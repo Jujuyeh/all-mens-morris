@@ -32,12 +32,16 @@ Implemented:
 - Flying to any empty point when the active player has exactly three pieces.
 - Win/loss detection when an opponent is reduced below three pieces after all
   reserves are placed, or when the active player has no legal move.
+- Main menu scaffold for choosing modes, with Classic Nine Men's Morris active
+  and smaller variants listed as future entries.
+- Directional cursor navigation that follows the board geometry.
+- Hold-A quick menu for reset, one-state rewind, and returning to the main menu.
 
 Not implemented yet:
 
 - Draw/stalemate handling.
 - AI.
-- Alternate boards and modes.
+- Playable alternate boards and modes.
 
 ## Variant Ideas
 

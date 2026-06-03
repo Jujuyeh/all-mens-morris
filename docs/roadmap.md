@@ -8,14 +8,13 @@
 - Added a playable placement-phase UI.
 - Added mandatory capture after forming a mill.
 - Added movement, flying, and classic win detection.
+- Added a main menu, board-direction cursor navigation, and hold-A quick menu.
 
 ## Next Cycle
 
 1. Add draw/stalemate handling.
-2. Improve cursor navigation so d-pad movement follows board geometry instead
-   of simple point order.
-3. Add first pixel-art pass for title, board, and pieces.
-4. Add debug build tools for forcing phases and board states.
+2. Add first pixel-art pass for title, board, and pieces.
+3. Add debug build tools for forcing phases and board states.
 
 ## Later
 

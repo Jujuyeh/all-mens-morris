@@ -10,7 +10,8 @@ all-mens-morris.ino -> gameSetup() / gameLoop()
 
 The implementation is split into:
 
-- `src/Game.cpp`: Arduboy setup, input, rendering, and current UI.
+- `src/Game.cpp`: Arduboy setup, input, rendering, main menu, quick menu, and
+  current UI.
 - `src/Board.*`: classic board coordinates, mill triples, and adjacency.
 - `src/Rules.*`: mutable game state, legal actions, mill capture rules, flying,
   win detection, and phase transitions.

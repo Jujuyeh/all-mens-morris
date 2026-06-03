@@ -14,10 +14,14 @@ ideas without mixing rule logic into rendering code.
 Early scaffold. The project compiles and runs, but the full game is not complete
 yet. Current controls:
 
-- Left/up: previous point.
-- Right/down: next point.
+- Main menu up/down: choose a mode.
+- Main menu B: start the selected mode.
+- In game d-pad: move the cursor in that board direction.
 - B: place/select/confirm/capture.
-- A: reset the match.
+- Hold A: show quick menu.
+- Hold A + up: reset the match, with confirmation.
+- Hold A + left: rewind one game state.
+- Hold A + down: return to the main menu, with confirmation.
 
 ## Development
 
