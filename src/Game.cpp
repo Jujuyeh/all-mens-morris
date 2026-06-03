@@ -90,13 +90,23 @@ void drawHud() {
     tinyfont.print("PLACE");
   } else if (game.phase == PHASE_CAPTURING) {
     tinyfont.print("CAPTURE");
+  } else if (game.phase == PHASE_GAME_OVER) {
+    tinyfont.print("GAME OVER");
+  } else if (playerCanFly(game, game.currentPlayer)) {
+    tinyfont.print("FLY");
   } else {
     tinyfont.print("MOVE");
   }
   tinyfont.setCursor(HUD_X, 27);
-  tinyfont.print("P");
-  tinyfont.print(game.currentPlayer == PLAYER_ONE ? "1" : "2");
-  tinyfont.print(game.phase == PHASE_CAPTURING ? " TAKE" : " TURN");
+  if (game.phase == PHASE_GAME_OVER) {
+    tinyfont.print("P");
+    tinyfont.print(game.winner == PLAYER_ONE ? "1" : "2");
+    tinyfont.print(" WINS");
+  } else {
+    tinyfont.print("P");
+    tinyfont.print(game.currentPlayer == PLAYER_ONE ? "1" : "2");
+    tinyfont.print(game.phase == PHASE_CAPTURING ? " TAKE" : " TURN");
+  }
 
   tinyfont.setCursor(HUD_X, 39);
   tinyfont.print("P1 ");
@@ -111,6 +121,9 @@ void drawHud() {
   if (messageFrames > 0) {
     tinyfont.setCursor(HUD_X, 33);
     tinyfont.print(message);
+  } else if (game.phase == PHASE_GAME_OVER) {
+    tinyfont.setCursor(HUD_X, 33);
+    tinyfont.print(game.winReason == WIN_BY_BLOCK ? "BLOCK" : "2 MEN");
   }
 }
 
@@ -139,6 +152,8 @@ void handleInput() {
     bool moved = applyPrimaryAction(game);
     if (!moved) {
       setMessage("NOPE");
+    } else if (game.phase == PHASE_GAME_OVER) {
+      setMessage(game.winner == PLAYER_ONE ? "P1 WIN" : "P2 WIN");
     } else if (game.lastMoveMadeMill) {
       setMessage("MILL!");
     } else if (phaseBeforeAction == PHASE_CAPTURING) {

@@ -28,12 +28,13 @@ Implemented:
 - Mill detection and feedback.
 - Capture/removal after a mill, including the classic restriction that pieces
   inside mills are protected unless every opponent piece is inside a mill.
-- Basic movement phase scaffolding after all pieces are placed.
+- Movement after all pieces are placed.
+- Flying to any empty point when the active player has exactly three pieces.
+- Win/loss detection when an opponent is reduced below three pieces after all
+  reserves are placed, or when the active player has no legal move.
 
 Not implemented yet:
 
-- Win/loss detection.
-- Flying rule.
 - Draw/stalemate handling.
 - AI.
 - Alternate boards and modes.

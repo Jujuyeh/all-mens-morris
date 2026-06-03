@@ -5,7 +5,9 @@ void resetMorrisGame(MorrisGameState &game) {
     game.points[i] = PLAYER_NONE;
   }
   game.currentPlayer = PLAYER_ONE;
+  game.winner = PLAYER_NONE;
   game.phase = PHASE_PLACING;
+  game.winReason = WIN_NONE;
   game.cursor = 0;
   game.selected = 255;
   game.piecesToPlace[0] = 9;
@@ -49,11 +51,22 @@ bool canPlaceAt(const MorrisGameState &game, uint8_t point) {
   return game.phase == PHASE_PLACING && game.points[point] == PLAYER_NONE;
 }
 
+bool playerCanFly(const MorrisGameState &game, Player player) {
+  uint8_t index = playerIndex(player);
+  return game.phase == PHASE_MOVING
+      && game.piecesToPlace[index] == 0
+      && game.piecesOnBoard[index] == 3;
+}
+
 bool canMovePiece(const MorrisGameState &game, uint8_t from, uint8_t to) {
   if (game.phase != PHASE_MOVING
       || game.points[from] != game.currentPlayer
       || game.points[to] != PLAYER_NONE) {
     return false;
+  }
+
+  if (playerCanFly(game, game.currentPlayer)) {
+    return true;
   }
 
   for (uint8_t slot = 0; slot < MORRIS_ADJACENCY_SLOTS; slot++) {
@@ -91,9 +104,70 @@ static void endTurn(MorrisGameState &game) {
   game.currentPlayer = opponentOf(game.currentPlayer);
 }
 
+static bool playerHasOpenPoint(const MorrisGameState &game) {
+  for (uint8_t point = 0; point < MORRIS_POINT_COUNT; point++) {
+    if (game.points[point] == PLAYER_NONE) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool playerHasLegalMove(const MorrisGameState &game, Player player) {
+  if (game.phase != PHASE_MOVING) {
+    return true;
+  }
+
+  if (playerCanFly(game, player)) {
+    return playerHasOpenPoint(game);
+  }
+
+  for (uint8_t point = 0; point < MORRIS_POINT_COUNT; point++) {
+    if (game.points[point] != player) {
+      continue;
+    }
+
+    for (uint8_t slot = 0; slot < MORRIS_ADJACENCY_SLOTS; slot++) {
+      uint8_t adjacent = adjacentPoint(point, slot);
+      if (adjacent != 255 && game.points[adjacent] == PLAYER_NONE) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+static bool playerHasTooFewPieces(const MorrisGameState &game, Player player) {
+  uint8_t index = playerIndex(player);
+  return game.piecesToPlace[index] == 0 && game.piecesOnBoard[index] < 3;
+}
+
+static void setGameOver(MorrisGameState &game, Player winner, WinReason reason) {
+  game.phase = PHASE_GAME_OVER;
+  game.winner = winner;
+  game.winReason = reason;
+  game.selected = 255;
+  game.millPending = false;
+}
+
 static void finishPlacementIfReady(MorrisGameState &game) {
   if (game.piecesToPlace[0] == 0 && game.piecesToPlace[1] == 0) {
     game.phase = PHASE_MOVING;
+  }
+}
+
+static void checkCurrentPlayerLoss(MorrisGameState &game) {
+  if (game.phase != PHASE_MOVING) {
+    return;
+  }
+
+  if (playerHasTooFewPieces(game, game.currentPlayer)) {
+    setGameOver(game, opponentOf(game.currentPlayer), WIN_BY_MATERIAL);
+    return;
+  }
+
+  if (!playerHasLegalMove(game, game.currentPlayer)) {
+    setGameOver(game, opponentOf(game.currentPlayer), WIN_BY_BLOCK);
   }
 }
 
@@ -111,6 +185,7 @@ static void finishAction(MorrisGameState &game, GamePhase currentPhase) {
 
   finishPlacementIfReady(game);
   endTurn(game);
+  checkCurrentPlayerLoss(game);
 }
 
 static bool placeAtCursor(MorrisGameState &game) {
@@ -170,7 +245,12 @@ static bool captureAtCursor(MorrisGameState &game) {
   game.lastMoveMadeMill = false;
   game.selected = 255;
   finishPlacementIfReady(game);
+  if (game.phase == PHASE_MOVING && playerHasTooFewPieces(game, opponentOf(game.currentPlayer))) {
+    setGameOver(game, game.currentPlayer, WIN_BY_MATERIAL);
+    return true;
+  }
   endTurn(game);
+  checkCurrentPlayerLoss(game);
   return true;
 }
 
