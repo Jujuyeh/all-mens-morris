@@ -5,9 +5,9 @@ Men's Morris and related board variants.
 
 The first playable slice implements the classic 24-point board, local two-player
 piece placement, movement, flying with three pieces, mill detection, mandatory
-capture after a mill, and basic win detection. The project is structured so
-future modes can add different boards, rule variants, AI, and campaign-style
-ideas without mixing rule logic into rendering code.
+capture after a mill, basic win detection, and sound/RGB feedback. The project
+is structured so future modes can add different boards, rule variants, AI, and
+campaign-style ideas without mixing rule logic into rendering code.
 
 ## Status
 

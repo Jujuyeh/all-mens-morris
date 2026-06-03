@@ -9,6 +9,7 @@
 - Added mandatory capture after forming a mill.
 - Added movement, flying, and classic win detection.
 - Added a main menu, board-direction cursor navigation, and hold-A quick menu.
+- Added sound/RGB feedback and a centered board layout.
 
 ## Next Cycle
 

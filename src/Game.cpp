@@ -4,16 +4,19 @@
 #include "Rules.h"
 
 #include <Arduboy2.h>
+#include <ArduboyTones.h>
 #include <Tinyfont.h>
 
 namespace {
 Arduboy2 arduboy;
+ArduboyTones sound(arduboy.audio.enabled);
 Tinyfont tinyfont = Tinyfont(arduboy.sBuffer, Arduboy2::width(), Arduboy2::height());
 
 constexpr uint8_t GAME_FPS = 30;
-constexpr uint8_t BOARD_OFFSET_X = 2;
+constexpr uint8_t BOARD_OFFSET_X = 32;
 constexpr uint8_t BOARD_OFFSET_Y = 0;
-constexpr uint8_t HUD_X = 72;
+constexpr uint8_t HUD_LEFT_X = 1;
+constexpr uint8_t HUD_RIGHT_X = 99;
 constexpr uint8_t NO_POINT = 255;
 constexpr uint8_t MENU_ITEM_COUNT = 4;
 
@@ -36,6 +39,7 @@ uint8_t selectedMenuItem = 0;
 Player firstPlayer = PLAYER_TWO;
 bool hasUndo = false;
 uint8_t messageFrames = 0;
+uint8_t millFlashFrames = 0;
 const char *message = "";
 
 void setMessage(const char *text) {
@@ -80,6 +84,7 @@ void startMatch() {
   resetMorrisGame(game);
   game.currentPlayer = firstPlayer;
   hasUndo = false;
+  millFlashFrames = 0;
   confirmAction = CONFIRM_NONE;
   scene = SCENE_PLAYING;
   setMessage("");
@@ -125,8 +130,27 @@ void moveCursorToward(int8_t dx, int8_t dy) {
   }
 }
 
-const char *playerLabel(Player player) {
-  return player == PLAYER_TWO ? "WHITE" : "BLACK";
+void ledsOff() {
+  arduboy.digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_OFF);
+}
+
+void startMillEffects() {
+  millFlashFrames = 36;
+  sound.tone(659, 70, 880, 90, 1175, 120);
+}
+
+void updateMillLed() {
+  if (millFlashFrames == 0) {
+    ledsOff();
+    return;
+  }
+
+  millFlashFrames--;
+  if ((millFlashFrames / 4) % 2 == 0) {
+    arduboy.digitalWriteRGB(RGB_ON, RGB_OFF, RGB_OFF);
+  } else {
+    arduboy.digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_ON);
+  }
 }
 
 void drawBoardLine(uint8_t a, uint8_t b) {
@@ -178,49 +202,54 @@ void drawCursor() {
 }
 
 void drawHud() {
-  tinyfont.setCursor(HUD_X, 2);
-  tinyfont.print("ALL MEN");
-  tinyfont.setCursor(HUD_X, 8);
+  tinyfont.setCursor(HUD_LEFT_X, 2);
+  tinyfont.print("ALL");
+  tinyfont.setCursor(HUD_LEFT_X, 8);
   tinyfont.print("MORRIS");
 
-  tinyfont.setCursor(HUD_X, 20);
+  tinyfont.setCursor(HUD_LEFT_X, 20);
   if (game.phase == PHASE_PLACING) {
     tinyfont.print("PLACE");
   } else if (game.phase == PHASE_CAPTURING) {
-    tinyfont.print("CAPTURE");
+    tinyfont.print("CAP");
   } else if (game.phase == PHASE_GAME_OVER) {
-    tinyfont.print("GAME OVER");
+    tinyfont.print("OVER");
   } else if (playerCanFly(game, game.currentPlayer)) {
     tinyfont.print("FLY");
   } else {
     tinyfont.print("MOVE");
   }
-  tinyfont.setCursor(HUD_X, 27);
+  tinyfont.setCursor(HUD_LEFT_X, 27);
   if (game.phase == PHASE_GAME_OVER) {
-    tinyfont.print(playerLabel(game.winner));
+    tinyfont.print(game.winner == PLAYER_TWO ? "W" : "B");
     tinyfont.print(" WINS");
   } else {
-    tinyfont.print(playerLabel(game.currentPlayer));
-    tinyfont.print(game.phase == PHASE_CAPTURING ? " TAKE" : " TURN");
+    tinyfont.print(game.currentPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
+    tinyfont.setCursor(HUD_LEFT_X, 34);
+    tinyfont.print(game.phase == PHASE_CAPTURING ? "TAKE" : "TURN");
   }
 
-  tinyfont.setCursor(HUD_X, 39);
+  tinyfont.setCursor(HUD_RIGHT_X, 2);
+  tinyfont.print("HAND");
+  tinyfont.setCursor(HUD_RIGHT_X, 12);
   tinyfont.print("B ");
   tinyfont.print(game.piecesToPlace[0]);
-  tinyfont.setCursor(HUD_X, 46);
+  tinyfont.setCursor(HUD_RIGHT_X, 19);
   tinyfont.print("W ");
   tinyfont.print(game.piecesToPlace[1]);
 
-  tinyfont.setCursor(HUD_X, 57);
-  tinyfont.print("A MENU B OK");
-
   if (messageFrames > 0) {
-    tinyfont.setCursor(HUD_X, 33);
+    tinyfont.setCursor(HUD_RIGHT_X, 34);
     tinyfont.print(message);
   } else if (game.phase == PHASE_GAME_OVER) {
-    tinyfont.setCursor(HUD_X, 33);
+    tinyfont.setCursor(HUD_RIGHT_X, 34);
     tinyfont.print(game.winReason == WIN_BY_BLOCK ? "BLOCK" : "2 MEN");
   }
+
+  tinyfont.setCursor(HUD_RIGHT_X, 50);
+  tinyfont.print("A MENU");
+  tinyfont.setCursor(HUD_RIGHT_X, 57);
+  tinyfont.print("B OK");
 }
 
 void drawCenteredPanel(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
@@ -305,18 +334,23 @@ void drawScene() {
 void handleMainMenuInput() {
   if (arduboy.justPressed(UP_BUTTON)) {
     selectedMenuItem = selectedMenuItem == 0 ? MENU_ITEM_COUNT - 1 : selectedMenuItem - 1;
+    sound.tone(523, 35);
   }
   if (arduboy.justPressed(DOWN_BUTTON)) {
     selectedMenuItem = selectedMenuItem == MENU_ITEM_COUNT - 1 ? 0 : selectedMenuItem + 1;
+    sound.tone(392, 35);
   }
   if (arduboy.justPressed(B_BUTTON)) {
     if (selectedMenuItem == 0) {
       startMatch();
+      sound.tone(660, 45, 880, 70);
     } else if (selectedMenuItem == 3) {
       firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
       setMessage(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
+      sound.tone(784, 45);
     } else {
       setMessage("SOON");
+      sound.tone(180, 90);
     }
   }
 }
@@ -326,11 +360,13 @@ void handleConfirmInput() {
     if (confirmAction == CONFIRM_RESET) {
       startMatch();
       setMessage("RESET");
+      sound.tone(262, 45, 392, 65);
     } else if (confirmAction == CONFIRM_MAIN_MENU) {
       scene = SCENE_MAIN_MENU;
       confirmAction = CONFIRM_NONE;
       hasUndo = false;
       setMessage("");
+      sound.tone(392, 45, 262, 65);
     }
     return;
   }
@@ -338,6 +374,7 @@ void handleConfirmInput() {
   if (arduboy.justPressed(LEFT_BUTTON)) {
     confirmAction = CONFIRM_NONE;
     setMessage("");
+    sound.tone(220, 40);
   }
 }
 
@@ -349,17 +386,21 @@ void handleQuickMenuInput() {
   if (arduboy.justPressed(UP_BUTTON)) {
     confirmAction = CONFIRM_RESET;
     setMessage("");
+    sound.tone(523, 35);
   } else if (arduboy.justPressed(LEFT_BUTTON)) {
     if (hasUndo) {
       game = undoGame;
       hasUndo = false;
       setMessage("REWIND");
+      sound.tone(440, 45, 330, 70);
     } else {
       setMessage("NO UNDO");
+      sound.tone(160, 80);
     }
   } else if (arduboy.justPressed(DOWN_BUTTON)) {
     confirmAction = CONFIRM_MAIN_MENU;
     setMessage("");
+    sound.tone(330, 35);
   }
 }
 
@@ -397,6 +438,7 @@ void handleInput() {
     bool moved = applyPrimaryAction(game);
     if (!moved) {
       setMessage("NOPE");
+      sound.tone(120, 80);
     } else if (gameStateChanged(beforeAction, game)) {
       undoGame = beforeAction;
       hasUndo = true;
@@ -406,12 +448,16 @@ void handleInput() {
       return;
     } else if (game.phase == PHASE_GAME_OVER) {
       setMessage(game.winner == PLAYER_ONE ? "B WIN" : "W WIN");
+      sound.tone(523, 80, 659, 80, 1047, 160);
     } else if (game.lastMoveMadeMill) {
       setMessage("MILL!");
+      startMillEffects();
     } else if (phaseBeforeAction == PHASE_CAPTURING) {
       setMessage("TAKEN");
+      sound.tone(330, 60, 220, 80);
     } else {
       setMessage("");
+      sound.tone(440, 30);
     }
   }
 }
@@ -421,8 +467,10 @@ void gameSetup() {
   arduboy.begin();
   arduboy.setFrameRate(GAME_FPS);
   arduboy.setTextColor(BLACK);
+  arduboy.audio.begin();
   tinyfont.setTextColor(BLACK);
   resetMorrisGame(game);
+  ledsOff();
 }
 
 void gameLoop() {
@@ -432,6 +480,7 @@ void gameLoop() {
 
   arduboy.pollButtons();
   handleInput();
+  updateMillLed();
   if (messageFrames > 0) {
     messageFrames--;
   }

@@ -37,6 +37,8 @@ Implemented:
 - Main menu setting for whether white or black moves first.
 - Directional cursor navigation that follows the board geometry.
 - Hold-A quick menu for reset, one-state rewind, and returning to the main menu.
+- Centered board layout with compact side HUD panels.
+- Sound effects for menu/action feedback and RGB LED flashing on mills.
 
 Not implemented yet:
 
