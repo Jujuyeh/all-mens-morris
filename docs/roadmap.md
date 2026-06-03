@@ -16,11 +16,14 @@
 1. Add draw/stalemate handling.
 2. Add first pixel-art pass for title, board, and pieces.
 3. Add debug build tools for forcing phases and board states.
+4. Plan TableTop Studio from Pocket Pixel's Pet Studio, starting with board
+   profile JSON, graph overlays, and sprite/banner editing.
 
 ## Later
 
 - AI opponent.
 - Board/rule variant definitions.
+- TableTop Studio for designing board sprites and playable graph data together.
 - Save/settings support.
 - Arduboy FX packaging workflow with banner art.
 - Sound effects and optional music.

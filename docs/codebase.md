@@ -32,3 +32,5 @@ state machine.
 - Separate scene state from match state.
 - Add debug-only helpers behind `ALL_MENS_MORRIS_DEBUG`.
 - Add save/settings support only after gameplay rules settle.
+- Use the TableTop Studio plan in `docs/tabletop-studio.md` when board variant
+  data and editor tooling become the next focus.
