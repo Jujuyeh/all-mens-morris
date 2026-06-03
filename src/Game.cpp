@@ -15,6 +15,7 @@ constexpr uint8_t BOARD_OFFSET_X = 2;
 constexpr uint8_t BOARD_OFFSET_Y = 0;
 constexpr uint8_t HUD_X = 72;
 constexpr uint8_t NO_POINT = 255;
+constexpr uint8_t MENU_ITEM_COUNT = 4;
 
 enum AppScene : uint8_t {
   SCENE_MAIN_MENU,
@@ -32,6 +33,7 @@ MorrisGameState undoGame;
 AppScene scene = SCENE_MAIN_MENU;
 ConfirmAction confirmAction = CONFIRM_NONE;
 uint8_t selectedMenuItem = 0;
+Player firstPlayer = PLAYER_TWO;
 bool hasUndo = false;
 uint8_t messageFrames = 0;
 const char *message = "";
@@ -76,6 +78,7 @@ bool gameStateChanged(const MorrisGameState &before, const MorrisGameState &afte
 
 void startMatch() {
   resetMorrisGame(game);
+  game.currentPlayer = firstPlayer;
   hasUndo = false;
   confirmAction = CONFIRM_NONE;
   scene = SCENE_PLAYING;
@@ -120,6 +123,10 @@ void moveCursorToward(int8_t dx, int8_t dy) {
   if (next != NO_POINT) {
     game.cursor = next;
   }
+}
+
+const char *playerLabel(Player player) {
+  return player == PLAYER_TWO ? "WHITE" : "BLACK";
 }
 
 void drawBoardLine(uint8_t a, uint8_t b) {
@@ -190,20 +197,18 @@ void drawHud() {
   }
   tinyfont.setCursor(HUD_X, 27);
   if (game.phase == PHASE_GAME_OVER) {
-    tinyfont.print("P");
-    tinyfont.print(game.winner == PLAYER_ONE ? "1" : "2");
+    tinyfont.print(playerLabel(game.winner));
     tinyfont.print(" WINS");
   } else {
-    tinyfont.print("P");
-    tinyfont.print(game.currentPlayer == PLAYER_ONE ? "1" : "2");
+    tinyfont.print(playerLabel(game.currentPlayer));
     tinyfont.print(game.phase == PHASE_CAPTURING ? " TAKE" : " TURN");
   }
 
   tinyfont.setCursor(HUD_X, 39);
-  tinyfont.print("P1 ");
+  tinyfont.print("B ");
   tinyfont.print(game.piecesToPlace[0]);
   tinyfont.setCursor(HUD_X, 46);
-  tinyfont.print("P2 ");
+  tinyfont.print("W ");
   tinyfont.print(game.piecesToPlace[1]);
 
   tinyfont.setCursor(HUD_X, 57);
@@ -224,23 +229,32 @@ void drawCenteredPanel(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
 }
 
 void drawMainMenu() {
-  tinyfont.setCursor(28, 8);
+  tinyfont.setCursor(28, 5);
   tinyfont.print("ALL MEN'S");
-  tinyfont.setCursor(36, 15);
+  tinyfont.setCursor(36, 12);
   tinyfont.print("MORRIS");
 
-  tinyfont.setCursor(23, 28);
+  tinyfont.setCursor(23, 24);
   tinyfont.print(selectedMenuItem == 0 ? "> CLASSIC 9" : "  CLASSIC 9");
-  tinyfont.setCursor(23, 36);
+  tinyfont.setCursor(23, 32);
   tinyfont.print(selectedMenuItem == 1 ? "> SIX MEN" : "  SIX MEN");
-  tinyfont.setCursor(23, 44);
+  tinyfont.setCursor(23, 40);
   tinyfont.print(selectedMenuItem == 2 ? "> THREE MEN" : "  THREE MEN");
+  tinyfont.setCursor(23, 48);
+  tinyfont.print(selectedMenuItem == 3 ? "> FIRST " : "  FIRST ");
+  tinyfont.print(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
 
-  tinyfont.setCursor(17, 56);
-  tinyfont.print(selectedMenuItem == 0 ? "B START" : "B SOON");
+  tinyfont.setCursor(17, 57);
+  if (selectedMenuItem == 0) {
+    tinyfont.print("B START");
+  } else if (selectedMenuItem == 3) {
+    tinyfont.print("B TOGGLE");
+  } else {
+    tinyfont.print("B SOON");
+  }
 
   if (messageFrames > 0) {
-    tinyfont.setCursor(77, 56);
+    tinyfont.setCursor(77, 57);
     tinyfont.print(message);
   }
 }
@@ -290,14 +304,17 @@ void drawScene() {
 
 void handleMainMenuInput() {
   if (arduboy.justPressed(UP_BUTTON)) {
-    selectedMenuItem = selectedMenuItem == 0 ? 2 : selectedMenuItem - 1;
+    selectedMenuItem = selectedMenuItem == 0 ? MENU_ITEM_COUNT - 1 : selectedMenuItem - 1;
   }
   if (arduboy.justPressed(DOWN_BUTTON)) {
-    selectedMenuItem = selectedMenuItem == 2 ? 0 : selectedMenuItem + 1;
+    selectedMenuItem = selectedMenuItem == MENU_ITEM_COUNT - 1 ? 0 : selectedMenuItem + 1;
   }
   if (arduboy.justPressed(B_BUTTON)) {
     if (selectedMenuItem == 0) {
       startMatch();
+    } else if (selectedMenuItem == 3) {
+      firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
+      setMessage(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
     } else {
       setMessage("SOON");
     }
@@ -388,7 +405,7 @@ void handleInput() {
     if (!moved) {
       return;
     } else if (game.phase == PHASE_GAME_OVER) {
-      setMessage(game.winner == PLAYER_ONE ? "P1 WIN" : "P2 WIN");
+      setMessage(game.winner == PLAYER_ONE ? "B WIN" : "W WIN");
     } else if (game.lastMoveMadeMill) {
       setMessage("MILL!");
     } else if (phaseBeforeAction == PHASE_CAPTURING) {

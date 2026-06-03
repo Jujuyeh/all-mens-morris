@@ -15,7 +15,8 @@ Early scaffold. The project compiles and runs, but the full game is not complete
 yet. Current controls:
 
 - Main menu up/down: choose a mode.
-- Main menu B: start the selected mode.
+- Main menu B: start the selected mode, or toggle a selected setting.
+- Main menu First setting: choose whether white or black moves first.
 - In game d-pad: move the cursor in that board direction.
 - B: place/select/confirm/capture.
 - Hold A: show quick menu.
