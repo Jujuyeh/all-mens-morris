@@ -12,7 +12,7 @@ RETROARCH ?= retroarch
 ARDENS_LIBRETRO_CORE ?=
 RETROARCH_CONFIG ?= $(SKETCH_DIR)/config/retroarch/arduboy-clean.cfg
 FX_CART_DIR ?= $(DIST_DIR)/fx-cart
-FX_CATEGORY ?= 99-Development
+FX_CATEGORY ?= TableTop
 FX_GAME ?= 02-All-Mens-Morris
 FX_BANNER ?= assets/fx/banner.png
 

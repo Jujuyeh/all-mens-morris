@@ -62,6 +62,8 @@ Prepare an Arduboy FX catalog entry:
 make fx-entry
 ```
 
+The entry is prepared under the `TableTop` category by default.
+
 ## Layout
 
 ```text

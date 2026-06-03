@@ -12,3 +12,4 @@ Safe flow:
 
 This repo's `make upload` target intentionally refuses `TARGET=fx`. Use
 `make fx-entry` to prepare files that can be merged into a backed-up catalog.
+By default the entry is prepared in the `TableTop` category.
