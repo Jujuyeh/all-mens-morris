@@ -12,7 +12,8 @@ The implementation is split into:
 
 - `src/Game.cpp`: Arduboy setup, input, rendering, and current UI.
 - `src/Board.*`: classic board coordinates, mill triples, and adjacency.
-- `src/Rules.*`: mutable game state and legal actions.
+- `src/Rules.*`: mutable game state, legal actions, mill capture rules, and
+  phase transitions.
 - `src/Assets.*`: placeholder asset module for future sprites/audio.
 
 ## Design Constraints
@@ -27,7 +28,6 @@ state machine.
 ## Near-Term Refactor Targets
 
 - Represent board variants through a `BoardDefinition` struct.
-- Add capture/removal flow after forming a mill.
 - Separate scene state from match state.
 - Add debug-only helpers behind `ALL_MENS_MORRIS_DEBUG`.
 - Add save/settings support only after gameplay rules settle.

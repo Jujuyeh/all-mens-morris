@@ -86,11 +86,17 @@ void drawHud() {
   tinyfont.print("MORRIS");
 
   tinyfont.setCursor(HUD_X, 20);
-  tinyfont.print(game.phase == PHASE_PLACING ? "PLACE" : "MOVE");
+  if (game.phase == PHASE_PLACING) {
+    tinyfont.print("PLACE");
+  } else if (game.phase == PHASE_CAPTURING) {
+    tinyfont.print("CAPTURE");
+  } else {
+    tinyfont.print("MOVE");
+  }
   tinyfont.setCursor(HUD_X, 27);
   tinyfont.print("P");
   tinyfont.print(game.currentPlayer == PLAYER_ONE ? "1" : "2");
-  tinyfont.print(" TURN");
+  tinyfont.print(game.phase == PHASE_CAPTURING ? " TAKE" : " TURN");
 
   tinyfont.setCursor(HUD_X, 39);
   tinyfont.print("P1 ");
@@ -129,11 +135,14 @@ void handleInput() {
     advanceCursor(game, 1);
   }
   if (arduboy.justPressed(B_BUTTON)) {
+    GamePhase phaseBeforeAction = game.phase;
     bool moved = applyPrimaryAction(game);
     if (!moved) {
       setMessage("NOPE");
     } else if (game.lastMoveMadeMill) {
       setMessage("MILL!");
+    } else if (phaseBeforeAction == PHASE_CAPTURING) {
+      setMessage("TAKEN");
     } else {
       setMessage("");
     }

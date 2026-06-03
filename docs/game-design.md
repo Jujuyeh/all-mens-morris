@@ -26,11 +26,12 @@ Implemented:
 - Local two-player placement phase.
 - Turn switching.
 - Mill detection and feedback.
+- Capture/removal after a mill, including the classic restriction that pieces
+  inside mills are protected unless every opponent piece is inside a mill.
 - Basic movement phase scaffolding after all pieces are placed.
 
 Not implemented yet:
 
-- Capture/removal after a mill.
 - Win/loss detection.
 - Flying rule.
 - Draw/stalemate handling.

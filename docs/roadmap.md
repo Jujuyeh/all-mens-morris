@@ -6,17 +6,17 @@
 - Added classic board topology data.
 - Added a first rules state machine.
 - Added a playable placement-phase UI.
+- Added mandatory capture after forming a mill.
 
 ## Next Cycle
 
-1. Implement mill capture flow.
-2. Finish movement phase rules.
-3. Add flying rule for three-piece endgame.
-4. Add win/loss and draw detection.
-5. Improve cursor navigation so d-pad movement follows board geometry instead
+1. Finish movement phase rules.
+2. Add flying rule for three-piece endgame.
+3. Add win/loss and draw detection.
+4. Improve cursor navigation so d-pad movement follows board geometry instead
    of simple point order.
-6. Add first pixel-art pass for title, board, and pieces.
-7. Add debug build tools for forcing phases and board states.
+5. Add first pixel-art pass for title, board, and pieces.
+6. Add debug build tools for forcing phases and board states.
 
 ## Later
 

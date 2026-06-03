@@ -12,6 +12,7 @@ void resetMorrisGame(MorrisGameState &game) {
   game.piecesToPlace[1] = 9;
   game.piecesOnBoard[0] = 0;
   game.piecesOnBoard[1] = 0;
+  game.phaseAfterCapture = PHASE_PLACING;
   game.millPending = false;
   game.lastMoveMadeMill = false;
 }
@@ -63,6 +64,29 @@ bool canMovePiece(const MorrisGameState &game, uint8_t from, uint8_t to) {
   return false;
 }
 
+static bool playerHasPieceOutsideMill(const MorrisGameState &game, Player player) {
+  for (uint8_t point = 0; point < MORRIS_POINT_COUNT; point++) {
+    if (game.points[point] == player && !isMillAt(game, point, player)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool canCaptureAt(const MorrisGameState &game, uint8_t point) {
+  if (game.phase != PHASE_CAPTURING || !game.millPending) {
+    return false;
+  }
+
+  Player opponent = opponentOf(game.currentPlayer);
+  if (game.points[point] != opponent) {
+    return false;
+  }
+
+  return !isMillAt(game, point, opponent)
+      || !playerHasPieceOutsideMill(game, opponent);
+}
+
 static void endTurn(MorrisGameState &game) {
   game.currentPlayer = opponentOf(game.currentPlayer);
 }
@@ -71,6 +95,22 @@ static void finishPlacementIfReady(MorrisGameState &game) {
   if (game.piecesToPlace[0] == 0 && game.piecesToPlace[1] == 0) {
     game.phase = PHASE_MOVING;
   }
+}
+
+static void enterCapture(MorrisGameState &game, GamePhase phaseAfterCapture) {
+  game.phase = PHASE_CAPTURING;
+  game.phaseAfterCapture = phaseAfterCapture;
+  game.millPending = true;
+}
+
+static void finishAction(MorrisGameState &game, GamePhase currentPhase) {
+  if (game.lastMoveMadeMill) {
+    enterCapture(game, currentPhase);
+    return;
+  }
+
+  finishPlacementIfReady(game);
+  endTurn(game);
 }
 
 static bool placeAtCursor(MorrisGameState &game) {
@@ -83,8 +123,7 @@ static bool placeAtCursor(MorrisGameState &game) {
   game.piecesToPlace[index]--;
   game.piecesOnBoard[index]++;
   game.lastMoveMadeMill = isMillAt(game, game.cursor, game.currentPlayer);
-  finishPlacementIfReady(game);
-  endTurn(game);
+  finishAction(game, PHASE_PLACING);
   return true;
 }
 
@@ -110,6 +149,27 @@ static bool moveFromSelection(MorrisGameState &game) {
   game.points[game.selected] = PLAYER_NONE;
   game.lastMoveMadeMill = isMillAt(game, game.cursor, game.currentPlayer);
   game.selected = 255;
+  finishAction(game, PHASE_MOVING);
+  return true;
+}
+
+static bool captureAtCursor(MorrisGameState &game) {
+  if (!canCaptureAt(game, game.cursor)) {
+    return false;
+  }
+
+  uint8_t opponentIndex = playerIndex(opponentOf(game.currentPlayer));
+  game.points[game.cursor] = PLAYER_NONE;
+  if (game.piecesOnBoard[opponentIndex] > 0) {
+    game.piecesOnBoard[opponentIndex]--;
+  }
+
+  game.phase = game.phaseAfterCapture;
+  game.phaseAfterCapture = PHASE_PLACING;
+  game.millPending = false;
+  game.lastMoveMadeMill = false;
+  game.selected = 255;
+  finishPlacementIfReady(game);
   endTurn(game);
   return true;
 }
@@ -118,6 +178,9 @@ bool applyPrimaryAction(MorrisGameState &game) {
   game.lastMoveMadeMill = false;
   if (game.phase == PHASE_PLACING) {
     return placeAtCursor(game);
+  }
+  if (game.phase == PHASE_CAPTURING) {
+    return captureAtCursor(game);
   }
   if (game.phase == PHASE_MOVING) {
     return moveFromSelection(game);

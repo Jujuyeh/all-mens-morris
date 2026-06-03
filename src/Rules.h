@@ -12,6 +12,7 @@ enum Player : uint8_t {
 
 enum GamePhase : uint8_t {
   PHASE_PLACING,
+  PHASE_CAPTURING,
   PHASE_MOVING,
   PHASE_GAME_OVER,
 };
@@ -24,6 +25,7 @@ struct MorrisGameState {
   uint8_t selected = 255;
   uint8_t piecesToPlace[2] = {9, 9};
   uint8_t piecesOnBoard[2] = {0, 0};
+  GamePhase phaseAfterCapture = PHASE_PLACING;
   bool millPending = false;
   bool lastMoveMadeMill = false;
 };
@@ -34,5 +36,6 @@ Player opponentOf(Player player);
 bool isMillAt(const MorrisGameState &game, uint8_t point, Player player);
 bool canPlaceAt(const MorrisGameState &game, uint8_t point);
 bool canMovePiece(const MorrisGameState &game, uint8_t from, uint8_t to);
+bool canCaptureAt(const MorrisGameState &game, uint8_t point);
 bool applyPrimaryAction(MorrisGameState &game);
 void advanceCursor(MorrisGameState &game, int8_t delta);
