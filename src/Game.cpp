@@ -31,6 +31,15 @@ enum ConfirmAction : uint8_t {
   CONFIRM_MAIN_MENU,
 };
 
+#ifdef ALL_MENS_MORRIS_DEBUG
+enum DebugScenario : uint8_t {
+  DEBUG_SCENARIO_MILL,
+  DEBUG_SCENARIO_FLY,
+  DEBUG_SCENARIO_BLOCK,
+  DEBUG_SCENARIO_COUNT,
+};
+#endif
+
 MorrisGameState game;
 MorrisGameState undoGame;
 AppScene scene = SCENE_MAIN_MENU;
@@ -40,6 +49,9 @@ Player firstPlayer = PLAYER_TWO;
 bool hasUndo = false;
 uint8_t messageFrames = 0;
 uint8_t millFlashFrames = 0;
+#ifdef ALL_MENS_MORRIS_DEBUG
+uint8_t debugScenario = DEBUG_SCENARIO_MILL;
+#endif
 const char *message = "";
 
 void setMessage(const char *text) {
@@ -89,6 +101,100 @@ void startMatch() {
   scene = SCENE_PLAYING;
   setMessage("");
 }
+
+#ifdef ALL_MENS_MORRIS_DEBUG
+void clearDebugBoard() {
+  for (uint8_t point = 0; point < MORRIS_POINT_COUNT; point++) {
+    game.points[point] = PLAYER_NONE;
+  }
+  game.cursor = 0;
+  game.selected = NO_POINT;
+  game.winner = PLAYER_NONE;
+  game.winReason = WIN_NONE;
+  game.phaseAfterCapture = PHASE_PLACING;
+  game.millPending = false;
+  game.lastMoveMadeMill = false;
+  game.piecesToPlace[0] = 0;
+  game.piecesToPlace[1] = 0;
+  game.piecesOnBoard[0] = 0;
+  game.piecesOnBoard[1] = 0;
+}
+
+void putDebugPiece(uint8_t point, Player player) {
+  game.points[point] = player;
+  if (player != PLAYER_NONE) {
+    game.piecesOnBoard[playerIndex(player)]++;
+  }
+}
+
+void loadDebugMillScenario() {
+  resetMorrisGame(game);
+  clearDebugBoard();
+  game.phase = PHASE_PLACING;
+  game.currentPlayer = PLAYER_TWO;
+  game.piecesToPlace[0] = 7;
+  game.piecesToPlace[1] = 7;
+  putDebugPiece(0, PLAYER_TWO);
+  putDebugPiece(1, PLAYER_TWO);
+  putDebugPiece(9, PLAYER_ONE);
+  putDebugPiece(10, PLAYER_ONE);
+  game.cursor = 2;
+  setMessage("DBG MILL");
+}
+
+void loadDebugFlyScenario() {
+  resetMorrisGame(game);
+  clearDebugBoard();
+  game.phase = PHASE_MOVING;
+  game.currentPlayer = PLAYER_TWO;
+  putDebugPiece(0, PLAYER_TWO);
+  putDebugPiece(9, PLAYER_TWO);
+  putDebugPiece(21, PLAYER_TWO);
+  putDebugPiece(2, PLAYER_ONE);
+  putDebugPiece(14, PLAYER_ONE);
+  putDebugPiece(23, PLAYER_ONE);
+  putDebugPiece(4, PLAYER_ONE);
+  game.cursor = 0;
+  setMessage("DBG FLY");
+}
+
+void loadDebugBlockScenario() {
+  resetMorrisGame(game);
+  clearDebugBoard();
+  game.phase = PHASE_GAME_OVER;
+  game.currentPlayer = PLAYER_ONE;
+  game.winner = PLAYER_TWO;
+  game.winReason = WIN_BY_BLOCK;
+  putDebugPiece(0, PLAYER_ONE);
+  putDebugPiece(2, PLAYER_ONE);
+  putDebugPiece(9, PLAYER_ONE);
+  putDebugPiece(1, PLAYER_TWO);
+  putDebugPiece(10, PLAYER_TWO);
+  putDebugPiece(14, PLAYER_TWO);
+  putDebugPiece(21, PLAYER_TWO);
+  game.cursor = 0;
+  setMessage("DBG BLOCK");
+}
+
+void loadDebugScenario() {
+  hasUndo = false;
+  millFlashFrames = 0;
+  confirmAction = CONFIRM_NONE;
+  scene = SCENE_PLAYING;
+  arduboy.digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_OFF);
+
+  if (debugScenario == DEBUG_SCENARIO_MILL) {
+    loadDebugMillScenario();
+  } else if (debugScenario == DEBUG_SCENARIO_FLY) {
+    loadDebugFlyScenario();
+  } else {
+    loadDebugBlockScenario();
+  }
+
+  debugScenario = (debugScenario + 1) % DEBUG_SCENARIO_COUNT;
+  sound.tone(988, 35, 740, 50);
+}
+#endif
 
 uint16_t absoluteDelta(int16_t value) {
   return value < 0 ? -value : value;
@@ -289,15 +395,36 @@ void drawMainMenu() {
 }
 
 void drawQuickMenu() {
+#ifdef ALL_MENS_MORRIS_DEBUG
+  drawCenteredPanel(19, 12, 90, 42);
+  tinyfont.setCursor(43, 16);
+#else
   drawCenteredPanel(19, 15, 90, 35);
   tinyfont.setCursor(43, 19);
+#endif
   tinyfont.print("QUICK");
+#ifdef ALL_MENS_MORRIS_DEBUG
+  tinyfont.setCursor(27, 24);
+#else
   tinyfont.setCursor(27, 27);
+#endif
   tinyfont.print("UP RESET");
+#ifdef ALL_MENS_MORRIS_DEBUG
+  tinyfont.setCursor(27, 31);
+#else
   tinyfont.setCursor(27, 34);
+#endif
   tinyfont.print("LEFT REWIND");
+#ifdef ALL_MENS_MORRIS_DEBUG
+  tinyfont.setCursor(27, 38);
+#else
   tinyfont.setCursor(27, 41);
+#endif
   tinyfont.print("DOWN MENU");
+#ifdef ALL_MENS_MORRIS_DEBUG
+  tinyfont.setCursor(27, 45);
+  tinyfont.print("RIGHT DBG");
+#endif
 }
 
 void drawConfirm() {
@@ -401,6 +528,10 @@ void handleQuickMenuInput() {
     confirmAction = CONFIRM_MAIN_MENU;
     setMessage("");
     sound.tone(330, 35);
+#ifdef ALL_MENS_MORRIS_DEBUG
+  } else if (arduboy.justPressed(RIGHT_BUTTON)) {
+    loadDebugScenario();
+#endif
   }
 }
 
