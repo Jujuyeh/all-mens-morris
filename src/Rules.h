@@ -21,7 +21,10 @@ enum WinReason : uint8_t {
   WIN_NONE,
   WIN_BY_MATERIAL,
   WIN_BY_BLOCK,
+  WIN_DRAW_NO_CAPTURE,
 };
+
+constexpr uint8_t DRAW_NO_CAPTURE_TURN_LIMIT = 50;
 
 struct MorrisGameState {
   Player points[MORRIS_POINT_COUNT] = {};
@@ -33,6 +36,7 @@ struct MorrisGameState {
   uint8_t selected = 255;
   uint8_t piecesToPlace[2] = {9, 9};
   uint8_t piecesOnBoard[2] = {0, 0};
+  uint8_t turnsSinceCapture = 0;
   GamePhase phaseAfterCapture = PHASE_PLACING;
   bool millPending = false;
   bool lastMoveMadeMill = false;

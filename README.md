@@ -23,8 +23,8 @@ yet. Current controls:
 - Hold A + up: reset the match, with confirmation.
 - Hold A + left: rewind one game state.
 - Hold A + down: return to the main menu, with confirmation.
-- Debug build only, hold A + right: cycle test scenarios for mill, flying, and
-  blocked-game-over states.
+- Debug build only, hold A + right: cycle test scenarios for mill, flying,
+  blocked-game-over, and draw states.
 
 ## Development
 

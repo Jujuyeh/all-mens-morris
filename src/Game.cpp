@@ -36,6 +36,7 @@ enum DebugScenario : uint8_t {
   DEBUG_SCENARIO_MILL,
   DEBUG_SCENARIO_FLY,
   DEBUG_SCENARIO_BLOCK,
+  DEBUG_SCENARIO_DRAW,
   DEBUG_SCENARIO_COUNT,
 };
 #endif
@@ -73,7 +74,8 @@ bool gameStateChanged(const MorrisGameState &before, const MorrisGameState &afte
       || before.winReason != after.winReason
       || before.phaseAfterCapture != after.phaseAfterCapture
       || before.millPending != after.millPending
-      || before.lastMoveMadeMill != after.lastMoveMadeMill) {
+      || before.lastMoveMadeMill != after.lastMoveMadeMill
+      || before.turnsSinceCapture != after.turnsSinceCapture) {
     return true;
   }
 
@@ -114,6 +116,7 @@ void clearDebugBoard() {
   game.phaseAfterCapture = PHASE_PLACING;
   game.millPending = false;
   game.lastMoveMadeMill = false;
+  game.turnsSinceCapture = 0;
   game.piecesToPlace[0] = 0;
   game.piecesToPlace[1] = 0;
   game.piecesOnBoard[0] = 0;
@@ -176,6 +179,22 @@ void loadDebugBlockScenario() {
   setMessage("DBG BLOCK");
 }
 
+void loadDebugDrawScenario() {
+  resetMorrisGame(game);
+  clearDebugBoard();
+  game.phase = PHASE_MOVING;
+  game.currentPlayer = PLAYER_TWO;
+  game.turnsSinceCapture = DRAW_NO_CAPTURE_TURN_LIMIT - 1;
+  putDebugPiece(0, PLAYER_TWO);
+  putDebugPiece(9, PLAYER_TWO);
+  putDebugPiece(21, PLAYER_TWO);
+  putDebugPiece(2, PLAYER_ONE);
+  putDebugPiece(14, PLAYER_ONE);
+  putDebugPiece(23, PLAYER_ONE);
+  game.cursor = 0;
+  setMessage("DBG DRAW");
+}
+
 void loadDebugScenario() {
   hasUndo = false;
   millFlashFrames = 0;
@@ -187,8 +206,10 @@ void loadDebugScenario() {
     loadDebugMillScenario();
   } else if (debugScenario == DEBUG_SCENARIO_FLY) {
     loadDebugFlyScenario();
-  } else {
+  } else if (debugScenario == DEBUG_SCENARIO_BLOCK) {
     loadDebugBlockScenario();
+  } else {
+    loadDebugDrawScenario();
   }
 
   debugScenario = (debugScenario + 1) % DEBUG_SCENARIO_COUNT;
@@ -293,8 +314,7 @@ void drawPiece(uint8_t point, Player player) {
     arduboy.fillCircle(p.x, p.y, 3, WHITE);
     arduboy.drawCircle(p.x, p.y, 3, BLACK);
   } else {
-    arduboy.fillCircle(p.x, p.y, 2, WHITE);
-    arduboy.drawCircle(p.x, p.y, 2, BLACK);
+    arduboy.drawCircle(p.x, p.y, 1, BLACK);
   }
 }
 
@@ -327,8 +347,12 @@ void drawHud() {
   }
   tinyfont.setCursor(HUD_LEFT_X, 27);
   if (game.phase == PHASE_GAME_OVER) {
-    tinyfont.print(game.winner == PLAYER_TWO ? "W" : "B");
-    tinyfont.print(" WINS");
+    if (game.winner == PLAYER_NONE) {
+      tinyfont.print("DRAW");
+    } else {
+      tinyfont.print(game.winner == PLAYER_TWO ? "W" : "B");
+      tinyfont.print(" WINS");
+    }
   } else {
     tinyfont.print(game.currentPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
     tinyfont.setCursor(HUD_LEFT_X, 34);
@@ -349,7 +373,11 @@ void drawHud() {
     tinyfont.print(message);
   } else if (game.phase == PHASE_GAME_OVER) {
     tinyfont.setCursor(HUD_RIGHT_X, 34);
-    tinyfont.print(game.winReason == WIN_BY_BLOCK ? "BLOCK" : "2 MEN");
+    if (game.winReason == WIN_DRAW_NO_CAPTURE) {
+      tinyfont.print("NO CAP");
+    } else {
+      tinyfont.print(game.winReason == WIN_BY_BLOCK ? "BLOCK" : "2 MEN");
+    }
   }
 
   tinyfont.setCursor(HUD_RIGHT_X, 50);
@@ -578,8 +606,13 @@ void handleInput() {
     if (!moved) {
       return;
     } else if (game.phase == PHASE_GAME_OVER) {
-      setMessage(game.winner == PLAYER_ONE ? "B WIN" : "W WIN");
-      sound.tone(523, 80, 659, 80, 1047, 160);
+      if (game.winner == PLAYER_NONE) {
+        setMessage("DRAW");
+        sound.tone(392, 80, 330, 80, 262, 140);
+      } else {
+        setMessage(game.winner == PLAYER_ONE ? "B WIN" : "W WIN");
+        sound.tone(523, 80, 659, 80, 1047, 160);
+      }
     } else if (game.lastMoveMadeMill) {
       setMessage("MILL!");
       startMillEffects();

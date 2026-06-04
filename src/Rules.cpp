@@ -14,6 +14,7 @@ void resetMorrisGame(MorrisGameState &game) {
   game.piecesToPlace[1] = 9;
   game.piecesOnBoard[0] = 0;
   game.piecesOnBoard[1] = 0;
+  game.turnsSinceCapture = 0;
   game.phaseAfterCapture = PHASE_PLACING;
   game.millPending = false;
   game.lastMoveMadeMill = false;
@@ -150,6 +151,10 @@ static void setGameOver(MorrisGameState &game, Player winner, WinReason reason) 
   game.millPending = false;
 }
 
+static void setDraw(MorrisGameState &game, WinReason reason) {
+  setGameOver(game, PLAYER_NONE, reason);
+}
+
 static void finishPlacementIfReady(MorrisGameState &game) {
   if (game.piecesToPlace[0] == 0 && game.piecesToPlace[1] == 0) {
     game.phase = PHASE_MOVING;
@@ -171,6 +176,18 @@ static void checkCurrentPlayerLoss(MorrisGameState &game) {
   }
 }
 
+static bool checkNoCaptureDraw(MorrisGameState &game) {
+  if (game.phase != PHASE_MOVING) {
+    return false;
+  }
+
+  if (game.turnsSinceCapture >= DRAW_NO_CAPTURE_TURN_LIMIT) {
+    setDraw(game, WIN_DRAW_NO_CAPTURE);
+    return true;
+  }
+  return false;
+}
+
 static void enterCapture(MorrisGameState &game, GamePhase phaseAfterCapture) {
   game.phase = PHASE_CAPTURING;
   game.phaseAfterCapture = phaseAfterCapture;
@@ -184,8 +201,16 @@ static void finishAction(MorrisGameState &game, GamePhase currentPhase) {
   }
 
   finishPlacementIfReady(game);
+  bool shouldCheckDraw = false;
+  if (currentPhase == PHASE_MOVING && game.phase == PHASE_MOVING) {
+    game.turnsSinceCapture++;
+    shouldCheckDraw = true;
+  }
   endTurn(game);
   checkCurrentPlayerLoss(game);
+  if (shouldCheckDraw && game.phase != PHASE_GAME_OVER) {
+    checkNoCaptureDraw(game);
+  }
 }
 
 static bool placeAtCursor(MorrisGameState &game) {
@@ -244,6 +269,7 @@ static bool captureAtCursor(MorrisGameState &game) {
   game.millPending = false;
   game.lastMoveMadeMill = false;
   game.selected = 255;
+  game.turnsSinceCapture = 0;
   finishPlacementIfReady(game);
   if (game.phase == PHASE_MOVING && playerHasTooFewPieces(game, opponentOf(game.currentPlayer))) {
     setGameOver(game, game.currentPlayer, WIN_BY_MATERIAL);

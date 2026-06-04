@@ -18,6 +18,10 @@ Classic Nine Men's Morris has three phases:
 Whenever a player forms a mill, they remove one opponent piece that is not
 inside a mill unless no such piece exists.
 
+The current draw rule is a practical early implementation: after movement has
+started, 50 completed turns without a capture ends the game as a draw. Immediate
+win conditions, such as blocking the opponent, take priority over this draw.
+
 ## Current Playable Slice
 
 Implemented:
@@ -32,6 +36,7 @@ Implemented:
 - Flying to any empty point when the active player has exactly three pieces.
 - Win/loss detection when an opponent is reduced below three pieces after all
   reserves are placed, or when the active player has no legal move.
+- Draw detection after 50 movement turns without a capture.
 - Main menu scaffold for choosing modes, with Classic Nine Men's Morris active
   and smaller variants listed as future entries.
 - Main menu setting for whether white or black moves first.
@@ -39,12 +44,11 @@ Implemented:
 - Hold-A quick menu for reset, one-state rewind, and returning to the main menu.
 - Centered board layout with compact side HUD panels.
 - Sound effects for menu/action feedback and RGB LED flashing on mills.
-- Debug-only quick-menu scenarios for mill, flying, and blocked-game-over
+- Debug-only quick-menu scenarios for mill, flying, blocked-game-over, and draw
   testing.
 
 Not implemented yet:
 
-- Draw/stalemate handling.
 - AI.
 - Playable alternate boards and modes.
 
