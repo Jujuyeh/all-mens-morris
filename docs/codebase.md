@@ -10,12 +10,18 @@ all-mens-morris.ino -> gameSetup() / gameLoop()
 
 The implementation is split into:
 
-- `src/Game.cpp`: Arduboy setup, input, rendering, sound/RGB feedback, main
-  menu, quick menu, and current UI.
+- `src/Game.cpp`: Arduboy setup, custom boot animation, input, rendering,
+  sound/RGB feedback, main menu, quick menu, and current UI.
 - `src/Board.*`: classic board coordinates, mill triples, and adjacency.
 - `src/Rules.*`: mutable game state, legal actions, mill capture rules, flying,
   win detection, and phase transitions.
-- `src/Assets.*`: placeholder asset module for future sprites/audio.
+- `src/Assets.*`: shared PROGMEM sprites, currently including title and boot
+  logo assets.
+
+Startup uses `arduboy.beginDoFirst()` and `arduboy.waitNoButtons()` instead of
+`arduboy.begin()` so the stock Arduboy boot logo and LED animation are skipped.
+A lightweight custom boot animation runs with inverted Pocket Pixel styling and
+keeps the RGB LED off throughout startup.
 
 ## Design Constraints
 

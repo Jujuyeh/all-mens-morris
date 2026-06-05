@@ -14,6 +14,8 @@
 - Added basic draw detection after 50 movement turns without capture.
 - Added a first visual pass for animated cursor, simplified board, HUD, and
   inverted horizontal main-menu board selector.
+- Added a custom inverted boot animation that skips the stock Arduboy logo and
+  LED startup animation.
 
 ## Next Cycle
 

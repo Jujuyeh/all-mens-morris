@@ -48,6 +48,8 @@ Implemented:
 - Animated dashed cursor selector.
 - First visual pass for the simplified board, side HUD, and inverted main menu
   with lightweight pattern decoration.
+- Custom inverted boot animation, with the stock Arduboy boot logo and LED
+  animation skipped.
 - Sound effects for menu/action feedback and RGB LED flashing on mills.
 - Debug-only quick-menu scenarios for mill, flying, blocked-game-over, and draw
   testing.

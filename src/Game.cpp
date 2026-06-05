@@ -1,5 +1,6 @@
 #include "AllMensMorrisGame.h"
 
+#include "Assets.h"
 #include "Board.h"
 #include "Rules.h"
 
@@ -13,6 +14,11 @@ ArduboyTones sound(arduboy.audio.enabled);
 Tinyfont tinyfont = Tinyfont(arduboy.sBuffer, Arduboy2::width(), Arduboy2::height());
 
 constexpr uint8_t GAME_FPS = 30;
+constexpr uint8_t BASE_FPS = 10;
+constexpr uint8_t FPS_SCALE = GAME_FPS / BASE_FPS;
+constexpr uint8_t framesAtGameFps(uint8_t baseFrames) {
+  return baseFrames * FPS_SCALE;
+}
 constexpr uint8_t BOARD_OFFSET_X = 32;
 constexpr uint8_t BOARD_OFFSET_Y = 0;
 constexpr uint8_t HUD_LEFT_X = 1;
@@ -20,6 +26,12 @@ constexpr uint8_t HUD_RIGHT_X = 99;
 constexpr uint8_t NO_POINT = 255;
 constexpr uint8_t MENU_ITEM_COUNT = 2;
 constexpr uint8_t BOARD_MENU_COUNT = 3;
+constexpr uint8_t BOOT_LOGO_X = 52;
+constexpr uint8_t BOOT_LOGO_Y = 26;
+constexpr uint8_t BOOT_DUST_START_FRAMES = framesAtGameFps(20);
+constexpr uint8_t BOOT_FILL_START_FRAMES = framesAtGameFps(32);
+constexpr uint8_t BOOT_CURTAIN_START_FRAMES = framesAtGameFps(47);
+constexpr uint8_t BOOT_TOTAL_FRAMES = framesAtGameFps(52);
 
 enum AppScene : uint8_t {
   SCENE_MAIN_MENU,
@@ -262,6 +274,116 @@ void moveCursorToward(int8_t dx, int8_t dy) {
 
 void ledsOff() {
   arduboy.digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_OFF);
+}
+
+bool spritePixelIsBlack(const uint8_t *sprite, uint8_t frame, uint8_t x, uint8_t y) {
+  uint8_t width = pgm_read_byte(sprite);
+  uint8_t height = pgm_read_byte(sprite + 1);
+  uint8_t pages = (height + 7) / 8;
+  uint16_t frameOffset = static_cast<uint16_t>(frame) * width * pages;
+  uint8_t byte = pgm_read_byte(sprite + 2 + frameOffset + (y / 8) * width + x);
+  return ((byte >> (y % 8)) & 1) == 0;
+}
+
+void drawSpriteWhitePixelsAsBlack(const uint8_t *sprite, uint8_t frame, int16_t x, int16_t y) {
+  uint8_t width = pgm_read_byte(sprite);
+  uint8_t height = pgm_read_byte(sprite + 1);
+  for (uint8_t py = 0; py < height; py++) {
+    for (uint8_t px = 0; px < width; px++) {
+      int16_t drawX = x + px;
+      int16_t drawY = y + py;
+      if (drawX >= 0 && drawX < 128 && drawY >= 0 && drawY < 64
+          && !spritePixelIsBlack(sprite, frame, px, py)) {
+        arduboy.drawPixel(drawX, drawY, BLACK);
+      }
+    }
+  }
+}
+
+void drawBootLogo(uint8_t frame) {
+  int8_t dx = (frame % 4 == 0) ? -2 : (frame % 4 == 2) ? 2 : 0;
+  int8_t dy = (frame % 6 == 1) ? -1 : (frame % 6 == 4) ? 1 : 0;
+  drawSpriteWhitePixelsAsBlack(bootLogo24x12, 0, BOOT_LOGO_X + dx, BOOT_LOGO_Y + dy);
+}
+
+void drawBootParticles(uint8_t frame) {
+  for (uint8_t i = 0; i < 22; i++) {
+    uint8_t fallSpeed = 1 + (i % 3);
+    int16_t x = (i * 23 + frame / 2 + ((frame + i * 7) / 8) % 7) % 128;
+    int16_t y = (i * 19 + frame * fallSpeed) % 72 - 8;
+    if (y >= 0 && y < 64) {
+      arduboy.drawPixel(x, y, BLACK);
+    }
+  }
+}
+
+uint16_t bootFillPixelCount(uint8_t frame) {
+  uint16_t count = 0;
+  for (uint8_t i = 0; i <= frame; i++) {
+    if (i < framesAtGameFps(5)) {
+      count += 10;
+    } else if (i < framesAtGameFps(12)) {
+      count += 34;
+    } else {
+      count += 420;
+    }
+  }
+  return count;
+}
+
+uint16_t bootFillPixelPosition(uint16_t index) {
+  uint16_t value = index * 173U + 911U;
+  value ^= value >> 7;
+  value *= 197U;
+  value ^= value >> 5;
+  return value & 8191;
+}
+
+void drawBootFillPixels(uint8_t frame) {
+  uint16_t count = bootFillPixelCount(frame);
+  if (count > 8192) {
+    count = 8192;
+  }
+
+  for (uint16_t i = 0; i < count; i++) {
+    uint16_t p = bootFillPixelPosition(i);
+    arduboy.drawPixel(p & 127, p >> 7, BLACK);
+  }
+}
+
+void drawBootCurtain(uint8_t frame) {
+  uint8_t halfWidth = 3 + frame * 5 + (frame * frame) / 8;
+  if (halfWidth > 64) {
+    halfWidth = 64;
+  }
+  arduboy.fillRect(64 - halfWidth, 0, halfWidth * 2, 64, BLACK);
+}
+
+void playBootAnimation() {
+  ledsOff();
+  for (uint8_t frame = 0; frame < BOOT_TOTAL_FRAMES; frame++) {
+    while (!arduboy.nextFrame()) { }
+    arduboy.pollButtons();
+    if (arduboy.buttonsState()) {
+      break;
+    }
+
+    arduboy.fillScreen(WHITE);
+    drawBootLogo(frame);
+    if (frame >= BOOT_DUST_START_FRAMES) {
+      drawBootParticles(frame - BOOT_DUST_START_FRAMES);
+    }
+    if (frame >= BOOT_FILL_START_FRAMES) {
+      drawBootFillPixels(frame - BOOT_FILL_START_FRAMES);
+    }
+    if (frame >= BOOT_CURTAIN_START_FRAMES) {
+      drawBootCurtain(frame - BOOT_CURTAIN_START_FRAMES);
+    }
+    arduboy.display();
+  }
+  arduboy.fillScreen(BLACK);
+  arduboy.display();
+  ledsOff();
 }
 
 void startMillEffects() {
@@ -761,13 +883,15 @@ void handleInput() {
 }
 
 void gameSetup() {
-  arduboy.begin();
+  arduboy.beginDoFirst();
+  arduboy.waitNoButtons();
+  ledsOff();
   arduboy.setFrameRate(GAME_FPS);
   arduboy.setTextColor(BLACK);
   arduboy.audio.begin();
   tinyfont.setTextColor(BLACK);
   resetMorrisGame(game);
-  ledsOff();
+  playBootAnimation();
 }
 
 void gameLoop() {
