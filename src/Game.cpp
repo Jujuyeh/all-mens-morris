@@ -626,9 +626,9 @@ void drawMainMenu() {
   tinyfont.setTextColor(WHITE);
   drawMenuPatterns();
 
-  tinyfont.setCursor(47, 5);
+  tinyfont.setCursor(45, 5);
   tinyfont.print("ALL MEN'S");
-  tinyfont.setCursor(53, 12);
+  tinyfont.setCursor(51, 12);
   tinyfont.print("MORRIS");
   arduboy.drawLine(30, 20, 98, 20, WHITE);
 
