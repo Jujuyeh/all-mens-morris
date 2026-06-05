@@ -325,36 +325,36 @@ bool dashPixelOn(uint8_t step, uint8_t phase) {
   return ((step + phase) % 8) < 4;
 }
 
-void drawDashedHLine(int8_t x, int8_t y, uint8_t w, uint8_t phase) {
+void drawDashedHLine(int8_t x, int8_t y, uint8_t w, uint8_t phase, uint8_t color) {
   for (uint8_t i = 0; i < w; i++) {
     if (dashPixelOn(i, phase)) {
-      arduboy.drawPixel(x + i, y, BLACK);
+      arduboy.drawPixel(x + i, y, color);
     }
   }
 }
 
-void drawDashedVLine(int8_t x, int8_t y, uint8_t h, uint8_t phase) {
+void drawDashedVLine(int8_t x, int8_t y, uint8_t h, uint8_t phase, uint8_t color) {
   for (uint8_t i = 0; i < h; i++) {
     if (dashPixelOn(i, phase)) {
-      arduboy.drawPixel(x, y + i, BLACK);
+      arduboy.drawPixel(x, y + i, color);
     }
   }
 }
 
-void drawDashedRect(int8_t x, int8_t y, uint8_t w, uint8_t h, uint8_t phase) {
-  drawDashedHLine(x, y, w, phase);
-  drawDashedVLine(x + w - 1, y, h, phase + w);
-  drawDashedHLine(x, y + h - 1, w, phase + w + h);
-  drawDashedVLine(x, y, h, phase + h);
+void drawDashedRect(int8_t x, int8_t y, uint8_t w, uint8_t h, uint8_t phase, uint8_t color) {
+  drawDashedHLine(x, y, w, phase, color);
+  drawDashedVLine(x + w - 1, y, h, phase + w, color);
+  drawDashedHLine(x, y + h - 1, w, phase + w + h, color);
+  drawDashedVLine(x, y, h, phase + h, color);
 }
 
 void drawCursor() {
   uint8_t phase = animationFrame / 4;
   BoardPoint p = screenPoint(game.cursor);
-  drawDashedRect(p.x - 5, p.y - 5, 11, 11, phase);
+  drawDashedRect(p.x - 5, p.y - 5, 11, 11, phase, BLACK);
   if (game.selected != 255) {
     BoardPoint selected = screenPoint(game.selected);
-    drawDashedRect(selected.x - 6, selected.y - 6, 13, 13, phase + 4);
+    drawDashedRect(selected.x - 6, selected.y - 6, 13, 13, phase + 4, BLACK);
   }
 }
 
@@ -469,26 +469,52 @@ uint8_t textPixelWidth(const char *text) {
 
 void drawMenuChevron(uint8_t x, uint8_t y, bool left) {
   if (left) {
-    arduboy.drawLine(x + 4, y, x, y + 3, BLACK);
-    arduboy.drawLine(x, y + 3, x + 4, y + 6, BLACK);
+    arduboy.drawLine(x + 4, y, x, y + 3, WHITE);
+    arduboy.drawLine(x, y + 3, x + 4, y + 6, WHITE);
   } else {
-    arduboy.drawLine(x, y, x + 4, y + 3, BLACK);
-    arduboy.drawLine(x + 4, y + 3, x, y + 6, BLACK);
+    arduboy.drawLine(x, y, x + 4, y + 3, WHITE);
+    arduboy.drawLine(x + 4, y + 3, x, y + 6, WHITE);
+  }
+}
+
+void drawMenuPatterns() {
+  for (uint8_t x = 4; x < 24; x += 5) {
+    for (uint8_t y = 4; y < 22; y += 5) {
+      arduboy.drawPixel(x, y, WHITE);
+    }
+  }
+
+  for (uint8_t x = 104; x < 126; x += 4) {
+    arduboy.drawLine(x, 4, x, 18, WHITE);
+  }
+  for (uint8_t y = 4; y < 20; y += 4) {
+    arduboy.drawLine(104, y, 124, y, WHITE);
+  }
+
+  for (uint8_t x = 5; x < 28; x += 6) {
+    arduboy.drawLine(x, 48, x + 3, 51, WHITE);
+  }
+  for (uint8_t x = 96; x < 122; x += 6) {
+    arduboy.drawLine(x, 33, x + 3, 30, WHITE);
   }
 }
 
 void drawMainMenu() {
+  arduboy.fillScreen(BLACK);
+  tinyfont.setTextColor(WHITE);
+  drawMenuPatterns();
+
   tinyfont.setCursor(37, 5);
   tinyfont.print("ALL MEN'S");
   tinyfont.setCursor(43, 12);
   tinyfont.print("MORRIS");
-  arduboy.drawLine(30, 20, 98, 20, BLACK);
+  arduboy.drawLine(30, 20, 98, 20, WHITE);
 
   const char *title = boardMenuTitle();
   uint8_t titleWidth = textPixelWidth(title);
-  uint8_t titleX = 64 - titleWidth / 2;
-  uint8_t leftX = titleX > 9 ? titleX - 9 : 2;
-  uint8_t rightX = titleX + titleWidth + 5;
+  uint8_t titleX = 62 - titleWidth / 2;
+  uint8_t leftX = titleX > 12 ? titleX - 12 : 2;
+  uint8_t rightX = titleX + titleWidth + 8;
 
   tinyfont.setCursor(52, 27);
   tinyfont.print("BOARD");
@@ -497,18 +523,18 @@ void drawMainMenu() {
   tinyfont.setCursor(titleX, 38);
   tinyfont.print(title);
   if (selectedMenuItem == 0) {
-    drawDashedRect(leftX - 3, 35, rightX - leftX + 10, 11, animationFrame / 5);
+    drawDashedRect(leftX - 3, 35, rightX - leftX + 11, 11, animationFrame / 5, WHITE);
   }
   if (selectedBoardMenuItem != 0) {
-    tinyfont.setCursor(56, 46);
+    tinyfont.setCursor(110, 57);
     tinyfont.print("SOON");
   }
 
-  tinyfont.setCursor(30, 52);
+  tinyfont.setCursor(42, 52);
   tinyfont.print("FIRST ");
   tinyfont.print(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
   if (selectedMenuItem == 1) {
-    drawDashedRect(27, 49, 73, 11, animationFrame / 5);
+    drawDashedRect(39, 49, 51, 11, animationFrame / 5, WHITE);
   }
 }
 
@@ -554,6 +580,7 @@ void drawConfirm() {
 }
 
 void drawGame() {
+  tinyfont.setTextColor(BLACK);
   drawClassicBoard();
   for (uint8_t i = 0; i < MORRIS_POINT_COUNT; i++) {
     drawPiece(i, game.points[i]);

@@ -46,7 +46,8 @@ Implemented:
 - Hold-A quick menu for reset, one-state rewind, and returning to the main menu.
 - Centered board layout with compact side HUD panels.
 - Animated dashed cursor selector.
-- First visual pass for the simplified board, side HUD, and main menu.
+- First visual pass for the simplified board, side HUD, and inverted main menu
+  with lightweight pattern decoration.
 - Sound effects for menu/action feedback and RGB LED flashing on mills.
 - Debug-only quick-menu scenarios for mill, flying, blocked-game-over, and draw
   testing.

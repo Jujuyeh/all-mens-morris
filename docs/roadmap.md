@@ -13,7 +13,7 @@
 - Added debug-only scenarios for fast mill, flying, and blocked-game-over tests.
 - Added basic draw detection after 50 movement turns without capture.
 - Added a first visual pass for animated cursor, simplified board, HUD, and
-  horizontal main-menu board selector.
+  inverted horizontal main-menu board selector.
 
 ## Next Cycle
 
