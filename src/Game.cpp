@@ -50,6 +50,7 @@ Player firstPlayer = PLAYER_TWO;
 bool hasUndo = false;
 uint8_t messageFrames = 0;
 uint8_t millFlashFrames = 0;
+uint8_t animationFrame = 0;
 #ifdef ALL_MENS_MORRIS_DEBUG
 uint8_t debugScenario = DEBUG_SCENARIO_MILL;
 #endif
@@ -286,7 +287,26 @@ void drawBoardLine(uint8_t a, uint8_t b) {
   arduboy.drawLine(pa.x, pa.y, pb.x, pb.y, BLACK);
 }
 
+void drawSmallCorner(uint8_t x, uint8_t y, int8_t dx, int8_t dy) {
+  arduboy.drawPixel(x + dx, y, BLACK);
+  arduboy.drawPixel(x, y + dy, BLACK);
+}
+
+void drawBoardTrim() {
+  arduboy.drawRect(34, 2, 61, 61, BLACK);
+  arduboy.drawRect(48, 16, 33, 33, BLACK);
+  arduboy.drawPixel(64, 16, WHITE);
+  arduboy.drawPixel(64, 48, WHITE);
+  arduboy.drawPixel(48, 32, WHITE);
+  arduboy.drawPixel(80, 32, WHITE);
+  drawSmallCorner(36, 4, 2, 2);
+  drawSmallCorner(92, 4, -2, 2);
+  drawSmallCorner(36, 60, 2, -2);
+  drawSmallCorner(92, 60, -2, -2);
+}
+
 void drawClassicBoard() {
+  drawBoardTrim();
   drawBoardLine(0, 2);
   drawBoardLine(3, 5);
   drawBoardLine(6, 8);
@@ -318,22 +338,71 @@ void drawPiece(uint8_t point, Player player) {
   }
 }
 
+bool dashPixelOn(uint8_t step, uint8_t phase) {
+  return ((step + phase) % 8) < 4;
+}
+
+void drawDashedHLine(int8_t x, int8_t y, uint8_t w, uint8_t phase) {
+  for (uint8_t i = 0; i < w; i++) {
+    if (dashPixelOn(i, phase)) {
+      arduboy.drawPixel(x + i, y, BLACK);
+    }
+  }
+}
+
+void drawDashedVLine(int8_t x, int8_t y, uint8_t h, uint8_t phase) {
+  for (uint8_t i = 0; i < h; i++) {
+    if (dashPixelOn(i, phase)) {
+      arduboy.drawPixel(x, y + i, BLACK);
+    }
+  }
+}
+
+void drawDashedRect(int8_t x, int8_t y, uint8_t w, uint8_t h, uint8_t phase) {
+  drawDashedHLine(x, y, w, phase);
+  drawDashedVLine(x + w - 1, y, h, phase + w);
+  drawDashedHLine(x, y + h - 1, w, phase + w + h);
+  drawDashedVLine(x, y, h, phase + h);
+}
+
 void drawCursor() {
+  uint8_t phase = animationFrame / 4;
   BoardPoint p = screenPoint(game.cursor);
-  arduboy.drawRect(p.x - 5, p.y - 5, 11, 11, BLACK);
+  drawDashedRect(p.x - 5, p.y - 5, 11, 11, phase);
   if (game.selected != 255) {
     BoardPoint selected = screenPoint(game.selected);
-    arduboy.drawRect(selected.x - 6, selected.y - 6, 13, 13, BLACK);
+    drawDashedRect(selected.x - 6, selected.y - 6, 13, 13, phase + 4);
+  }
+}
+
+void drawHudRule(uint8_t x) {
+  for (uint8_t y = 2; y < 62; y += 4) {
+    arduboy.drawPixel(x, y, BLACK);
+    arduboy.drawPixel(x, y + 1, BLACK);
+  }
+}
+
+void drawHudPiece(uint8_t x, uint8_t y, Player player) {
+  if (player == PLAYER_ONE) {
+    arduboy.fillCircle(x, y, 2, BLACK);
+  } else {
+    arduboy.fillCircle(x, y, 2, WHITE);
+    arduboy.drawCircle(x, y, 2, BLACK);
   }
 }
 
 void drawHud() {
+  drawHudRule(29);
+  drawHudRule(98);
+
   tinyfont.setCursor(HUD_LEFT_X, 2);
   tinyfont.print("ALL");
   tinyfont.setCursor(HUD_LEFT_X, 8);
   tinyfont.print("MORRIS");
 
-  tinyfont.setCursor(HUD_LEFT_X, 20);
+  tinyfont.setCursor(HUD_LEFT_X, 18);
+  tinyfont.print("STATE");
+  tinyfont.setCursor(HUD_LEFT_X, 25);
   if (game.phase == PHASE_PLACING) {
     tinyfont.print("PLACE");
   } else if (game.phase == PHASE_CAPTURING) {
@@ -345,7 +414,7 @@ void drawHud() {
   } else {
     tinyfont.print("MOVE");
   }
-  tinyfont.setCursor(HUD_LEFT_X, 27);
+  tinyfont.setCursor(HUD_LEFT_X, 35);
   if (game.phase == PHASE_GAME_OVER) {
     if (game.winner == PLAYER_NONE) {
       tinyfont.print("DRAW");
@@ -354,25 +423,37 @@ void drawHud() {
       tinyfont.print(" WINS");
     }
   } else {
-    tinyfont.print(game.currentPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
-    tinyfont.setCursor(HUD_LEFT_X, 34);
+    tinyfont.print("TURN");
+    drawHudPiece(HUD_LEFT_X + 4, 47, game.currentPlayer);
+    tinyfont.setCursor(HUD_LEFT_X + 10, 45);
+    tinyfont.print(game.currentPlayer == PLAYER_TWO ? "W" : "B");
+    tinyfont.setCursor(HUD_LEFT_X, 54);
     tinyfont.print(game.phase == PHASE_CAPTURING ? "TAKE" : "TURN");
   }
 
   tinyfont.setCursor(HUD_RIGHT_X, 2);
   tinyfont.print("HAND");
-  tinyfont.setCursor(HUD_RIGHT_X, 12);
-  tinyfont.print("B ");
+  drawHudPiece(HUD_RIGHT_X + 4, 14, PLAYER_ONE);
+  tinyfont.setCursor(HUD_RIGHT_X + 10, 12);
   tinyfont.print(game.piecesToPlace[0]);
-  tinyfont.setCursor(HUD_RIGHT_X, 19);
-  tinyfont.print("W ");
+  drawHudPiece(HUD_RIGHT_X + 4, 23, PLAYER_TWO);
+  tinyfont.setCursor(HUD_RIGHT_X + 10, 21);
   tinyfont.print(game.piecesToPlace[1]);
 
+  tinyfont.setCursor(HUD_RIGHT_X, 31);
+  tinyfont.print("BOARD");
+  tinyfont.setCursor(HUD_RIGHT_X, 38);
+  tinyfont.print("B ");
+  tinyfont.print(game.piecesOnBoard[0]);
+  tinyfont.setCursor(HUD_RIGHT_X + 13, 38);
+  tinyfont.print("W ");
+  tinyfont.print(game.piecesOnBoard[1]);
+
   if (messageFrames > 0) {
-    tinyfont.setCursor(HUD_RIGHT_X, 34);
+    tinyfont.setCursor(HUD_RIGHT_X, 48);
     tinyfont.print(message);
   } else if (game.phase == PHASE_GAME_OVER) {
-    tinyfont.setCursor(HUD_RIGHT_X, 34);
+    tinyfont.setCursor(HUD_RIGHT_X, 48);
     if (game.winReason == WIN_DRAW_NO_CAPTURE) {
       tinyfont.print("NO CAP");
     } else {
@@ -380,10 +461,8 @@ void drawHud() {
     }
   }
 
-  tinyfont.setCursor(HUD_RIGHT_X, 50);
-  tinyfont.print("A MENU");
   tinyfont.setCursor(HUD_RIGHT_X, 57);
-  tinyfont.print("B OK");
+  tinyfont.print("A MENU");
 }
 
 void drawCenteredPanel(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
@@ -392,22 +471,28 @@ void drawCenteredPanel(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
 }
 
 void drawMainMenu() {
-  tinyfont.setCursor(28, 5);
+  arduboy.drawCircle(17, 14, 6, BLACK);
+  arduboy.fillCircle(21, 21, 6, BLACK);
+  arduboy.fillCircle(21, 21, 3, WHITE);
+  arduboy.drawLine(30, 18, 111, 18, BLACK);
+
+  tinyfont.setCursor(37, 5);
   tinyfont.print("ALL MEN'S");
-  tinyfont.setCursor(36, 12);
+  tinyfont.setCursor(43, 12);
   tinyfont.print("MORRIS");
 
-  tinyfont.setCursor(23, 24);
-  tinyfont.print(selectedMenuItem == 0 ? "> CLASSIC 9" : "  CLASSIC 9");
-  tinyfont.setCursor(23, 32);
-  tinyfont.print(selectedMenuItem == 1 ? "> SIX MEN" : "  SIX MEN");
-  tinyfont.setCursor(23, 40);
-  tinyfont.print(selectedMenuItem == 2 ? "> THREE MEN" : "  THREE MEN");
-  tinyfont.setCursor(23, 48);
-  tinyfont.print(selectedMenuItem == 3 ? "> FIRST " : "  FIRST ");
+  drawDashedRect(15, 24 + selectedMenuItem * 7, 98, 8, animationFrame / 5);
+  tinyfont.setCursor(22, 26);
+  tinyfont.print("CLASSIC 9");
+  tinyfont.setCursor(22, 33);
+  tinyfont.print("SIX MEN");
+  tinyfont.setCursor(22, 40);
+  tinyfont.print("THREE MEN");
+  tinyfont.setCursor(22, 47);
+  tinyfont.print("FIRST ");
   tinyfont.print(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
 
-  tinyfont.setCursor(17, 57);
+  tinyfont.setCursor(19, 57);
   if (selectedMenuItem == 0) {
     tinyfont.print("B START");
   } else if (selectedMenuItem == 3) {
@@ -642,6 +727,7 @@ void gameLoop() {
     return;
   }
 
+  animationFrame++;
   arduboy.pollButtons();
   handleInput();
   updateMillLed();
