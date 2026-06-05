@@ -648,7 +648,7 @@ void drawMainMenu() {
     drawDashedRect(leftX - 3, 35, rightX - leftX + 11, 11, animationFrame / 5, WHITE);
   }
   if (selectedBoardMenuItem != 0) {
-    tinyfont.setCursor(110, 57);
+    tinyfont.setCursor(108, 56);
     tinyfont.print("SOON");
   }
 
@@ -656,7 +656,7 @@ void drawMainMenu() {
   tinyfont.print("FIRST ");
   tinyfont.print(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
   if (selectedMenuItem == 1) {
-    drawDashedRect(35, 49, 55, 11, animationFrame / 5, WHITE);
+    drawDashedRect(35, 49, 59, 11, animationFrame / 5, WHITE);
   }
 }
 
