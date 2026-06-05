@@ -626,9 +626,9 @@ void drawMainMenu() {
   tinyfont.setTextColor(WHITE);
   drawMenuPatterns();
 
-  tinyfont.setCursor(37, 5);
+  tinyfont.setCursor(41, 5);
   tinyfont.print("ALL MEN'S");
-  tinyfont.setCursor(43, 12);
+  tinyfont.setCursor(47, 12);
   tinyfont.print("MORRIS");
   arduboy.drawLine(30, 20, 98, 20, WHITE);
 
@@ -642,7 +642,7 @@ void drawMainMenu() {
   tinyfont.print("BOARD");
   drawMenuChevron(leftX, 37, true);
   drawMenuChevron(rightX, 37, false);
-  tinyfont.setCursor(titleX, 38);
+  tinyfont.setCursor(titleX - 2, 38);
   tinyfont.print(title);
   if (selectedMenuItem == 0) {
     drawDashedRect(leftX - 3, 35, rightX - leftX + 11, 11, animationFrame / 5, WHITE);
@@ -656,7 +656,7 @@ void drawMainMenu() {
   tinyfont.print("FIRST ");
   tinyfont.print(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
   if (selectedMenuItem == 1) {
-    drawDashedRect(35, 49, 59, 11, animationFrame / 5, WHITE);
+    drawDashedRect(35, 49, 60, 11, animationFrame / 5, WHITE);
   }
 }
 
