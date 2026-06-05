@@ -18,7 +18,8 @@ constexpr uint8_t BOARD_OFFSET_Y = 0;
 constexpr uint8_t HUD_LEFT_X = 1;
 constexpr uint8_t HUD_RIGHT_X = 99;
 constexpr uint8_t NO_POINT = 255;
-constexpr uint8_t MENU_ITEM_COUNT = 4;
+constexpr uint8_t MENU_ITEM_COUNT = 2;
+constexpr uint8_t BOARD_MENU_COUNT = 3;
 
 enum AppScene : uint8_t {
   SCENE_MAIN_MENU,
@@ -46,6 +47,7 @@ MorrisGameState undoGame;
 AppScene scene = SCENE_MAIN_MENU;
 ConfirmAction confirmAction = CONFIRM_NONE;
 uint8_t selectedMenuItem = 0;
+uint8_t selectedBoardMenuItem = 0;
 Player firstPlayer = PLAYER_TWO;
 bool hasUndo = false;
 uint8_t messageFrames = 0;
@@ -287,26 +289,7 @@ void drawBoardLine(uint8_t a, uint8_t b) {
   arduboy.drawLine(pa.x, pa.y, pb.x, pb.y, BLACK);
 }
 
-void drawSmallCorner(uint8_t x, uint8_t y, int8_t dx, int8_t dy) {
-  arduboy.drawPixel(x + dx, y, BLACK);
-  arduboy.drawPixel(x, y + dy, BLACK);
-}
-
-void drawBoardTrim() {
-  arduboy.drawRect(34, 2, 61, 61, BLACK);
-  arduboy.drawRect(48, 16, 33, 33, BLACK);
-  arduboy.drawPixel(64, 16, WHITE);
-  arduboy.drawPixel(64, 48, WHITE);
-  arduboy.drawPixel(48, 32, WHITE);
-  arduboy.drawPixel(80, 32, WHITE);
-  drawSmallCorner(36, 4, 2, 2);
-  drawSmallCorner(92, 4, -2, 2);
-  drawSmallCorner(36, 60, 2, -2);
-  drawSmallCorner(92, 60, -2, -2);
-}
-
 void drawClassicBoard() {
-  drawBoardTrim();
   drawBoardLine(0, 2);
   drawBoardLine(3, 5);
   drawBoardLine(6, 8);
@@ -334,7 +317,7 @@ void drawPiece(uint8_t point, Player player) {
     arduboy.fillCircle(p.x, p.y, 3, WHITE);
     arduboy.drawCircle(p.x, p.y, 3, BLACK);
   } else {
-    arduboy.drawCircle(p.x, p.y, 1, BLACK);
+    arduboy.fillRect(p.x - 1, p.y - 1, 3, 3, BLACK);
   }
 }
 
@@ -396,13 +379,8 @@ void drawHud() {
   drawHudRule(98);
 
   tinyfont.setCursor(HUD_LEFT_X, 2);
-  tinyfont.print("ALL");
-  tinyfont.setCursor(HUD_LEFT_X, 8);
-  tinyfont.print("MORRIS");
-
-  tinyfont.setCursor(HUD_LEFT_X, 18);
   tinyfont.print("STATE");
-  tinyfont.setCursor(HUD_LEFT_X, 25);
+  tinyfont.setCursor(HUD_LEFT_X, 9);
   if (game.phase == PHASE_PLACING) {
     tinyfont.print("PLACE");
   } else if (game.phase == PHASE_CAPTURING) {
@@ -414,7 +392,7 @@ void drawHud() {
   } else {
     tinyfont.print("MOVE");
   }
-  tinyfont.setCursor(HUD_LEFT_X, 35);
+  tinyfont.setCursor(HUD_LEFT_X, 22);
   if (game.phase == PHASE_GAME_OVER) {
     if (game.winner == PLAYER_NONE) {
       tinyfont.print("DRAW");
@@ -424,10 +402,10 @@ void drawHud() {
     }
   } else {
     tinyfont.print("TURN");
-    drawHudPiece(HUD_LEFT_X + 4, 47, game.currentPlayer);
-    tinyfont.setCursor(HUD_LEFT_X + 10, 45);
+    drawHudPiece(HUD_LEFT_X + 4, 34, game.currentPlayer);
+    tinyfont.setCursor(HUD_LEFT_X + 10, 32);
     tinyfont.print(game.currentPlayer == PLAYER_TWO ? "W" : "B");
-    tinyfont.setCursor(HUD_LEFT_X, 54);
+    tinyfont.setCursor(HUD_LEFT_X, 45);
     tinyfont.print(game.phase == PHASE_CAPTURING ? "TAKE" : "TURN");
   }
 
@@ -470,40 +448,67 @@ void drawCenteredPanel(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
   arduboy.drawRect(x, y, w, h, BLACK);
 }
 
-void drawMainMenu() {
-  arduboy.drawCircle(17, 14, 6, BLACK);
-  arduboy.fillCircle(21, 21, 6, BLACK);
-  arduboy.fillCircle(21, 21, 3, WHITE);
-  arduboy.drawLine(30, 18, 111, 18, BLACK);
+const char *boardMenuTitle() {
+  if (selectedBoardMenuItem == 1) {
+    return "SIX MEN";
+  }
+  if (selectedBoardMenuItem == 2) {
+    return "THREE MEN";
+  }
+  return "CLASSIC 9";
+}
 
+uint8_t textPixelWidth(const char *text) {
+  uint8_t width = 0;
+  while (*text != '\0') {
+    width += 4;
+    text++;
+  }
+  return width;
+}
+
+void drawMenuChevron(uint8_t x, uint8_t y, bool left) {
+  if (left) {
+    arduboy.drawLine(x + 4, y, x, y + 3, BLACK);
+    arduboy.drawLine(x, y + 3, x + 4, y + 6, BLACK);
+  } else {
+    arduboy.drawLine(x, y, x + 4, y + 3, BLACK);
+    arduboy.drawLine(x + 4, y + 3, x, y + 6, BLACK);
+  }
+}
+
+void drawMainMenu() {
   tinyfont.setCursor(37, 5);
   tinyfont.print("ALL MEN'S");
   tinyfont.setCursor(43, 12);
   tinyfont.print("MORRIS");
+  arduboy.drawLine(30, 20, 98, 20, BLACK);
 
-  drawDashedRect(15, 24 + selectedMenuItem * 7, 98, 8, animationFrame / 5);
-  tinyfont.setCursor(22, 26);
-  tinyfont.print("CLASSIC 9");
-  tinyfont.setCursor(22, 33);
-  tinyfont.print("SIX MEN");
-  tinyfont.setCursor(22, 40);
-  tinyfont.print("THREE MEN");
-  tinyfont.setCursor(22, 47);
-  tinyfont.print("FIRST ");
-  tinyfont.print(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
+  const char *title = boardMenuTitle();
+  uint8_t titleWidth = textPixelWidth(title);
+  uint8_t titleX = 64 - titleWidth / 2;
+  uint8_t leftX = titleX > 9 ? titleX - 9 : 2;
+  uint8_t rightX = titleX + titleWidth + 5;
 
-  tinyfont.setCursor(19, 57);
+  tinyfont.setCursor(52, 27);
+  tinyfont.print("BOARD");
+  drawMenuChevron(leftX, 37, true);
+  drawMenuChevron(rightX, 37, false);
+  tinyfont.setCursor(titleX, 38);
+  tinyfont.print(title);
   if (selectedMenuItem == 0) {
-    tinyfont.print("B START");
-  } else if (selectedMenuItem == 3) {
-    tinyfont.print("B TOGGLE");
-  } else {
-    tinyfont.print("B SOON");
+    drawDashedRect(leftX - 3, 35, rightX - leftX + 10, 11, animationFrame / 5);
+  }
+  if (selectedBoardMenuItem != 0) {
+    tinyfont.setCursor(56, 46);
+    tinyfont.print("SOON");
   }
 
-  if (messageFrames > 0) {
-    tinyfont.setCursor(77, 57);
-    tinyfont.print(message);
+  tinyfont.setCursor(30, 52);
+  tinyfont.print("FIRST ");
+  tinyfont.print(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
+  if (selectedMenuItem == 1) {
+    drawDashedRect(27, 49, 73, 11, animationFrame / 5);
   }
 }
 
@@ -580,11 +585,27 @@ void handleMainMenuInput() {
     selectedMenuItem = selectedMenuItem == MENU_ITEM_COUNT - 1 ? 0 : selectedMenuItem + 1;
     sound.tone(392, 35);
   }
-  if (arduboy.justPressed(B_BUTTON)) {
+  if (arduboy.justPressed(LEFT_BUTTON)) {
     if (selectedMenuItem == 0) {
+      selectedBoardMenuItem = selectedBoardMenuItem == 0 ? BOARD_MENU_COUNT - 1 : selectedBoardMenuItem - 1;
+    } else {
+      firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
+    }
+    sound.tone(494, 35);
+  }
+  if (arduboy.justPressed(RIGHT_BUTTON)) {
+    if (selectedMenuItem == 0) {
+      selectedBoardMenuItem = (selectedBoardMenuItem + 1) % BOARD_MENU_COUNT;
+    } else {
+      firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
+    }
+    sound.tone(587, 35);
+  }
+  if (arduboy.justPressed(B_BUTTON)) {
+    if (selectedMenuItem == 0 && selectedBoardMenuItem == 0) {
       startMatch();
       sound.tone(660, 45, 880, 70);
-    } else if (selectedMenuItem == 3) {
+    } else if (selectedMenuItem == 1) {
       firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
       setMessage(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
       sound.tone(784, 45);

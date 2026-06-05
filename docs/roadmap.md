@@ -12,7 +12,8 @@
 - Added sound/RGB feedback and a centered board layout.
 - Added debug-only scenarios for fast mill, flying, and blocked-game-over tests.
 - Added basic draw detection after 50 movement turns without capture.
-- Added a first visual pass for animated cursor, board trim, HUD, and main menu.
+- Added a first visual pass for animated cursor, simplified board, HUD, and
+  horizontal main-menu board selector.
 
 ## Next Cycle
 

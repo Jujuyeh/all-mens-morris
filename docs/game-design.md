@@ -39,12 +39,14 @@ Implemented:
 - Draw detection after 50 movement turns without a capture.
 - Main menu scaffold for choosing modes, with Classic Nine Men's Morris active
   and smaller variants listed as future entries.
+- Horizontal board selector in the main menu, with left/right cycling board
+  titles and up/down moving between board and first-player settings.
 - Main menu setting for whether white or black moves first.
 - Directional cursor navigation that follows the board geometry.
 - Hold-A quick menu for reset, one-state rewind, and returning to the main menu.
 - Centered board layout with compact side HUD panels.
 - Animated dashed cursor selector.
-- First visual pass for the board trim, side HUD, and main menu.
+- First visual pass for the simplified board, side HUD, and main menu.
 - Sound effects for menu/action feedback and RGB LED flashing on mills.
 - Debug-only quick-menu scenarios for mill, flying, blocked-game-over, and draw
   testing.
