@@ -636,7 +636,7 @@ void drawMainMenu() {
   uint8_t titleWidth = textPixelWidth(title);
   uint8_t titleX = 62 - titleWidth / 2;
   uint8_t leftX = titleX > 12 ? titleX - 12 : 2;
-  uint8_t rightX = titleX + titleWidth + 8;
+  uint8_t rightX = titleX + titleWidth + 12;
 
   tinyfont.setCursor(52, 27);
   tinyfont.print("BOARD");
@@ -652,11 +652,11 @@ void drawMainMenu() {
     tinyfont.print("SOON");
   }
 
-  tinyfont.setCursor(42, 52);
+  tinyfont.setCursor(38, 52);
   tinyfont.print("FIRST ");
   tinyfont.print(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
   if (selectedMenuItem == 1) {
-    drawDashedRect(39, 49, 51, 11, animationFrame / 5, WHITE);
+    drawDashedRect(35, 49, 55, 11, animationFrame / 5, WHITE);
   }
 }
 
