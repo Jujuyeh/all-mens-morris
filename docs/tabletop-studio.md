@@ -95,6 +95,10 @@ Implemented first:
 - `boards/classic-nine.json` as the first board profile;
 - `make tabletop-studio`, serving `tools/tabletop-studio/`;
 - graph overlay preview from points, adjacency, and mills;
+- direct graph editing modes for points, visual board lines, adjacency edges,
+  mill triples, and point deletion;
+- layer toggles so visual board lines, adjacency edges, and mill bands can be
+  inspected separately;
 - basic validation for missing points, duplicate/self edges, non-bidirectional
   adjacency, malformed mills, and core numeric rule fields;
 - JSON duplication/saving through local project endpoints.

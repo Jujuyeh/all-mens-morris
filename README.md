@@ -73,9 +73,9 @@ Open TableTop Studio:
 make tabletop-studio
 ```
 
-The first Studio slice loads board profiles from `boards/`, draws the playable
-graph overlay, validates adjacency/mills/rule settings, and can duplicate or
-save profile JSON.
+The first Studio slice loads board profiles from `boards/`, draws and edits the
+playable graph overlay, validates adjacency/mills/rule settings, and can create,
+duplicate, or save profile JSON.
 
 ## Layout
 

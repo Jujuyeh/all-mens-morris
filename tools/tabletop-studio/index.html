@@ -22,6 +22,7 @@
         <select id="boardSelect"></select>
       </label>
       <input id="newBoardName" type="text" placeholder="New board name">
+      <button id="createBoard">New blank</button>
       <button id="duplicateBoard">Duplicate</button>
       <button id="saveBoard">Save</button>
       <div class="tabs">
@@ -40,12 +41,27 @@
       </aside>
 
       <section id="graphTab" class="editor">
+        <div class="graphTools">
+          <div class="modeGroup">
+            <button class="active" data-tool="move">Move</button>
+            <button data-tool="point">Point</button>
+            <button data-tool="visual">Visual</button>
+            <button data-tool="edge">Edge</button>
+            <button data-tool="mill">Mill</button>
+            <button data-tool="erase">Erase</button>
+          </div>
+          <label><input id="showVisual" type="checkbox" checked> visual</label>
+          <label><input id="showAdjacency" type="checkbox" checked> adjacency</label>
+          <label><input id="showMills" type="checkbox" checked> mills</label>
+          <span id="selectionInfo" class="selectionInfo">No selection</span>
+        </div>
         <div class="canvasFrame">
           <canvas id="boardCanvas" width="512" height="512"></canvas>
         </div>
         <div class="legend">
-          <span><i class="line"></i> adjacency</span>
-          <span><i class="mill"></i> mill</span>
+          <span><i class="visual"></i> visual board line</span>
+          <span><i class="mill"></i> mill band</span>
+          <span><i class="line"></i> adjacency edge</span>
           <span><i class="point"></i> point</span>
         </div>
       </section>

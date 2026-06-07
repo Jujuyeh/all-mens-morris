@@ -18,8 +18,8 @@
   LED startup animation.
 - Added `BoardDefinition` and `RuleSet` scaffolding so future variants can
   change board graph data and rule knobs independently.
-- Added the first TableTop Studio slice for board profile viewing, validation,
-  duplication, and JSON editing.
+- Added the first TableTop Studio slice for board profile viewing, graph
+  editing, validation, duplication, and JSON editing.
 
 ## Next Cycle
 

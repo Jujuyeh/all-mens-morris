@@ -7,6 +7,7 @@
   --muted: #a9a9a9;
   --line: #69b7ff;
   --mill: #ffcf5a;
+  --visual: #606060;
   --point: #f7f7f7;
   --bad: #ff7474;
   --ok: #7ee787;
@@ -163,6 +164,31 @@ textarea {
   border: 1px solid #343434;
 }
 
+.graphTools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.graphTools label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+}
+
+.modeGroup {
+  display: flex;
+  gap: 6px;
+}
+
+.selectionInfo {
+  margin-left: auto;
+  color: var(--muted);
+}
+
 canvas {
   width: 100%;
   height: 100%;
@@ -188,8 +214,13 @@ canvas {
   background: var(--line);
 }
 
+.legend .visual {
+  background: var(--visual);
+}
+
 .legend .mill {
   background: var(--mill);
+  height: 7px;
 }
 
 .legend .point {

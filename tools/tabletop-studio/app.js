@@ -2,15 +2,27 @@ const state = {
   boards: [],
   selected: null,
   tab: "graph",
+  tool: "move",
+  selectedPoint: null,
+  dragPoint: null,
+  visualStart: null,
+  edgeStart: null,
+  millDraft: [],
 };
 
 const el = {
   status: document.querySelector("#status"),
   boardSelect: document.querySelector("#boardSelect"),
   newBoardName: document.querySelector("#newBoardName"),
+  createBoard: document.querySelector("#createBoard"),
   duplicateBoard: document.querySelector("#duplicateBoard"),
   saveBoard: document.querySelector("#saveBoard"),
   tabs: Array.from(document.querySelectorAll("[data-tab]")),
+  tools: Array.from(document.querySelectorAll("[data-tool]")),
+  showVisual: document.querySelector("#showVisual"),
+  showAdjacency: document.querySelector("#showAdjacency"),
+  showMills: document.querySelector("#showMills"),
+  selectionInfo: document.querySelector("#selectionInfo"),
   summary: document.querySelector("#summary"),
   validation: document.querySelector("#validation"),
   canvas: document.querySelector("#boardCanvas"),
@@ -52,17 +64,132 @@ function pointAt(board, index) {
   };
 }
 
-function drawLine(board, pair, color, width) {
+function canvasToBoard(event) {
+  const board = selectedBoard();
+  const rect = el.canvas.getBoundingClientRect();
+  const canvas = board?.canvas || { width: 64, height: 64 };
+  return {
+    x: Math.round(((event.clientX - rect.left) / rect.width) * canvas.width),
+    y: Math.round(((event.clientY - rect.top) / rect.height) * canvas.height),
+  };
+}
+
+function hitPoint(event) {
+  const board = selectedBoard();
+  if (!board) return null;
+  const rect = el.canvas.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * el.canvas.width;
+  const y = ((event.clientY - rect.top) / rect.height) * el.canvas.height;
+  let best = null;
+  let bestDistance = 18;
+  (board.points || []).forEach((point, index) => {
+    const p = pointAt(board, index);
+    const distance = Math.hypot(p.x - x, p.y - y);
+    if (distance < bestDistance) {
+      best = index;
+      bestDistance = distance;
+    }
+  });
+  return best;
+}
+
+function drawLine(board, pair, color, width, dash = []) {
   if (!Array.isArray(pair) || pair.length < 2) return;
   if (!board.points[pair[0]] || !board.points[pair[1]]) return;
   const a = pointAt(board, pair[0]);
   const b = pointAt(board, pair[1]);
   ctx.strokeStyle = color;
   ctx.lineWidth = width;
+  ctx.setLineDash(dash);
   ctx.beginPath();
   ctx.moveTo(a.x, a.y);
   ctx.lineTo(b.x, b.y);
   ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function ensureGraphArrays(board) {
+  board.points ||= [];
+  board.adjacency ||= [];
+  board.mills ||= [];
+  board.visualLines ||= [];
+  while (board.adjacency.length < board.points.length) {
+    board.adjacency.push([]);
+  }
+}
+
+function edgeExists(board, a, b) {
+  return (board.adjacency?.[a] || []).includes(b);
+}
+
+function toggleEdge(board, a, b) {
+  ensureGraphArrays(board);
+  if (a === b) return;
+  [a, b].forEach((index) => {
+    board.adjacency[index] ||= [];
+  });
+  if (edgeExists(board, a, b)) {
+    board.adjacency[a] = board.adjacency[a].filter((value) => value !== b);
+    board.adjacency[b] = board.adjacency[b].filter((value) => value !== a);
+  } else {
+    board.adjacency[a].push(b);
+    board.adjacency[b].push(a);
+    board.adjacency[a].sort((left, right) => left - right);
+    board.adjacency[b].sort((left, right) => left - right);
+  }
+}
+
+function samePair(pair, a, b) {
+  return pair.length >= 2 && ((pair[0] === a && pair[1] === b) || (pair[0] === b && pair[1] === a));
+}
+
+function toggleVisualLine(board, a, b) {
+  ensureGraphArrays(board);
+  if (a === b) return;
+  const existing = board.visualLines.findIndex((line) => samePair(line, a, b));
+  if (existing >= 0) {
+    board.visualLines.splice(existing, 1);
+  } else {
+    board.visualLines.push([a, b]);
+  }
+}
+
+function normalizeMill(points) {
+  return [...points].sort((a, b) => a - b);
+}
+
+function sameMill(left, right) {
+  const a = normalizeMill(left);
+  const b = normalizeMill(right);
+  return a.length === 3 && b.length === 3 && a.every((value, index) => value === b[index]);
+}
+
+function toggleMill(board, points) {
+  ensureGraphArrays(board);
+  if (new Set(points).size !== 3) return;
+  const existing = board.mills.findIndex((mill) => sameMill(mill, points));
+  if (existing >= 0) {
+    board.mills.splice(existing, 1);
+  } else {
+    board.mills.push([...points]);
+  }
+}
+
+function removePoint(board, index) {
+  ensureGraphArrays(board);
+  board.points.splice(index, 1);
+  board.adjacency.splice(index, 1);
+  board.adjacency = board.adjacency.map((edges) =>
+    (edges || [])
+      .filter((to) => to !== index)
+      .map((to) => (to > index ? to - 1 : to))
+  );
+  board.mills = (board.mills || [])
+    .filter((mill) => !mill.includes(index))
+    .map((mill) => mill.map((point) => (point > index ? point - 1 : point)));
+  board.visualLines = (board.visualLines || [])
+    .filter((line) => !line.includes(index))
+    .map((line) => line.map((point) => (point > index ? point - 1 : point)));
 }
 
 function drawBoard() {
@@ -71,22 +198,38 @@ function drawBoard() {
   ctx.fillRect(0, 0, el.canvas.width, el.canvas.height);
   if (!board) return;
 
-  (board.adjacency || []).forEach((edges, index) => {
-    (edges || []).forEach((to) => {
-      if (to > index) drawLine(board, [index, to], "#69b7ff", 2);
+  if (el.showVisual.checked) {
+    (board.visualLines || []).forEach((line) => {
+      drawLine(board, line, "#606060", 3);
     });
-  });
+  }
 
-  (board.mills || []).forEach((mill) => {
-    drawLine(board, [mill[0], mill[1]], "#ffcf5a", 1);
-    drawLine(board, [mill[1], mill[2]], "#ffcf5a", 1);
-  });
+  if (el.showMills.checked) {
+    ctx.globalAlpha = 0.8;
+    (board.mills || []).forEach((mill) => {
+      drawLine(board, [mill[0], mill[1]], "#ffcf5a", 8);
+      drawLine(board, [mill[1], mill[2]], "#ffcf5a", 8);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  if (el.showAdjacency.checked) {
+    (board.adjacency || []).forEach((edges, index) => {
+      (edges || []).forEach((to) => {
+        if (to > index) drawLine(board, [index, to], "#69b7ff", 3, [10, 6]);
+      });
+    });
+  }
 
   (board.points || []).forEach((point, index) => {
     const p = pointAt(board, index);
-    ctx.fillStyle = "#f7f7f7";
+    const selected = index === state.selectedPoint
+      || state.millDraft.includes(index)
+      || index === state.edgeStart
+      || index === state.visualStart;
+    ctx.fillStyle = selected ? "#7ee787" : "#f7f7f7";
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, selected ? 11 : 8, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = "#050505";
     ctx.font = "14px ui-monospace, monospace";
@@ -159,6 +302,20 @@ function renderSummary(board) {
   });
 }
 
+function renderSelection() {
+  if (state.tool === "visual" && state.visualStart !== null) {
+    el.selectionInfo.textContent = `Visual start: ${state.visualStart}`;
+  } else if (state.tool === "edge" && state.edgeStart !== null) {
+    el.selectionInfo.textContent = `Edge start: ${state.edgeStart}`;
+  } else if (state.tool === "mill" && state.millDraft.length) {
+    el.selectionInfo.textContent = `Mill: ${state.millDraft.join(", ")}`;
+  } else if (state.selectedPoint !== null) {
+    el.selectionInfo.textContent = `Point ${state.selectedPoint}`;
+  } else {
+    el.selectionInfo.textContent = `${state.tool} mode`;
+  }
+}
+
 function renderValidation(board) {
   el.validation.innerHTML = "";
   if (!board) return;
@@ -225,7 +382,38 @@ function render() {
   renderSummary(board);
   renderValidation(board);
   renderRules(board);
+  renderSelection();
   drawBoard();
+}
+
+function makeBlankBoard(name) {
+  const id = name.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-|-$/g, "") || "board";
+  return {
+    schemaVersion: 1,
+    id,
+    name,
+    label: name.toUpperCase().slice(0, 12),
+    family: "custom-morris",
+    canvas: { width: 64, height: 64 },
+    rules: {
+      piecesPerPlayer: 6,
+      minPiecesToContinue: 3,
+      flyPieceCount: 3,
+      noCaptureDrawTurnLimit: 50,
+      flyingEnabled: true,
+      protectPiecesInMills: true,
+      blockWinEnabled: true,
+      materialWinEnabled: true,
+    },
+    points: [],
+    mills: [],
+    adjacency: [],
+    visualLines: [],
+    assets: {
+      boardSprite: null,
+      banner: "assets/fx/banner.png",
+    },
+  };
 }
 
 function selectBoard(slug) {
@@ -287,7 +475,94 @@ function duplicateBoard() {
   setStatus("Duplicated board draft");
 }
 
+function createBoard() {
+  const name = el.newBoardName.value.trim() || "New Board";
+  const data = makeBlankBoard(name);
+  const board = { slug: data.id, path: `boards/${data.id}.json`, data };
+  state.boards.push(board);
+  populateSelect();
+  selectBoard(board.slug);
+  setStatus("Created blank board draft");
+}
+
+function syncEditedBoard() {
+  syncRawFromState();
+  render();
+}
+
+function handleCanvasDown(event) {
+  const board = selectedBoard();
+  if (!board) return;
+  ensureGraphArrays(board);
+  const hit = hitPoint(event);
+  if (state.tool === "point") {
+    const point = canvasToBoard(event);
+    board.points.push(point);
+    board.adjacency.push([]);
+    state.selectedPoint = board.points.length - 1;
+    setStatus(`Added point ${state.selectedPoint}`);
+    syncEditedBoard();
+    return;
+  }
+  if (hit === null) return;
+  state.selectedPoint = hit;
+  if (state.tool === "move") {
+    state.dragPoint = hit;
+  } else if (state.tool === "visual") {
+    if (state.visualStart === null) {
+      state.visualStart = hit;
+      setStatus(`Selected visual start ${hit}`);
+    } else {
+      toggleVisualLine(board, state.visualStart, hit);
+      setStatus(`Toggled visual line ${state.visualStart}-${hit}`);
+      state.visualStart = null;
+      syncEditedBoard();
+    }
+  } else if (state.tool === "edge") {
+    if (state.edgeStart === null) {
+      state.edgeStart = hit;
+      setStatus(`Selected edge start ${hit}`);
+    } else {
+      toggleEdge(board, state.edgeStart, hit);
+      setStatus(`Toggled edge ${state.edgeStart}-${hit}`);
+      state.edgeStart = null;
+      syncEditedBoard();
+    }
+  } else if (state.tool === "mill") {
+    if (!state.millDraft.includes(hit)) state.millDraft.push(hit);
+    if (state.millDraft.length === 3) {
+      toggleMill(board, state.millDraft);
+      setStatus(`Toggled mill ${state.millDraft.join("-")}`);
+      state.millDraft = [];
+      syncEditedBoard();
+    } else {
+      render();
+    }
+  } else if (state.tool === "erase") {
+    removePoint(board, hit);
+    state.selectedPoint = null;
+    setStatus(`Removed point ${hit}`);
+    syncEditedBoard();
+  }
+}
+
+function handleCanvasMove(event) {
+  const board = selectedBoard();
+  if (!board || state.dragPoint === null) return;
+  board.points[state.dragPoint] = canvasToBoard(event);
+  syncRawFromState();
+  render();
+}
+
+function handleCanvasUp() {
+  if (state.dragPoint !== null) {
+    setStatus(`Moved point ${state.dragPoint}`);
+  }
+  state.dragPoint = null;
+}
+
 el.boardSelect.addEventListener("change", () => selectBoard(el.boardSelect.value));
+el.createBoard.addEventListener("click", createBoard);
 el.duplicateBoard.addEventListener("click", duplicateBoard);
 el.saveBoard.addEventListener("click", () => saveBoard().catch((error) => setStatus(error.message)));
 el.rawJson.addEventListener("input", () => {
@@ -306,5 +581,23 @@ el.tabs.forEach((tab) => {
     render();
   });
 });
+el.tools.forEach((tool) => {
+  tool.addEventListener("click", () => {
+    state.tool = tool.dataset.tool;
+    state.visualStart = null;
+    state.edgeStart = null;
+    state.millDraft = [];
+    el.tools.forEach((button) => button.classList.toggle("active", button === tool));
+    render();
+  });
+});
+["change", "input"].forEach((eventName) => {
+  [el.showVisual, el.showAdjacency, el.showMills].forEach((input) => {
+    input.addEventListener(eventName, render);
+  });
+});
+el.canvas.addEventListener("mousedown", handleCanvasDown);
+el.canvas.addEventListener("mousemove", handleCanvasMove);
+window.addEventListener("mouseup", handleCanvasUp);
 
 loadBoards().catch((error) => setStatus(error.message));
