@@ -32,7 +32,7 @@ endif
 export ARDUINO_DIRECTORIES_DATA := $(ARDUINO_DATA_DIR)
 export ARDUINO_DIRECTORIES_USER := $(SKETCH_DIR)/.arduino-sketchbook
 
-.PHONY: all setup compile compile-debug upload upload-sketch clean hex size size-debug symbols symbols-debug check sim cloud libretro libretro-debug fx-entry
+.PHONY: all setup compile compile-debug upload upload-sketch clean hex size size-debug symbols symbols-debug check sim cloud libretro libretro-debug fx-entry tabletop-studio
 
 all: compile
 
@@ -103,6 +103,9 @@ fx-entry: compile
 	@printf '%s\n' "$(FX_CART_DIR)/$(FX_CATEGORY)/$(FX_GAME).hex"
 	@printf '%s\n' "$(FX_CART_DIR)/$(FX_CATEGORY)/$(FX_GAME).png"
 	@printf '%s\n' "Merge this into a backup of your existing FX cart before writing."
+
+tabletop-studio:
+	python tools/tabletop-studio/server.py --open
 
 check: compile
 

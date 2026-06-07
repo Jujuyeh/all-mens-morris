@@ -18,13 +18,15 @@
   LED startup animation.
 - Added `BoardDefinition` and `RuleSet` scaffolding so future variants can
   change board graph data and rule knobs independently.
+- Added the first TableTop Studio slice for board profile viewing, validation,
+  duplication, and JSON editing.
 
 ## Next Cycle
 
-1. Add the first non-classic board definition on top of `BoardDefinition`.
-2. Continue the pixel-art pass for pieces and final board/menu assets.
-3. Plan TableTop Studio from Pocket Pixel's Pet Studio, starting with board
-   profile JSON, graph overlays, and sprite/banner editing.
+1. Use TableTop Studio to draft Six Men's Morris as a board profile.
+2. Add `make board-data` generation from validated board profiles into C++
+   `BoardDefinition`/`RuleSet` data.
+3. Continue the pixel-art pass for pieces and final board/menu assets.
 
 ## Later
 

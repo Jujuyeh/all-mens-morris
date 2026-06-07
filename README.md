@@ -67,11 +67,22 @@ make fx-entry
 
 The entry is prepared under the `TableTop` category by default.
 
+Open TableTop Studio:
+
+```sh
+make tabletop-studio
+```
+
+The first Studio slice loads board profiles from `boards/`, draws the playable
+graph overlay, validates adjacency/mills/rule settings, and can duplicate or
+save profile JSON.
+
 ## Layout
 
 ```text
 .
 |-- all-mens-morris.ino
+|-- boards/
 |-- src/
 |   |-- Assets.*
 |   |-- Board.*
@@ -79,6 +90,7 @@ The entry is prepared under the `TableTop` category by default.
 |   |-- Game.cpp
 |   `-- AllMensMorrisGame.h
 |-- docs/
+|-- tools/tabletop-studio/
 |-- skills/
 |-- nix/
 |-- .github/workflows/

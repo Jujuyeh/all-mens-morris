@@ -18,6 +18,10 @@ The implementation is split into:
   mill capture rules, flying, win detection, and phase transitions.
 - `src/Assets.*`: shared PROGMEM sprites, currently including title and boot
   logo assets.
+- `boards/*.json`: editable board/rule profiles consumed by TableTop Studio and
+  intended to become the source for generated firmware board data.
+- `tools/tabletop-studio/`: local browser tool for inspecting board graphs,
+  validating profiles, and editing JSON board/rule data.
 
 Startup uses `arduboy.beginDoFirst()` and `arduboy.waitNoButtons()` instead of
 `arduboy.begin()` so the stock Arduboy boot logo and LED animation are skipped.

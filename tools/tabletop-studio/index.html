@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>All Men's Morris TableTop Studio</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>TableTop Studio</h1>
+        <p>Board graph and rule profile editor for All Men's Morris.</p>
+      </div>
+      <div id="status" class="status">Ready</div>
+    </header>
+
+    <section class="toolbar">
+      <label>
+        Board
+        <select id="boardSelect"></select>
+      </label>
+      <input id="newBoardName" type="text" placeholder="New board name">
+      <button id="duplicateBoard">Duplicate</button>
+      <button id="saveBoard">Save</button>
+      <div class="tabs">
+        <button class="active" data-tab="graph">Graph</button>
+        <button data-tab="rules">Rules</button>
+        <button data-tab="raw">Raw JSON</button>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <aside class="panel">
+        <h2>Profile</h2>
+        <div id="summary" class="summary"></div>
+        <h2>Validation</h2>
+        <div id="validation" class="validation"></div>
+      </aside>
+
+      <section id="graphTab" class="editor">
+        <div class="canvasFrame">
+          <canvas id="boardCanvas" width="512" height="512"></canvas>
+        </div>
+        <div class="legend">
+          <span><i class="line"></i> adjacency</span>
+          <span><i class="mill"></i> mill</span>
+          <span><i class="point"></i> point</span>
+        </div>
+      </section>
+
+      <section id="rulesTab" class="editor hidden">
+        <div id="rulesForm" class="rulesForm"></div>
+      </section>
+
+      <section id="rawTab" class="editor hidden">
+        <textarea id="rawJson" spellcheck="false"></textarea>
+      </section>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

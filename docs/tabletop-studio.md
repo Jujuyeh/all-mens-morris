@@ -90,13 +90,20 @@ The overlay should be exportable as JSON and as generated C++/PROGMEM data.
 
 ## Future Build Integration
 
-Add commands only when the first board profile exists:
+Implemented first:
+
+- `boards/classic-nine.json` as the first board profile;
+- `make tabletop-studio`, serving `tools/tabletop-studio/`;
+- graph overlay preview from points, adjacency, and mills;
+- basic validation for missing points, duplicate/self edges, non-bidirectional
+  adjacency, malformed mills, and core numeric rule fields;
+- JSON duplication/saving through local project endpoints.
+
+Still future:
 
 ```sh
-make tabletop-studio
 make board-data
 ```
 
-`make tabletop-studio` should start the browser editor. `make board-data` should
-validate selected board profiles and generate C++ data files consumed by
-`Board.*`.
+`make board-data` should validate selected board profiles and generate C++ data
+files consumed by `Board.*`.
