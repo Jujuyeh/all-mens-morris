@@ -74,8 +74,8 @@ make tabletop-studio
 ```
 
 The first Studio slice loads board profiles from `boards/`, draws and edits the
-playable graph overlay, validates adjacency/mills/rule settings, and can create,
-duplicate, or save profile JSON.
+playable graph overlay, validates connections/mills/rule settings, and can
+create, duplicate, or save profile JSON.
 
 ## Layout
 

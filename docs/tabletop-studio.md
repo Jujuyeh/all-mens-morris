@@ -6,15 +6,16 @@ Copy the useful shape of Pocket Pixel's Pet Studio into this project as a local
 browser tool named TableTop Studio. Instead of editing pet personality profiles,
 the tool should edit Morris-family board profiles.
 
-Each board profile should describe both:
+Each board profile should describe:
 
-- the visual board sprite/banner that players see;
-- the graph data the rules engine uses to know how the board is played.
+- the board connections players see and pieces use for legal movement;
+- the mill triples that define scoring/capture patterns;
+- optional sprite/banner assets for richer presentation.
 
-The important constraint is that artwork and rules data must stay linked but not
-mixed. A board can look decorative, but the playable points, adjacency edges,
-and mill lines must remain explicit data that can be validated and generated
-into firmware.
+The important constraint is that graph and rules data stay explicit. Board
+connections are both visual lines and movement edges. Mill lines remain separate
+because custom boards may have scoring triples that are not obvious from simple
+geometry.
 
 ## Pocket Pixel Pieces To Reuse
 
@@ -38,7 +39,8 @@ profile should include:
 - piece count per player;
 - optional first-player/default settings;
 - board canvas size and point coordinates;
-- adjacency graph as point-index pairs or fixed adjacency lists;
+- adjacency graph as point-index pairs or fixed adjacency lists, used both for
+  board drawing and legal movement;
 - mill lines as point-index triples;
 - optional rule flags, such as flying enabled or capture restrictions;
 - asset paths for board sprite, FX banner, and preview art.
@@ -50,7 +52,7 @@ lines, not pixels.
 Firmware currently separates this into:
 
 - `BoardDefinition`: board id, display label, point coordinates, mill triples,
-  adjacency slots, and simple visual line data;
+  and adjacency slots;
 - `RuleSet`: rule id, pieces per player, flying settings, protected mill
   capture behavior, material/block win switches, and no-capture draw limit.
 
@@ -62,8 +64,8 @@ sprites once the graph/rule data is stable.
 Initial TableTop Studio modes:
 
 - `Boards`: choose, duplicate, rename, and edit board JSON profiles.
-- `Graph`: place numbered points over a board reference image, draw adjacency
-  edges, and define mill triples.
+- `Graph`: place numbered points over a board reference image, draw board
+  connections/legal movement edges, and define mill triples.
 - `Sprites`: draw or import the visible board sprite and FX banner.
 - `Validate`: check graph consistency before generation.
 
@@ -83,7 +85,7 @@ This overlay is the contract between art and play:
 
 - sprite pixels define how the board looks;
 - point coordinates define where pieces can be placed;
-- adjacency edges define legal movement;
+- adjacency edges define both board lines and legal movement;
 - mill triples define scoring/capture triggers.
 
 The overlay should be exportable as JSON and as generated C++/PROGMEM data.
@@ -95,10 +97,10 @@ Implemented first:
 - `boards/classic-nine.json` as the first board profile;
 - `make tabletop-studio`, serving `tools/tabletop-studio/`;
 - graph overlay preview from points, adjacency, and mills;
-- direct graph editing modes for points, visual board lines, adjacency edges,
-  mill triples, and point deletion;
-- layer toggles so visual board lines, adjacency edges, and mill bands can be
-  inspected separately;
+- direct graph editing modes for points, board connections, mill triples, and
+  point deletion;
+- layer toggles so board connections and mill bands can be inspected
+  separately;
 - basic validation for missing points, duplicate/self edges, non-bidirectional
   adjacency, malformed mills, and core numeric rule fields;
 - JSON duplication/saving through local project endpoints.

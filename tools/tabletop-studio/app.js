@@ -5,7 +5,6 @@ const state = {
   tool: "move",
   selectedPoint: null,
   dragPoint: null,
-  visualStart: null,
   edgeStart: null,
   millDraft: [],
 };
@@ -19,7 +18,6 @@ const el = {
   saveBoard: document.querySelector("#saveBoard"),
   tabs: Array.from(document.querySelectorAll("[data-tab]")),
   tools: Array.from(document.querySelectorAll("[data-tool]")),
-  showVisual: document.querySelector("#showVisual"),
   showAdjacency: document.querySelector("#showAdjacency"),
   showMills: document.querySelector("#showMills"),
   selectionInfo: document.querySelector("#selectionInfo"),
@@ -112,7 +110,6 @@ function ensureGraphArrays(board) {
   board.points ||= [];
   board.adjacency ||= [];
   board.mills ||= [];
-  board.visualLines ||= [];
   while (board.adjacency.length < board.points.length) {
     board.adjacency.push([]);
   }
@@ -136,21 +133,6 @@ function toggleEdge(board, a, b) {
     board.adjacency[b].push(a);
     board.adjacency[a].sort((left, right) => left - right);
     board.adjacency[b].sort((left, right) => left - right);
-  }
-}
-
-function samePair(pair, a, b) {
-  return pair.length >= 2 && ((pair[0] === a && pair[1] === b) || (pair[0] === b && pair[1] === a));
-}
-
-function toggleVisualLine(board, a, b) {
-  ensureGraphArrays(board);
-  if (a === b) return;
-  const existing = board.visualLines.findIndex((line) => samePair(line, a, b));
-  if (existing >= 0) {
-    board.visualLines.splice(existing, 1);
-  } else {
-    board.visualLines.push([a, b]);
   }
 }
 
@@ -187,9 +169,6 @@ function removePoint(board, index) {
   board.mills = (board.mills || [])
     .filter((mill) => !mill.includes(index))
     .map((mill) => mill.map((point) => (point > index ? point - 1 : point)));
-  board.visualLines = (board.visualLines || [])
-    .filter((line) => !line.includes(index))
-    .map((line) => line.map((point) => (point > index ? point - 1 : point)));
 }
 
 function drawBoard() {
@@ -197,12 +176,6 @@ function drawBoard() {
   ctx.fillStyle = "#080808";
   ctx.fillRect(0, 0, el.canvas.width, el.canvas.height);
   if (!board) return;
-
-  if (el.showVisual.checked) {
-    (board.visualLines || []).forEach((line) => {
-      drawLine(board, line, "#606060", 3);
-    });
-  }
 
   if (el.showMills.checked) {
     ctx.globalAlpha = 0.8;
@@ -216,7 +189,7 @@ function drawBoard() {
   if (el.showAdjacency.checked) {
     (board.adjacency || []).forEach((edges, index) => {
       (edges || []).forEach((to) => {
-        if (to > index) drawLine(board, [index, to], "#69b7ff", 3, [10, 6]);
+        if (to > index) drawLine(board, [index, to], "#69b7ff", 4);
       });
     });
   }
@@ -225,8 +198,7 @@ function drawBoard() {
     const p = pointAt(board, index);
     const selected = index === state.selectedPoint
       || state.millDraft.includes(index)
-      || index === state.edgeStart
-      || index === state.visualStart;
+      || index === state.edgeStart;
     ctx.fillStyle = selected ? "#7ee787" : "#f7f7f7";
     ctx.beginPath();
     ctx.arc(p.x, p.y, selected ? 11 : 8, 0, Math.PI * 2);
@@ -303,10 +275,8 @@ function renderSummary(board) {
 }
 
 function renderSelection() {
-  if (state.tool === "visual" && state.visualStart !== null) {
-    el.selectionInfo.textContent = `Visual start: ${state.visualStart}`;
-  } else if (state.tool === "edge" && state.edgeStart !== null) {
-    el.selectionInfo.textContent = `Edge start: ${state.edgeStart}`;
+  if (state.tool === "edge" && state.edgeStart !== null) {
+    el.selectionInfo.textContent = `Connection start: ${state.edgeStart}`;
   } else if (state.tool === "mill" && state.millDraft.length) {
     el.selectionInfo.textContent = `Mill: ${state.millDraft.join(", ")}`;
   } else if (state.selectedPoint !== null) {
@@ -408,7 +378,6 @@ function makeBlankBoard(name) {
     points: [],
     mills: [],
     adjacency: [],
-    visualLines: [],
     assets: {
       boardSprite: null,
       banner: "assets/fx/banner.png",
@@ -508,23 +477,13 @@ function handleCanvasDown(event) {
   state.selectedPoint = hit;
   if (state.tool === "move") {
     state.dragPoint = hit;
-  } else if (state.tool === "visual") {
-    if (state.visualStart === null) {
-      state.visualStart = hit;
-      setStatus(`Selected visual start ${hit}`);
-    } else {
-      toggleVisualLine(board, state.visualStart, hit);
-      setStatus(`Toggled visual line ${state.visualStart}-${hit}`);
-      state.visualStart = null;
-      syncEditedBoard();
-    }
   } else if (state.tool === "edge") {
     if (state.edgeStart === null) {
       state.edgeStart = hit;
-      setStatus(`Selected edge start ${hit}`);
+      setStatus(`Selected connection start ${hit}`);
     } else {
       toggleEdge(board, state.edgeStart, hit);
-      setStatus(`Toggled edge ${state.edgeStart}-${hit}`);
+      setStatus(`Toggled connection ${state.edgeStart}-${hit}`);
       state.edgeStart = null;
       syncEditedBoard();
     }
@@ -584,7 +543,6 @@ el.tabs.forEach((tab) => {
 el.tools.forEach((tool) => {
   tool.addEventListener("click", () => {
     state.tool = tool.dataset.tool;
-    state.visualStart = null;
     state.edgeStart = null;
     state.millDraft = [];
     el.tools.forEach((button) => button.classList.toggle("active", button === tool));
@@ -592,7 +550,7 @@ el.tools.forEach((tool) => {
   });
 });
 ["change", "input"].forEach((eventName) => {
-  [el.showVisual, el.showAdjacency, el.showMills].forEach((input) => {
+  [el.showAdjacency, el.showMills].forEach((input) => {
     input.addEventListener(eventName, render);
   });
 });

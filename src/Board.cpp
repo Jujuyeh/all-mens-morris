@@ -45,24 +45,15 @@ const uint8_t ClassicAdjacency[MORRIS_MAX_POINT_COUNT][MORRIS_MAX_ADJACENCY_SLOT
   {14, 22, 255, 255},
 };
 
-const BoardVisualLine ClassicVisualLines[MORRIS_MAX_VISUAL_LINE_COUNT] PROGMEM = {
-  {0, 2}, {3, 5}, {6, 8}, {9, 11},
-  {12, 14}, {15, 17}, {18, 20}, {21, 23},
-  {0, 21}, {3, 18}, {6, 15}, {1, 7},
-  {16, 22}, {8, 17}, {5, 20}, {2, 23},
-};
-
 const BoardDefinition ClassicBoardDefinition = {
   "classic-nine",
   "CLASSIC 9",
   MORRIS_MAX_POINT_COUNT,
   MORRIS_MAX_MILL_COUNT,
   MORRIS_MAX_ADJACENCY_SLOTS,
-  MORRIS_MAX_VISUAL_LINE_COUNT,
   ClassicBoardPoints,
   ClassicMills,
   ClassicAdjacency,
-  ClassicVisualLines,
 };
 
 BoardPoint boardPoint(const BoardDefinition &board, uint8_t index) {
@@ -79,10 +70,4 @@ MillLine millLine(const BoardDefinition &board, uint8_t index) {
 
 uint8_t adjacentPoint(const BoardDefinition &board, uint8_t point, uint8_t slot) {
   return pgm_read_byte(&board.adjacency[point][slot]);
-}
-
-BoardVisualLine visualLine(const BoardDefinition &board, uint8_t index) {
-  BoardVisualLine line;
-  memcpy_P(&line, &board.visualLines[index], sizeof(BoardVisualLine));
-  return line;
 }

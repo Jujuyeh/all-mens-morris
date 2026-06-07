@@ -407,17 +407,20 @@ void updateMillLed() {
   }
 }
 
-void drawBoardLine(BoardVisualLine line) {
-  uint8_t a = line.a;
-  uint8_t b = line.b;
+void drawBoardLine(uint8_t a, uint8_t b) {
   BoardPoint pa = screenPoint(a);
   BoardPoint pb = screenPoint(b);
   arduboy.drawLine(pa.x, pa.y, pb.x, pb.y, BLACK);
 }
 
 void drawBoard() {
-  for (uint8_t i = 0; i < game.board->visualLineCount; i++) {
-    drawBoardLine(visualLine(*game.board, i));
+  for (uint8_t point = 0; point < game.board->pointCount; point++) {
+    for (uint8_t slot = 0; slot < game.board->adjacencySlots; slot++) {
+      uint8_t adjacent = adjacentPoint(*game.board, point, slot);
+      if (adjacent != 255 && adjacent > point) {
+        drawBoardLine(point, adjacent);
+      }
+    }
   }
 }
 

@@ -45,13 +45,11 @@
           <div class="modeGroup">
             <button class="active" data-tool="move">Move</button>
             <button data-tool="point">Point</button>
-            <button data-tool="visual">Visual</button>
-            <button data-tool="edge">Edge</button>
+            <button data-tool="edge">Connect</button>
             <button data-tool="mill">Mill</button>
             <button data-tool="erase">Erase</button>
           </div>
-          <label><input id="showVisual" type="checkbox" checked> visual</label>
-          <label><input id="showAdjacency" type="checkbox" checked> adjacency</label>
+          <label><input id="showAdjacency" type="checkbox" checked> connections</label>
           <label><input id="showMills" type="checkbox" checked> mills</label>
           <span id="selectionInfo" class="selectionInfo">No selection</span>
         </div>
@@ -59,9 +57,8 @@
           <canvas id="boardCanvas" width="512" height="512"></canvas>
         </div>
         <div class="legend">
-          <span><i class="visual"></i> visual board line</span>
           <span><i class="mill"></i> mill band</span>
-          <span><i class="line"></i> adjacency edge</span>
+          <span><i class="line"></i> board connection / legal move</span>
           <span><i class="point"></i> point</span>
         </div>
       </section>
