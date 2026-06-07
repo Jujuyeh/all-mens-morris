@@ -44,6 +44,8 @@ profile should include:
 - mill lines as point-index triples;
 - optional rule flags, such as flying enabled or capture restrictions;
 - mill behavior, currently capture after mill or immediate win after mill;
+- placement/movement behavior, including variants that stop initial placement
+  with empty points left and later mix placing with moving;
 - asset paths for board sprite, FX banner, and preview art.
 
 The generated firmware data should stay data-first, matching the current
@@ -118,7 +120,8 @@ Implemented first:
 - `make board-data`, which validates board profiles and generates
   `src/GeneratedBoards.*` for firmware;
 - generated `RuleSet` mill behavior, allowing Nine/Six Men's Morris to capture
-  after mills and Three Men's Morris to win immediately after forming a mill.
+  after mills and Three Men's Morris to win immediately after forming a mill;
+- generated `RuleSet` mixed placement/movement behavior for Long Morris.
 
 ```sh
 make board-data

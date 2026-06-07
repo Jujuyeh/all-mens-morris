@@ -18,6 +18,7 @@ void resetMorrisGame(MorrisGameState &game, const BoardDefinition &board, const 
   game.piecesOnBoard[1] = 0;
   game.turnsSinceCapture = 0;
   game.phaseAfterCapture = PHASE_PLACING;
+  game.actionMode = TURN_ACTION_PLACE;
   game.millPending = false;
   game.lastMoveMadeMill = false;
 }
@@ -54,8 +55,29 @@ bool isMillAt(const MorrisGameState &game, uint8_t point, Player player) {
   return false;
 }
 
+static uint8_t emptyPointCount(const MorrisGameState &game) {
+  uint8_t count = 0;
+  for (uint8_t point = 0; point < game.board->pointCount; point++) {
+    if (game.points[point] == PLAYER_NONE) {
+      count++;
+    }
+  }
+  return count;
+}
+
+static bool phaseAllowsPlacement(const MorrisGameState &game) {
+  return game.phase == PHASE_PLACING
+      || (game.phase == PHASE_MOVING && game.rules->mixedPlacementMovement);
+}
+
+static bool playerCanPlace(const MorrisGameState &game, Player player) {
+  return phaseAllowsPlacement(game)
+      && game.piecesToPlace[playerIndex(player)] > 0
+      && emptyPointCount(game) > game.rules->placementStopEmptyPoints;
+}
+
 bool canPlaceAt(const MorrisGameState &game, uint8_t point) {
-  return game.phase == PHASE_PLACING && game.points[point] == PLAYER_NONE;
+  return playerCanPlace(game, game.currentPlayer) && game.points[point] == PLAYER_NONE;
 }
 
 bool playerCanFly(const MorrisGameState &game, Player player) {
@@ -146,11 +168,20 @@ static bool playerHasLegalMove(const MorrisGameState &game, Player player) {
   return false;
 }
 
+static bool playerHasLegalAction(const MorrisGameState &game, Player player) {
+  return playerCanPlace(game, player) || playerHasLegalMove(game, player);
+}
+
 static bool playerHasTooFewPieces(const MorrisGameState &game, Player player) {
   uint8_t index = playerIndex(player);
   return game.rules->materialWinEnabled
-      && game.piecesToPlace[index] == 0
+      && (!game.rules->materialWinRequiresReserveEmpty || game.piecesToPlace[index] == 0)
       && game.piecesOnBoard[index] < game.rules->minPiecesToContinue;
+}
+
+static bool blockWinAllowed(const MorrisGameState &game, Player player) {
+  return !game.rules->blockWinRequiresReserveEmpty
+      || game.piecesToPlace[playerIndex(player)] == 0;
 }
 
 static void setGameOver(MorrisGameState &game, Player winner, WinReason reason) {
@@ -165,10 +196,44 @@ static void setDraw(MorrisGameState &game, WinReason reason) {
   setGameOver(game, PLAYER_NONE, reason);
 }
 
-static void finishPlacementIfReady(MorrisGameState &game) {
-  if (game.piecesToPlace[0] == 0 && game.piecesToPlace[1] == 0) {
-    game.phase = PHASE_MOVING;
+static void normalizeActionMode(MorrisGameState &game) {
+  if (game.phase == PHASE_PLACING) {
+    game.actionMode = TURN_ACTION_PLACE;
+    return;
   }
+
+  if (game.phase != PHASE_MOVING) {
+    return;
+  }
+
+  bool canPlace = playerCanPlace(game, game.currentPlayer);
+  bool canMove = playerHasLegalMove(game, game.currentPlayer);
+  if (game.actionMode == TURN_ACTION_PLACE && !canPlace && canMove) {
+    game.actionMode = TURN_ACTION_MOVE;
+  } else if (game.actionMode == TURN_ACTION_MOVE && !canMove && canPlace) {
+    game.actionMode = TURN_ACTION_PLACE;
+  }
+}
+
+static void finishPlacementIfReady(MorrisGameState &game) {
+  if (game.phase == PHASE_PLACING
+      && ((game.rules->placementStopEmptyPoints > 0
+           && emptyPointCount(game) <= game.rules->placementStopEmptyPoints)
+          || (game.piecesToPlace[0] == 0 && game.piecesToPlace[1] == 0))) {
+    game.phase = PHASE_MOVING;
+    game.actionMode = TURN_ACTION_MOVE;
+    normalizeActionMode(game);
+  }
+}
+
+static GamePhase phaseAfterAction(MorrisGameState &game, GamePhase currentPhase) {
+  if (currentPhase == PHASE_PLACING
+      && ((game.rules->placementStopEmptyPoints > 0
+           && emptyPointCount(game) <= game.rules->placementStopEmptyPoints)
+          || (game.piecesToPlace[0] == 0 && game.piecesToPlace[1] == 0))) {
+    return PHASE_MOVING;
+  }
+  return currentPhase;
 }
 
 static void checkCurrentPlayerLoss(MorrisGameState &game) {
@@ -181,8 +246,40 @@ static void checkCurrentPlayerLoss(MorrisGameState &game) {
     return;
   }
 
-  if (game.rules->blockWinEnabled && !playerHasLegalMove(game, game.currentPlayer)) {
+  if (game.rules->blockWinEnabled
+      && !playerHasLegalAction(game, game.currentPlayer)
+      && blockWinAllowed(game, game.currentPlayer)) {
     setGameOver(game, opponentOf(game.currentPlayer), WIN_BY_BLOCK);
+  }
+}
+
+static void resolveCurrentPlayerTurn(MorrisGameState &game) {
+  for (uint8_t attempt = 0; attempt < 2 && game.phase == PHASE_MOVING; attempt++) {
+    if (playerHasTooFewPieces(game, game.currentPlayer)) {
+      setGameOver(game, opponentOf(game.currentPlayer), WIN_BY_MATERIAL);
+      return;
+    }
+
+    if (playerHasLegalAction(game, game.currentPlayer)) {
+      normalizeActionMode(game);
+      return;
+    }
+
+    if (game.rules->blockWinEnabled && blockWinAllowed(game, game.currentPlayer)) {
+      setGameOver(game, opponentOf(game.currentPlayer), WIN_BY_BLOCK);
+      return;
+    }
+
+    if (game.rules->skipBlockedWithReserve
+        && game.piecesToPlace[playerIndex(game.currentPlayer)] > 0) {
+      endTurn(game);
+      continue;
+    }
+
+    if (game.rules->blockWinEnabled) {
+      setGameOver(game, opponentOf(game.currentPlayer), WIN_BY_BLOCK);
+      return;
+    }
   }
 }
 
@@ -210,7 +307,7 @@ static void finishAction(MorrisGameState &game, GamePhase currentPhase) {
     if (game.rules->millAction == MILL_ACTION_WIN) {
       setGameOver(game, game.currentPlayer, WIN_BY_MILL);
     } else {
-      enterCapture(game, currentPhase);
+      enterCapture(game, phaseAfterAction(game, currentPhase));
     }
     return;
   }
@@ -222,13 +319,13 @@ static void finishAction(MorrisGameState &game, GamePhase currentPhase) {
     shouldCheckDraw = true;
   }
   endTurn(game);
-  checkCurrentPlayerLoss(game);
+  resolveCurrentPlayerTurn(game);
   if (shouldCheckDraw && game.phase != PHASE_GAME_OVER) {
     checkNoCaptureDraw(game);
   }
 }
 
-static bool placeAtCursor(MorrisGameState &game) {
+static bool placeAtCursor(MorrisGameState &game, GamePhase currentPhase) {
   if (!canPlaceAt(game, game.cursor)) {
     return false;
   }
@@ -238,7 +335,7 @@ static bool placeAtCursor(MorrisGameState &game) {
   game.piecesToPlace[index]--;
   game.piecesOnBoard[index]++;
   game.lastMoveMadeMill = isMillAt(game, game.cursor, game.currentPlayer);
-  finishAction(game, PHASE_PLACING);
+  finishAction(game, currentPhase);
   return true;
 }
 
@@ -291,19 +388,39 @@ static bool captureAtCursor(MorrisGameState &game) {
     return true;
   }
   endTurn(game);
-  checkCurrentPlayerLoss(game);
+  resolveCurrentPlayerTurn(game);
   return true;
+}
+
+bool canToggleActionMode(const MorrisGameState &game) {
+  return game.phase == PHASE_MOVING
+      && game.rules->mixedPlacementMovement
+      && playerCanPlace(game, game.currentPlayer)
+      && playerHasLegalMove(game, game.currentPlayer);
+}
+
+void toggleActionMode(MorrisGameState &game) {
+  if (!canToggleActionMode(game)) {
+    normalizeActionMode(game);
+    return;
+  }
+  game.actionMode = game.actionMode == TURN_ACTION_PLACE ? TURN_ACTION_MOVE : TURN_ACTION_PLACE;
+  game.selected = 255;
 }
 
 bool applyPrimaryAction(MorrisGameState &game) {
   game.lastMoveMadeMill = false;
   if (game.phase == PHASE_PLACING) {
-    return placeAtCursor(game);
+    return placeAtCursor(game, PHASE_PLACING);
   }
   if (game.phase == PHASE_CAPTURING) {
     return captureAtCursor(game);
   }
   if (game.phase == PHASE_MOVING) {
+    normalizeActionMode(game);
+    if (game.rules->mixedPlacementMovement && game.actionMode == TURN_ACTION_PLACE) {
+      return placeAtCursor(game, PHASE_MOVING);
+    }
     return moveFromSelection(game);
   }
   return false;

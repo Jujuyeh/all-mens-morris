@@ -18,8 +18,8 @@ The implementation is split into:
 - `src/Rules.*`: mutable game state, `RuleSet` configuration, legal actions,
   mill capture rules, flying, win detection, and phase transitions.
 - `src/GeneratedBoards.*`: generated firmware board and rule data from
-  `boards/*.json`, currently Classic Nine Men's Morris, Six Men's Morris, and
-  Three Men's Morris.
+  `boards/*.json`, currently Classic Nine Men's Morris, Long Morris, Six Men's
+  Morris, and Three Men's Morris.
 - `src/Assets.*`: shared PROGMEM sprites, currently including title and boot
   logo assets.
 - `boards/*.json`: editable board/rule profiles consumed by TableTop Studio and
@@ -45,7 +45,8 @@ state machine.
 Board and rules data are deliberately separate. `make board-data` generates a
 board definition from the graph overlay, and a rule set from variant settings
 such as piece count, flying, capture protection, material wins, blocked wins,
-mill behavior, and draw counters.
+reserve-gated block wins, mixed placement/movement, mill behavior, and draw
+counters.
 
 ## Near-Term Refactor Targets
 

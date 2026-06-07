@@ -297,8 +297,29 @@ function validateBoard(board) {
   });
 
   const rules = board.rules || {};
-  ["piecesPerPlayer", "minPiecesToContinue", "flyPieceCount"].forEach((key) => {
+  [
+    "piecesPerPlayer",
+    "minPiecesToContinue",
+    "flyPieceCount",
+    "noCaptureDrawTurnLimit",
+    "placementStopEmptyPoints",
+  ].forEach((key) => {
     if (!Number.isInteger(rules[key]) || rules[key] < 0) issues.push(`Rule ${key} must be a positive integer.`);
+  });
+  if (!["capture", "win"].includes(rules.millAction)) {
+    issues.push("Rule millAction must be capture or win.");
+  }
+  [
+    "flyingEnabled",
+    "mixedPlacementMovement",
+    "protectPiecesInMills",
+    "blockWinEnabled",
+    "materialWinEnabled",
+    "blockWinRequiresReserveEmpty",
+    "materialWinRequiresReserveEmpty",
+    "skipBlockedWithReserve",
+  ].forEach((key) => {
+    if (typeof rules[key] !== "boolean") issues.push(`Rule ${key} must be boolean.`);
   });
 
   return issues;
@@ -358,15 +379,29 @@ function renderRules(board) {
   Object.keys(rules).forEach((key) => {
     const label = document.createElement("label");
     label.textContent = key;
-    const input = document.createElement("input");
-    input.type = typeof rules[key] === "boolean" ? "checkbox" : "number";
+    const input = key === "millAction" ? document.createElement("select") : document.createElement("input");
+    if (key === "millAction") {
+      ["capture", "win"].forEach((value) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        input.appendChild(option);
+      });
+      input.value = rules[key];
+    } else {
+      input.type = typeof rules[key] === "boolean" ? "checkbox" : "number";
+    }
     if (input.type === "checkbox") {
       input.checked = Boolean(rules[key]);
     } else {
       input.value = rules[key];
     }
     input.addEventListener("input", () => {
-      rules[key] = input.type === "checkbox" ? input.checked : Number(input.value);
+      if (key === "millAction") {
+        rules[key] = input.value;
+      } else {
+        rules[key] = input.type === "checkbox" ? input.checked : Number(input.value);
+      }
       syncRawFromState();
       render();
     });
@@ -416,10 +451,16 @@ function makeBlankBoard(name) {
       minPiecesToContinue: 3,
       flyPieceCount: 3,
       noCaptureDrawTurnLimit: 50,
+      placementStopEmptyPoints: 0,
+      millAction: "capture",
       flyingEnabled: true,
+      mixedPlacementMovement: false,
       protectPiecesInMills: true,
       blockWinEnabled: true,
       materialWinEnabled: true,
+      blockWinRequiresReserveEmpty: true,
+      materialWinRequiresReserveEmpty: true,
+      skipBlockedWithReserve: false,
     },
     points: [],
     mills: [],

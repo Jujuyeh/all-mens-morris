@@ -24,8 +24,10 @@ yet. Current controls:
 - Hold A + up: reset the match, with confirmation.
 - Hold A + left: rewind one game state.
 - Hold A + down: return to the main menu, with confirmation.
-- Debug build only, hold A + right: cycle test scenarios for mill, flying,
-  blocked-game-over, and draw states.
+- Hold A + right: toggle `PUT`/`MOVE` in variants that support mixed placement
+  and movement.
+- Debug build only, hold A + right when no mixed action is available: cycle
+  test scenarios for mill, flying, blocked-game-over, and draw states.
 
 ## Development
 
@@ -82,8 +84,8 @@ make tabletop-studio
 The first Studio slice loads board profiles from `boards/`, draws and edits the
 playable graph overlay, validates connections/mills/rule settings, and can
 create, duplicate, or save profile JSON. `make board-data` converts those
-profiles into firmware C++ data for Classic Nine Men's Morris, Six Men's
-Morris, and Three Men's Morris.
+profiles into firmware C++ data for Classic Nine Men's Morris, Long Morris,
+Six Men's Morris, and Three Men's Morris.
 
 ## Layout
 

@@ -13,11 +13,16 @@
     "minPiecesToContinue": 3,
     "flyPieceCount": 0,
     "noCaptureDrawTurnLimit": 10,
+    "placementStopEmptyPoints": 0,
     "millAction": "win",
     "flyingEnabled": false,
+    "mixedPlacementMovement": false,
     "protectPiecesInMills": false,
     "blockWinEnabled": false,
-    "materialWinEnabled": false
+    "materialWinEnabled": false,
+    "blockWinRequiresReserveEmpty": true,
+    "materialWinRequiresReserveEmpty": true,
+    "skipBlockedWithReserve": false
   },
   "points": [
     {"x": 12, "y": 12},

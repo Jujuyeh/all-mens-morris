@@ -120,11 +120,16 @@ def validate_profile(path: Path, data: dict) -> None:
     require_uint8(path, rules, "minPiecesToContinue")
     require_uint8(path, rules, "flyPieceCount")
     require_uint8(path, rules, "noCaptureDrawTurnLimit")
+    require_uint8(path, rules, "placementStopEmptyPoints")
     require_mill_action(path, rules)
     require_bool(path, rules, "flyingEnabled")
+    require_bool(path, rules, "mixedPlacementMovement")
     require_bool(path, rules, "protectPiecesInMills")
     require_bool(path, rules, "blockWinEnabled")
     require_bool(path, rules, "materialWinEnabled")
+    require_bool(path, rules, "blockWinRequiresReserveEmpty")
+    require_bool(path, rules, "materialWinRequiresReserveEmpty")
+    require_bool(path, rules, "skipBlockedWithReserve")
 
 
 def bool_literal(value: bool) -> str:
@@ -243,11 +248,16 @@ def generated_source(profiles: list[dict]) -> str:
                 f"  {rules['minPiecesToContinue']},",
                 f"  {rules['flyPieceCount']},",
                 f"  {rules['noCaptureDrawTurnLimit']},",
+                f"  {rules['placementStopEmptyPoints']},",
                 f"  {mill_action_literal(rules['millAction'])},",
                 f"  {bool_literal(rules['flyingEnabled'])},",
+                f"  {bool_literal(rules['mixedPlacementMovement'])},",
                 f"  {bool_literal(rules['protectPiecesInMills'])},",
                 f"  {bool_literal(rules['blockWinEnabled'])},",
                 f"  {bool_literal(rules['materialWinEnabled'])},",
+                f"  {bool_literal(rules['blockWinRequiresReserveEmpty'])},",
+                f"  {bool_literal(rules['materialWinRequiresReserveEmpty'])},",
+                f"  {bool_literal(rules['skipBlockedWithReserve'])},",
                 "};",
                 "",
             ]

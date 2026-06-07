@@ -1,28 +1,28 @@
 {
   "schemaVersion": 1,
-  "id": "classic-nine",
-  "name": "Classic Nine Men's Morris",
-  "label": "CLASSIC 9",
+  "id": "long-morris",
+  "name": "Long Morris",
+  "label": "LONG",
   "family": "nine-men-morris",
   "canvas": {
     "width": 64,
     "height": 64
   },
   "rules": {
-    "piecesPerPlayer": 9,
+    "piecesPerPlayer": 21,
     "minPiecesToContinue": 3,
     "flyPieceCount": 3,
-    "noCaptureDrawTurnLimit": 50,
-    "placementStopEmptyPoints": 0,
+    "noCaptureDrawTurnLimit": 100,
+    "placementStopEmptyPoints": 1,
     "millAction": "capture",
     "flyingEnabled": true,
-    "mixedPlacementMovement": false,
+    "mixedPlacementMovement": true,
     "protectPiecesInMills": true,
     "blockWinEnabled": true,
     "materialWinEnabled": true,
     "blockWinRequiresReserveEmpty": true,
-    "materialWinRequiresReserveEmpty": true,
-    "skipBlockedWithReserve": false
+    "materialWinRequiresReserveEmpty": false,
+    "skipBlockedWithReserve": true
   },
   "points": [
     {"x": 4, "y": 4},

@@ -109,6 +109,7 @@ bool gameStateChanged(const MorrisGameState &before, const MorrisGameState &afte
       || before.phase != after.phase
       || before.winReason != after.winReason
       || before.phaseAfterCapture != after.phaseAfterCapture
+      || before.actionMode != after.actionMode
       || before.millPending != after.millPending
       || before.lastMoveMadeMill != after.lastMoveMadeMill
       || before.turnsSinceCapture != after.turnsSinceCapture) {
@@ -527,6 +528,8 @@ void drawHud() {
     tinyfont.print("CAP");
   } else if (game.phase == PHASE_GAME_OVER) {
     tinyfont.print("OVER");
+  } else if (game.rules->mixedPlacementMovement && game.actionMode == TURN_ACTION_PLACE) {
+    tinyfont.print("PUT");
   } else if (playerCanFly(game, game.currentPlayer)) {
     tinyfont.print("FLY");
   } else {
@@ -810,6 +813,12 @@ void handleConfirmInput() {
   }
 }
 
+void toggleLongActionMode() {
+  toggleActionMode(game);
+  setMessage(game.actionMode == TURN_ACTION_PLACE ? "PUT" : "MOVE");
+  sound.tone(698, 35);
+}
+
 void handleQuickMenuInput() {
   if (!arduboy.pressed(A_BUTTON)) {
     return;
@@ -833,10 +842,14 @@ void handleQuickMenuInput() {
     confirmAction = CONFIRM_MAIN_MENU;
     setMessage("");
     sound.tone(330, 35);
-#ifdef ALL_MENS_MORRIS_DEBUG
   } else if (arduboy.justPressed(RIGHT_BUTTON)) {
-    loadDebugScenario();
+    if (canToggleActionMode(game)) {
+      toggleLongActionMode();
+#ifdef ALL_MENS_MORRIS_DEBUG
+    } else {
+      loadDebugScenario();
 #endif
+    }
   }
 }
 

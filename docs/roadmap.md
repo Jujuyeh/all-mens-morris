@@ -27,11 +27,13 @@
 - Added mill behavior as a rule knob so variants can capture on mills or win
   immediately on mills.
 - Added a playable Three Men's Morris profile.
+- Added Long Morris as a playable custom variant with mixed placement/movement
+  rules on the classic board.
 
 ## Next Cycle
 
-1. Test Six Men's Morris and Three Men's Morris on device/libretro and tune
-   their graph/art direction.
+1. Test Six Men's Morris, Three Men's Morris, and Long Morris on device/libretro
+   and tune their graph/art direction.
 2. Add generated profile metadata for menu labels, availability, and future
    variant descriptions.
 3. Continue the pixel-art pass for pieces and final board/menu assets.

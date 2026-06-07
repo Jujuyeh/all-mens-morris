@@ -32,17 +32,27 @@ enum MillAction : uint8_t {
   MILL_ACTION_WIN,
 };
 
+enum TurnActionMode : uint8_t {
+  TURN_ACTION_PLACE,
+  TURN_ACTION_MOVE,
+};
+
 struct RuleSet {
   const char *id;
   uint8_t piecesPerPlayer;
   uint8_t minPiecesToContinue;
   uint8_t flyPieceCount;
   uint8_t noCaptureDrawTurnLimit;
+  uint8_t placementStopEmptyPoints;
   MillAction millAction;
   bool flyingEnabled;
+  bool mixedPlacementMovement;
   bool protectPiecesInMills;
   bool blockWinEnabled;
   bool materialWinEnabled;
+  bool blockWinRequiresReserveEmpty;
+  bool materialWinRequiresReserveEmpty;
+  bool skipBlockedWithReserve;
 };
 
 extern const RuleSet ClassicRuleSet;
@@ -61,6 +71,7 @@ struct MorrisGameState {
   uint8_t piecesOnBoard[2] = {0, 0};
   uint8_t turnsSinceCapture = 0;
   GamePhase phaseAfterCapture = PHASE_PLACING;
+  TurnActionMode actionMode = TURN_ACTION_PLACE;
   bool millPending = false;
   bool lastMoveMadeMill = false;
 };
@@ -74,5 +85,7 @@ bool canPlaceAt(const MorrisGameState &game, uint8_t point);
 bool playerCanFly(const MorrisGameState &game, Player player);
 bool canMovePiece(const MorrisGameState &game, uint8_t from, uint8_t to);
 bool canCaptureAt(const MorrisGameState &game, uint8_t point);
+bool canToggleActionMode(const MorrisGameState &game);
+void toggleActionMode(MorrisGameState &game);
 bool applyPrimaryAction(MorrisGameState &game);
 void advanceCursor(MorrisGameState &game, int8_t delta);
