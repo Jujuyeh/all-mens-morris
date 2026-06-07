@@ -4,7 +4,7 @@
 
 constexpr uint8_t MORRIS_MAX_POINT_COUNT = 24;
 constexpr uint8_t MORRIS_MAX_MILL_COUNT = 16;
-constexpr uint8_t MORRIS_MAX_ADJACENCY_SLOTS = 4;
+constexpr uint8_t MORRIS_MAX_ADJACENCY_SLOTS = 8;
 
 struct BoardPoint {
   uint8_t x;

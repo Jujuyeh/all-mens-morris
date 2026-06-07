@@ -43,6 +43,7 @@ profile should include:
   board drawing and legal movement;
 - mill lines as point-index triples;
 - optional rule flags, such as flying enabled or capture restrictions;
+- mill behavior, currently capture after mill or immediate win after mill;
 - asset paths for board sprite, FX banner, and preview art.
 
 The generated firmware data should stay data-first, matching the current
@@ -115,7 +116,9 @@ Implemented first:
   adjacency, malformed mills, and core numeric rule fields;
 - JSON duplication/saving through local project endpoints;
 - `make board-data`, which validates board profiles and generates
-  `src/GeneratedBoards.*` for firmware.
+  `src/GeneratedBoards.*` for firmware;
+- generated `RuleSet` mill behavior, allowing Nine/Six Men's Morris to capture
+  after mills and Three Men's Morris to win immediately after forming a mill.
 
 ```sh
 make board-data

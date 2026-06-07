@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 MAX_POINT_COUNT = 24
 MAX_MILL_COUNT = 16
-MAX_ADJACENCY_SLOTS = 4
+MAX_ADJACENCY_SLOTS = 8
 EMPTY_ADJACENCY = 255
 
 
@@ -40,6 +40,13 @@ def require_uint8(path: Path, rules: dict, key: str) -> int:
     value = rules.get(key)
     if not isinstance(value, int) or not 0 <= value <= 255:
         raise ValueError(f"{path}: rules.{key} must be uint8")
+    return value
+
+
+def require_mill_action(path: Path, rules: dict) -> str:
+    value = rules.get("millAction")
+    if value not in ("capture", "win"):
+        raise ValueError(f"{path}: rules.millAction must be capture or win")
     return value
 
 
@@ -113,6 +120,7 @@ def validate_profile(path: Path, data: dict) -> None:
     require_uint8(path, rules, "minPiecesToContinue")
     require_uint8(path, rules, "flyPieceCount")
     require_uint8(path, rules, "noCaptureDrawTurnLimit")
+    require_mill_action(path, rules)
     require_bool(path, rules, "flyingEnabled")
     require_bool(path, rules, "protectPiecesInMills")
     require_bool(path, rules, "blockWinEnabled")
@@ -121,6 +129,12 @@ def validate_profile(path: Path, data: dict) -> None:
 
 def bool_literal(value: bool) -> str:
     return "true" if value else "false"
+
+
+def mill_action_literal(value: str) -> str:
+    if value == "win":
+        return "MILL_ACTION_WIN"
+    return "MILL_ACTION_CAPTURE"
 
 
 def format_points(profile: dict) -> str:
@@ -145,7 +159,7 @@ def format_adjacency(profile: dict) -> str:
         padded = neighbors + [EMPTY_ADJACENCY] * (MAX_ADJACENCY_SLOTS - len(neighbors))
         rows.append("  {" + ", ".join(str(value) for value in padded) + "},")
     for _ in range(MAX_POINT_COUNT - len(profile["adjacency"])):
-        rows.append("  {255, 255, 255, 255},")
+        rows.append("  {" + ", ".join(["255"] * MAX_ADJACENCY_SLOTS) + "},")
     return "\n".join(rows)
 
 
@@ -229,6 +243,7 @@ def generated_source(profiles: list[dict]) -> str:
                 f"  {rules['minPiecesToContinue']},",
                 f"  {rules['flyPieceCount']},",
                 f"  {rules['noCaptureDrawTurnLimit']},",
+                f"  {mill_action_literal(rules['millAction'])},",
                 f"  {bool_literal(rules['flyingEnabled'])},",
                 f"  {bool_literal(rules['protectPiecesInMills'])},",
                 f"  {bool_literal(rules['blockWinEnabled'])},",

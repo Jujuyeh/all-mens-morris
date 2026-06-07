@@ -37,8 +37,8 @@ Implemented:
 - Win/loss detection when an opponent is reduced below three pieces after all
   reserves are placed, or when the active player has no legal move.
 - Draw detection after 50 movement turns without a capture.
-- Main menu scaffold for choosing modes, with Classic Nine Men's Morris and Six
-  Men's Morris active and future entries marked as `SOON`.
+- Main menu scaffold for choosing modes, with Classic Nine Men's Morris, Six
+  Men's Morris, and Three Men's Morris active.
 - Horizontal board selector in the main menu, with left/right cycling board
   titles and up/down moving between board and first-player settings.
 - Data-backed `BoardDefinition` and `RuleSet` generation for board and rule
@@ -47,6 +47,9 @@ Implemented:
   regenerating firmware data.
 - Playable Six Men's Morris profile with a two-square board, six pieces per
   player, and side-line mill triples.
+- Playable Three Men's Morris profile with a 3x3 board, three pieces per
+  player, diagonal mills, and immediate win on mill formation instead of
+  capture.
 - Main menu setting for whether white or black moves first.
 - Directional cursor navigation that follows the board geometry.
 - Hold-A quick menu for reset, one-state rewind, and returning to the main menu.
@@ -63,7 +66,7 @@ Implemented:
 Not implemented yet:
 
 - AI.
-- Three Men's Morris and other alternate boards.
+- More alternate boards.
 
 ## Variant Ideas
 

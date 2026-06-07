@@ -21,10 +21,16 @@ enum WinReason : uint8_t {
   WIN_NONE,
   WIN_BY_MATERIAL,
   WIN_BY_BLOCK,
+  WIN_BY_MILL,
   WIN_DRAW_NO_CAPTURE,
 };
 
 constexpr uint8_t DRAW_NO_CAPTURE_TURN_LIMIT = 50;
+
+enum MillAction : uint8_t {
+  MILL_ACTION_CAPTURE,
+  MILL_ACTION_WIN,
+};
 
 struct RuleSet {
   const char *id;
@@ -32,6 +38,7 @@ struct RuleSet {
   uint8_t minPiecesToContinue;
   uint8_t flyPieceCount;
   uint8_t noCaptureDrawTurnLimit;
+  MillAction millAction;
   bool flyingEnabled;
   bool protectPiecesInMills;
   bool blockWinEnabled;

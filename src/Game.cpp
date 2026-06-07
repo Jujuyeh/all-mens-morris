@@ -26,7 +26,7 @@ constexpr uint8_t HUD_LEFT_X = 1;
 constexpr uint8_t HUD_RIGHT_X = 99;
 constexpr uint8_t NO_POINT = 255;
 constexpr uint8_t MENU_ITEM_COUNT = 2;
-constexpr uint8_t BOARD_MENU_COUNT = MORRIS_BOARD_PROFILE_COUNT + 1;
+constexpr uint8_t BOARD_MENU_COUNT = MORRIS_BOARD_PROFILE_COUNT;
 constexpr uint8_t BOOT_LOGO_X = 52;
 constexpr uint8_t BOOT_LOGO_Y = 26;
 constexpr uint8_t BOOT_DUST_START_FRAMES = framesAtGameFps(20);
@@ -575,7 +575,13 @@ void drawHud() {
     if (game.winReason == WIN_DRAW_NO_CAPTURE) {
       tinyfont.print("NO CAP");
     } else {
-      tinyfont.print(game.winReason == WIN_BY_BLOCK ? "BLOCK" : "2 MEN");
+      if (game.winReason == WIN_BY_BLOCK) {
+        tinyfont.print("BLOCK");
+      } else if (game.winReason == WIN_BY_MILL) {
+        tinyfont.print("MILL");
+      } else {
+        tinyfont.print("2 MEN");
+      }
     }
   }
 
@@ -593,10 +599,7 @@ const char *boardMenuTitle() {
   if (board != nullptr) {
     return board->label;
   }
-  if (selectedBoardMenuItem == MORRIS_BOARD_PROFILE_COUNT) {
-    return "THREE MEN";
-  }
-  return "CLASSIC 9";
+  return "SOON";
 }
 
 uint8_t textPixelWidth(const char *text) {

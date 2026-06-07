@@ -207,7 +207,11 @@ static void enterCapture(MorrisGameState &game, GamePhase phaseAfterCapture) {
 
 static void finishAction(MorrisGameState &game, GamePhase currentPhase) {
   if (game.lastMoveMadeMill) {
-    enterCapture(game, currentPhase);
+    if (game.rules->millAction == MILL_ACTION_WIN) {
+      setGameOver(game, game.currentPlayer, WIN_BY_MILL);
+    } else {
+      enterCapture(game, currentPhase);
+    }
     return;
   }
 

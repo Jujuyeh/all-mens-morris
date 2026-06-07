@@ -24,17 +24,22 @@
 - Added `make board-data` generation from board profiles into firmware
   `BoardDefinition`/`RuleSet` data.
 - Made Six Men's Morris playable from the main menu.
+- Added mill behavior as a rule knob so variants can capture on mills or win
+  immediately on mills.
+- Added a playable Three Men's Morris profile.
 
 ## Next Cycle
 
-1. Test Six Men's Morris on device/libretro and tune its graph/art direction.
-2. Add a Three Men's Morris profile and decide whether it should be playable.
+1. Test Six Men's Morris and Three Men's Morris on device/libretro and tune
+   their graph/art direction.
+2. Add generated profile metadata for menu labels, availability, and future
+   variant descriptions.
 3. Continue the pixel-art pass for pieces and final board/menu assets.
 
 ## Later
 
 - AI opponent.
-- Board/rule variant definitions.
+- More board/rule variant definitions.
 - More advanced draw rules, such as repeated-position detection.
 - TableTop Studio for designing board sprites and playable graph data together.
 - Save/settings support.

@@ -12,9 +12,14 @@ extern const BoardPoint SixMenBoardPoints[MORRIS_MAX_POINT_COUNT] PROGMEM;
 extern const MillLine SixMenMills[MORRIS_MAX_MILL_COUNT] PROGMEM;
 extern const uint8_t SixMenAdjacency[MORRIS_MAX_POINT_COUNT][MORRIS_MAX_ADJACENCY_SLOTS] PROGMEM;
 extern const BoardDefinition SixMenBoardDefinition;
+extern const BoardPoint ThreeMenBoardPoints[MORRIS_MAX_POINT_COUNT] PROGMEM;
+extern const MillLine ThreeMenMills[MORRIS_MAX_MILL_COUNT] PROGMEM;
+extern const uint8_t ThreeMenAdjacency[MORRIS_MAX_POINT_COUNT][MORRIS_MAX_ADJACENCY_SLOTS] PROGMEM;
+extern const BoardDefinition ThreeMenBoardDefinition;
 extern const RuleSet ClassicRuleSet;
 extern const RuleSet SixMenRuleSet;
+extern const RuleSet ThreeMenRuleSet;
 
-constexpr uint8_t MORRIS_BOARD_PROFILE_COUNT = 2;
+constexpr uint8_t MORRIS_BOARD_PROFILE_COUNT = 3;
 extern const BoardDefinition *const MorrisBoardProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM;
 extern const RuleSet *const MorrisRuleProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM;
