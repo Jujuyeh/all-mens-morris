@@ -210,11 +210,12 @@ canvas {
 }
 
 .legend .line {
-  background: var(--line);
+  background: repeating-linear-gradient(90deg, #f7f7f7 0 6px, #050505 6px 11px);
+  border: 1px solid #555;
 }
 
 .legend .mill {
-  background: var(--mill);
+  background: linear-gradient(90deg, #ffcf5a, #ff7474, #7ee787, #b48cff);
   height: 7px;
 }
 

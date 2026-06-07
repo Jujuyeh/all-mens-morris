@@ -32,6 +32,16 @@ const el = {
 };
 
 const ctx = el.canvas.getContext("2d");
+const MILL_COLORS = [
+  "#ffcf5a",
+  "#ff7474",
+  "#7ee787",
+  "#b48cff",
+  "#ff9f5a",
+  "#5de4ff",
+  "#f778ba",
+  "#d7ff72",
+];
 
 function setStatus(text) {
   el.status.textContent = text;
@@ -106,6 +116,17 @@ function drawLine(board, pair, color, width, dash = []) {
   ctx.setLineDash([]);
 }
 
+function drawBoardConnection(board, pair) {
+  drawLine(board, pair, "#050505", 3, [8, 5]);
+  drawLine(board, pair, "#f7f7f7", 1.5, [8, 5]);
+}
+
+function drawMillSegment(board, pair, millIndex) {
+  const color = MILL_COLORS[millIndex % MILL_COLORS.length];
+  const width = 12 + (millIndex % 3) * 4;
+  drawLine(board, pair, color, width);
+}
+
 function ensureGraphArrays(board) {
   board.points ||= [];
   board.adjacency ||= [];
@@ -178,10 +199,10 @@ function drawBoard() {
   if (!board) return;
 
   if (el.showMills.checked) {
-    ctx.globalAlpha = 0.8;
-    (board.mills || []).forEach((mill) => {
-      drawLine(board, [mill[0], mill[1]], "#ffcf5a", 8);
-      drawLine(board, [mill[1], mill[2]], "#ffcf5a", 8);
+    ctx.globalAlpha = 0.72;
+    (board.mills || []).forEach((mill, index) => {
+      drawMillSegment(board, [mill[0], mill[1]], index);
+      drawMillSegment(board, [mill[1], mill[2]], index);
     });
     ctx.globalAlpha = 1;
   }
@@ -189,7 +210,7 @@ function drawBoard() {
   if (el.showAdjacency.checked) {
     (board.adjacency || []).forEach((edges, index) => {
       (edges || []).forEach((to) => {
-        if (to > index) drawLine(board, [index, to], "#69b7ff", 4);
+        if (to > index) drawBoardConnection(board, [index, to]);
       });
     });
   }
