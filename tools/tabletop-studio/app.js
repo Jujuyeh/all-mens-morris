@@ -20,6 +20,7 @@ const el = {
   tools: Array.from(document.querySelectorAll("[data-tool]")),
   showAdjacency: document.querySelector("#showAdjacency"),
   showMills: document.querySelector("#showMills"),
+  cursorInfo: document.querySelector("#cursorInfo"),
   selectionInfo: document.querySelector("#selectionInfo"),
   summary: document.querySelector("#summary"),
   validation: document.querySelector("#validation"),
@@ -550,10 +551,18 @@ function handleCanvasDown(event) {
 
 function handleCanvasMove(event) {
   const board = selectedBoard();
-  if (!board || state.dragPoint === null) return;
-  board.points[state.dragPoint] = canvasToBoard(event);
+  if (!board) return;
+  const point = canvasToBoard(event);
+  el.cursorInfo.textContent = `x ${point.x} y ${point.y}`;
+  if (state.dragPoint === null) return;
+  board.points[state.dragPoint] = point;
   syncRawFromState();
   render();
+}
+
+function handleCanvasLeave() {
+  el.cursorInfo.textContent = "x -- y --";
+  handleCanvasUp();
 }
 
 function handleCanvasUp() {
@@ -599,6 +608,7 @@ el.tools.forEach((tool) => {
 });
 el.canvas.addEventListener("mousedown", handleCanvasDown);
 el.canvas.addEventListener("mousemove", handleCanvasMove);
+el.canvas.addEventListener("mouseleave", handleCanvasLeave);
 window.addEventListener("mouseup", handleCanvasUp);
 
 loadBoards().catch((error) => setStatus(error.message));

@@ -183,9 +183,14 @@ textarea {
   gap: 6px;
 }
 
+.cursorInfo,
 .selectionInfo {
   margin-left: auto;
   color: var(--muted);
+}
+
+.selectionInfo {
+  margin-left: 0;
 }
 
 canvas {
