@@ -1,7 +1,21 @@
 #include "Rules.h"
 
-void resetMorrisGame(MorrisGameState &game) {
-  for (uint8_t i = 0; i < MORRIS_POINT_COUNT; i++) {
+const RuleSet ClassicRuleSet = {
+  "classic-nine",
+  9,
+  3,
+  3,
+  DRAW_NO_CAPTURE_TURN_LIMIT,
+  true,
+  true,
+  true,
+  true,
+};
+
+void resetMorrisGame(MorrisGameState &game, const BoardDefinition &board, const RuleSet &rules) {
+  game.board = &board;
+  game.rules = &rules;
+  for (uint8_t i = 0; i < MORRIS_MAX_POINT_COUNT; i++) {
     game.points[i] = PLAYER_NONE;
   }
   game.currentPlayer = PLAYER_ONE;
@@ -10,14 +24,18 @@ void resetMorrisGame(MorrisGameState &game) {
   game.winReason = WIN_NONE;
   game.cursor = 0;
   game.selected = 255;
-  game.piecesToPlace[0] = 9;
-  game.piecesToPlace[1] = 9;
+  game.piecesToPlace[0] = rules.piecesPerPlayer;
+  game.piecesToPlace[1] = rules.piecesPerPlayer;
   game.piecesOnBoard[0] = 0;
   game.piecesOnBoard[1] = 0;
   game.turnsSinceCapture = 0;
   game.phaseAfterCapture = PHASE_PLACING;
   game.millPending = false;
   game.lastMoveMadeMill = false;
+}
+
+void resetMorrisGame(MorrisGameState &game) {
+  resetMorrisGame(game, ClassicBoardDefinition, ClassicRuleSet);
 }
 
 uint8_t playerIndex(Player player) {
@@ -33,8 +51,8 @@ bool isMillAt(const MorrisGameState &game, uint8_t point, Player player) {
     return false;
   }
 
-  for (uint8_t i = 0; i < MORRIS_MILL_COUNT; i++) {
-    MillLine line = millLine(i);
+  for (uint8_t i = 0; i < game.board->millCount; i++) {
+    MillLine line = millLine(*game.board, i);
     bool containsPoint = line.a == point || line.b == point || line.c == point;
     if (!containsPoint) {
       continue;
@@ -54,9 +72,10 @@ bool canPlaceAt(const MorrisGameState &game, uint8_t point) {
 
 bool playerCanFly(const MorrisGameState &game, Player player) {
   uint8_t index = playerIndex(player);
-  return game.phase == PHASE_MOVING
+  return game.rules->flyingEnabled
+      && game.phase == PHASE_MOVING
       && game.piecesToPlace[index] == 0
-      && game.piecesOnBoard[index] == 3;
+      && game.piecesOnBoard[index] == game.rules->flyPieceCount;
 }
 
 bool canMovePiece(const MorrisGameState &game, uint8_t from, uint8_t to) {
@@ -70,8 +89,8 @@ bool canMovePiece(const MorrisGameState &game, uint8_t from, uint8_t to) {
     return true;
   }
 
-  for (uint8_t slot = 0; slot < MORRIS_ADJACENCY_SLOTS; slot++) {
-    if (adjacentPoint(from, slot) == to) {
+  for (uint8_t slot = 0; slot < game.board->adjacencySlots; slot++) {
+    if (adjacentPoint(*game.board, from, slot) == to) {
       return true;
     }
   }
@@ -79,7 +98,7 @@ bool canMovePiece(const MorrisGameState &game, uint8_t from, uint8_t to) {
 }
 
 static bool playerHasPieceOutsideMill(const MorrisGameState &game, Player player) {
-  for (uint8_t point = 0; point < MORRIS_POINT_COUNT; point++) {
+  for (uint8_t point = 0; point < game.board->pointCount; point++) {
     if (game.points[point] == player && !isMillAt(game, point, player)) {
       return true;
     }
@@ -97,7 +116,8 @@ bool canCaptureAt(const MorrisGameState &game, uint8_t point) {
     return false;
   }
 
-  return !isMillAt(game, point, opponent)
+  return !game.rules->protectPiecesInMills
+      || !isMillAt(game, point, opponent)
       || !playerHasPieceOutsideMill(game, opponent);
 }
 
@@ -106,7 +126,7 @@ static void endTurn(MorrisGameState &game) {
 }
 
 static bool playerHasOpenPoint(const MorrisGameState &game) {
-  for (uint8_t point = 0; point < MORRIS_POINT_COUNT; point++) {
+  for (uint8_t point = 0; point < game.board->pointCount; point++) {
     if (game.points[point] == PLAYER_NONE) {
       return true;
     }
@@ -123,13 +143,13 @@ static bool playerHasLegalMove(const MorrisGameState &game, Player player) {
     return playerHasOpenPoint(game);
   }
 
-  for (uint8_t point = 0; point < MORRIS_POINT_COUNT; point++) {
+  for (uint8_t point = 0; point < game.board->pointCount; point++) {
     if (game.points[point] != player) {
       continue;
     }
 
-    for (uint8_t slot = 0; slot < MORRIS_ADJACENCY_SLOTS; slot++) {
-      uint8_t adjacent = adjacentPoint(point, slot);
+    for (uint8_t slot = 0; slot < game.board->adjacencySlots; slot++) {
+      uint8_t adjacent = adjacentPoint(*game.board, point, slot);
       if (adjacent != 255 && game.points[adjacent] == PLAYER_NONE) {
         return true;
       }
@@ -140,7 +160,9 @@ static bool playerHasLegalMove(const MorrisGameState &game, Player player) {
 
 static bool playerHasTooFewPieces(const MorrisGameState &game, Player player) {
   uint8_t index = playerIndex(player);
-  return game.piecesToPlace[index] == 0 && game.piecesOnBoard[index] < 3;
+  return game.rules->materialWinEnabled
+      && game.piecesToPlace[index] == 0
+      && game.piecesOnBoard[index] < game.rules->minPiecesToContinue;
 }
 
 static void setGameOver(MorrisGameState &game, Player winner, WinReason reason) {
@@ -171,7 +193,7 @@ static void checkCurrentPlayerLoss(MorrisGameState &game) {
     return;
   }
 
-  if (!playerHasLegalMove(game, game.currentPlayer)) {
+  if (game.rules->blockWinEnabled && !playerHasLegalMove(game, game.currentPlayer)) {
     setGameOver(game, opponentOf(game.currentPlayer), WIN_BY_BLOCK);
   }
 }
@@ -181,7 +203,8 @@ static bool checkNoCaptureDraw(MorrisGameState &game) {
     return false;
   }
 
-  if (game.turnsSinceCapture >= DRAW_NO_CAPTURE_TURN_LIMIT) {
+  if (game.rules->noCaptureDrawTurnLimit > 0
+      && game.turnsSinceCapture >= game.rules->noCaptureDrawTurnLimit) {
     setDraw(game, WIN_DRAW_NO_CAPTURE);
     return true;
   }
@@ -297,10 +320,10 @@ bool applyPrimaryAction(MorrisGameState &game) {
 void advanceCursor(MorrisGameState &game, int8_t delta) {
   int8_t next = static_cast<int8_t>(game.cursor) + delta;
   while (next < 0) {
-    next += MORRIS_POINT_COUNT;
+    next += game.board->pointCount;
   }
-  while (next >= MORRIS_POINT_COUNT) {
-    next -= MORRIS_POINT_COUNT;
+  while (next >= game.board->pointCount) {
+    next -= game.board->pointCount;
   }
   game.cursor = static_cast<uint8_t>(next);
 }

@@ -12,9 +12,10 @@ The implementation is split into:
 
 - `src/Game.cpp`: Arduboy setup, custom boot animation, input, rendering,
   sound/RGB feedback, main menu, quick menu, and current UI.
-- `src/Board.*`: classic board coordinates, mill triples, and adjacency.
-- `src/Rules.*`: mutable game state, legal actions, mill capture rules, flying,
-  win detection, and phase transitions.
+- `src/Board.*`: `BoardDefinition` data for board graph coordinates, mill
+  triples, adjacency, and simple visual line rendering.
+- `src/Rules.*`: mutable game state, `RuleSet` configuration, legal actions,
+  mill capture rules, flying, win detection, and phase transitions.
 - `src/Assets.*`: shared PROGMEM sprites, currently including title and boot
   logo assets.
 
@@ -32,10 +33,16 @@ The rule engine should not know about screen layout. It should operate on point
 indices and board data so later variants can swap topology without rewriting the
 state machine.
 
+Board and rules data are deliberately separate. Future TableTop Studio output
+should generate a board definition from the visual board sprite plus graph
+overlay, and a rule set from variant settings such as piece count, flying,
+capture protection, material wins, blocked wins, and draw counters.
+
 ## Near-Term Refactor Targets
 
-- Represent board variants through a `BoardDefinition` struct.
 - Separate scene state from match state.
+- Add the first non-classic board definition once Classic is stable on the new
+  `BoardDefinition`/`RuleSet` contract.
 - Add debug-only helpers behind `ALL_MENS_MORRIS_DEBUG`.
 - Add save/settings support only after gameplay rules settle.
 - Use the TableTop Studio plan in `docs/tabletop-studio.md` when board variant

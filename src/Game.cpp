@@ -76,14 +76,16 @@ void setMessage(const char *text) {
 }
 
 BoardPoint screenPoint(uint8_t index) {
-  BoardPoint point = boardPoint(index);
+  BoardPoint point = boardPoint(*game.board, index);
   point.x += BOARD_OFFSET_X;
   point.y += BOARD_OFFSET_Y;
   return point;
 }
 
 bool gameStateChanged(const MorrisGameState &before, const MorrisGameState &after) {
-  if (before.currentPlayer != after.currentPlayer
+  if (before.board != after.board
+      || before.rules != after.rules
+      || before.currentPlayer != after.currentPlayer
       || before.winner != after.winner
       || before.phase != after.phase
       || before.winReason != after.winReason
@@ -101,7 +103,7 @@ bool gameStateChanged(const MorrisGameState &before, const MorrisGameState &afte
     }
   }
 
-  for (uint8_t point = 0; point < MORRIS_POINT_COUNT; point++) {
+  for (uint8_t point = 0; point < before.board->pointCount; point++) {
     if (before.points[point] != after.points[point]) {
       return true;
     }
@@ -110,7 +112,7 @@ bool gameStateChanged(const MorrisGameState &before, const MorrisGameState &afte
 }
 
 void startMatch() {
-  resetMorrisGame(game);
+  resetMorrisGame(game, ClassicBoardDefinition, ClassicRuleSet);
   game.currentPlayer = firstPlayer;
   hasUndo = false;
   millFlashFrames = 0;
@@ -121,7 +123,7 @@ void startMatch() {
 
 #ifdef ALL_MENS_MORRIS_DEBUG
 void clearDebugBoard() {
-  for (uint8_t point = 0; point < MORRIS_POINT_COUNT; point++) {
+  for (uint8_t point = 0; point < MORRIS_MAX_POINT_COUNT; point++) {
     game.points[point] = PLAYER_NONE;
   }
   game.cursor = 0;
@@ -237,16 +239,16 @@ uint16_t absoluteDelta(int16_t value) {
 }
 
 uint8_t cursorToward(int8_t dx, int8_t dy) {
-  BoardPoint current = boardPoint(game.cursor);
+  BoardPoint current = boardPoint(*game.board, game.cursor);
   uint8_t best = NO_POINT;
   uint16_t bestDistance = 65535;
 
-  for (uint8_t point = 0; point < MORRIS_POINT_COUNT; point++) {
+  for (uint8_t point = 0; point < game.board->pointCount; point++) {
     if (point == game.cursor) {
       continue;
     }
 
-    BoardPoint candidate = boardPoint(point);
+    BoardPoint candidate = boardPoint(*game.board, point);
     int16_t deltaX = static_cast<int16_t>(candidate.x) - current.x;
     int16_t deltaY = static_cast<int16_t>(candidate.y) - current.y;
     if ((dx < 0 && deltaX >= 0) || (dx > 0 && deltaX <= 0)
@@ -405,30 +407,18 @@ void updateMillLed() {
   }
 }
 
-void drawBoardLine(uint8_t a, uint8_t b) {
+void drawBoardLine(BoardVisualLine line) {
+  uint8_t a = line.a;
+  uint8_t b = line.b;
   BoardPoint pa = screenPoint(a);
   BoardPoint pb = screenPoint(b);
   arduboy.drawLine(pa.x, pa.y, pb.x, pb.y, BLACK);
 }
 
-void drawClassicBoard() {
-  drawBoardLine(0, 2);
-  drawBoardLine(3, 5);
-  drawBoardLine(6, 8);
-  drawBoardLine(9, 11);
-  drawBoardLine(12, 14);
-  drawBoardLine(15, 17);
-  drawBoardLine(18, 20);
-  drawBoardLine(21, 23);
-
-  drawBoardLine(0, 21);
-  drawBoardLine(3, 18);
-  drawBoardLine(6, 15);
-  drawBoardLine(1, 7);
-  drawBoardLine(16, 22);
-  drawBoardLine(8, 17);
-  drawBoardLine(5, 20);
-  drawBoardLine(2, 23);
+void drawBoard() {
+  for (uint8_t i = 0; i < game.board->visualLineCount; i++) {
+    drawBoardLine(visualLine(*game.board, i));
+  }
 }
 
 void drawPiece(uint8_t point, Player player) {
@@ -703,8 +693,8 @@ void drawConfirm() {
 
 void drawGame() {
   tinyfont.setTextColor(BLACK);
-  drawClassicBoard();
-  for (uint8_t i = 0; i < MORRIS_POINT_COUNT; i++) {
+  drawBoard();
+  for (uint8_t i = 0; i < game.board->pointCount; i++) {
     drawPiece(i, game.points[i]);
   }
   drawCursor();
@@ -890,7 +880,7 @@ void gameSetup() {
   arduboy.setTextColor(BLACK);
   arduboy.audio.begin();
   tinyfont.setTextColor(BLACK);
-  resetMorrisGame(game);
+  resetMorrisGame(game, ClassicBoardDefinition, ClassicRuleSet);
   playBootAnimation();
 }
 

@@ -16,11 +16,14 @@
   inverted horizontal main-menu board selector.
 - Added a custom inverted boot animation that skips the stock Arduboy logo and
   LED startup animation.
+- Added `BoardDefinition` and `RuleSet` scaffolding so future variants can
+  change board graph data and rule knobs independently.
 
 ## Next Cycle
 
-1. Continue the pixel-art pass for pieces and final board/menu assets.
-2. Plan TableTop Studio from Pocket Pixel's Pet Studio, starting with board
+1. Add the first non-classic board definition on top of `BoardDefinition`.
+2. Continue the pixel-art pass for pieces and final board/menu assets.
+3. Plan TableTop Studio from Pocket Pixel's Pet Studio, starting with board
    profile JSON, graph overlays, and sprite/banner editing.
 
 ## Later

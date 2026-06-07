@@ -14,9 +14,10 @@ campaign-style ideas without mixing rule logic into rendering code.
 Early scaffold. The project compiles and runs, but the full game is not complete
 yet. Current controls:
 
-- Main menu up/down: choose a mode.
-- Main menu B: start the selected mode, or toggle a selected setting.
-- Main menu First setting: choose whether white or black moves first.
+- Main menu up/down: switch between board selection and first-player setting.
+- Main menu left/right: change the selected board or first-player setting.
+- Main menu B: start Classic, toggle the first-player setting, or show `SOON`
+  for unavailable boards.
 - In game d-pad: move the cursor in that board direction.
 - B: place/select/confirm/capture.
 - Hold A: show quick menu.

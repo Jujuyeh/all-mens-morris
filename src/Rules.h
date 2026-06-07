@@ -26,8 +26,24 @@ enum WinReason : uint8_t {
 
 constexpr uint8_t DRAW_NO_CAPTURE_TURN_LIMIT = 50;
 
+struct RuleSet {
+  const char *id;
+  uint8_t piecesPerPlayer;
+  uint8_t minPiecesToContinue;
+  uint8_t flyPieceCount;
+  uint8_t noCaptureDrawTurnLimit;
+  bool flyingEnabled;
+  bool protectPiecesInMills;
+  bool blockWinEnabled;
+  bool materialWinEnabled;
+};
+
+extern const RuleSet ClassicRuleSet;
+
 struct MorrisGameState {
-  Player points[MORRIS_POINT_COUNT] = {};
+  const BoardDefinition *board = &ClassicBoardDefinition;
+  const RuleSet *rules = &ClassicRuleSet;
+  Player points[MORRIS_MAX_POINT_COUNT] = {};
   Player currentPlayer = PLAYER_ONE;
   Player winner = PLAYER_NONE;
   GamePhase phase = PHASE_PLACING;
@@ -43,6 +59,7 @@ struct MorrisGameState {
 };
 
 void resetMorrisGame(MorrisGameState &game);
+void resetMorrisGame(MorrisGameState &game, const BoardDefinition &board, const RuleSet &rules);
 uint8_t playerIndex(Player player);
 Player opponentOf(Player player);
 bool isMillAt(const MorrisGameState &game, uint8_t point, Player player);

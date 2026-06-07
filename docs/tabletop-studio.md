@@ -47,6 +47,16 @@ The generated firmware data should stay data-first, matching the current
 `Board.*` direction. Rules should consume point indices, adjacency, and mill
 lines, not pixels.
 
+Firmware currently separates this into:
+
+- `BoardDefinition`: board id, display label, point coordinates, mill triples,
+  adjacency slots, and simple visual line data;
+- `RuleSet`: rule id, pieces per player, flying settings, protected mill
+  capture behavior, material/block win switches, and no-capture draw limit.
+
+Studio output should target these structures first, then grow into richer board
+sprites once the graph/rule data is stable.
+
 ## Editor Modes
 
 Initial TableTop Studio modes:

@@ -41,6 +41,8 @@ Implemented:
   and smaller variants listed as future entries.
 - Horizontal board selector in the main menu, with left/right cycling board
   titles and up/down moving between board and first-player settings.
+- Data-backed `BoardDefinition` and `RuleSet` scaffolding for future board and
+  rule variants.
 - Main menu setting for whether white or black moves first.
 - Directional cursor navigation that follows the board geometry.
 - Hold-A quick menu for reset, one-state rewind, and returning to the main menu.

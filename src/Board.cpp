@@ -2,7 +2,7 @@
 
 // Screen-space coordinates for the classic 24-point Nine Men's Morris board.
 // They are deliberately data-only so future board variants can live beside them.
-const BoardPoint ClassicBoardPoints[MORRIS_POINT_COUNT] PROGMEM = {
+const BoardPoint ClassicBoardPoints[MORRIS_MAX_POINT_COUNT] PROGMEM = {
   {4, 4}, {32, 4}, {60, 4}, {12, 12}, {32, 12}, {52, 12},
   {20, 20}, {32, 20}, {44, 20}, {4, 32}, {12, 32}, {20, 32},
   {44, 32}, {52, 32}, {60, 32}, {20, 44}, {32, 44}, {44, 44},
@@ -10,7 +10,7 @@ const BoardPoint ClassicBoardPoints[MORRIS_POINT_COUNT] PROGMEM = {
 };
 
 // Every possible mill in the classic board. Detection checks these triples.
-const MillLine ClassicMills[MORRIS_MILL_COUNT] PROGMEM = {
+const MillLine ClassicMills[MORRIS_MAX_MILL_COUNT] PROGMEM = {
   {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {9, 10, 11},
   {12, 13, 14}, {15, 16, 17}, {18, 19, 20}, {21, 22, 23},
   {0, 9, 21}, {3, 10, 18}, {6, 11, 15}, {1, 4, 7},
@@ -18,7 +18,7 @@ const MillLine ClassicMills[MORRIS_MILL_COUNT] PROGMEM = {
 };
 
 // 255 marks an empty adjacency slot. Keeping a fixed width avoids heap use.
-const uint8_t ClassicAdjacency[MORRIS_POINT_COUNT][MORRIS_ADJACENCY_SLOTS] PROGMEM = {
+const uint8_t ClassicAdjacency[MORRIS_MAX_POINT_COUNT][MORRIS_MAX_ADJACENCY_SLOTS] PROGMEM = {
   {1, 9, 255, 255},
   {0, 2, 4, 255},
   {1, 14, 255, 255},
@@ -45,18 +45,44 @@ const uint8_t ClassicAdjacency[MORRIS_POINT_COUNT][MORRIS_ADJACENCY_SLOTS] PROGM
   {14, 22, 255, 255},
 };
 
-BoardPoint boardPoint(uint8_t index) {
+const BoardVisualLine ClassicVisualLines[MORRIS_MAX_VISUAL_LINE_COUNT] PROGMEM = {
+  {0, 2}, {3, 5}, {6, 8}, {9, 11},
+  {12, 14}, {15, 17}, {18, 20}, {21, 23},
+  {0, 21}, {3, 18}, {6, 15}, {1, 7},
+  {16, 22}, {8, 17}, {5, 20}, {2, 23},
+};
+
+const BoardDefinition ClassicBoardDefinition = {
+  "classic-nine",
+  "CLASSIC 9",
+  MORRIS_MAX_POINT_COUNT,
+  MORRIS_MAX_MILL_COUNT,
+  MORRIS_MAX_ADJACENCY_SLOTS,
+  MORRIS_MAX_VISUAL_LINE_COUNT,
+  ClassicBoardPoints,
+  ClassicMills,
+  ClassicAdjacency,
+  ClassicVisualLines,
+};
+
+BoardPoint boardPoint(const BoardDefinition &board, uint8_t index) {
   BoardPoint point;
-  memcpy_P(&point, &ClassicBoardPoints[index], sizeof(BoardPoint));
+  memcpy_P(&point, &board.points[index], sizeof(BoardPoint));
   return point;
 }
 
-MillLine millLine(uint8_t index) {
+MillLine millLine(const BoardDefinition &board, uint8_t index) {
   MillLine line;
-  memcpy_P(&line, &ClassicMills[index], sizeof(MillLine));
+  memcpy_P(&line, &board.mills[index], sizeof(MillLine));
   return line;
 }
 
-uint8_t adjacentPoint(uint8_t point, uint8_t slot) {
-  return pgm_read_byte(&ClassicAdjacency[point][slot]);
+uint8_t adjacentPoint(const BoardDefinition &board, uint8_t point, uint8_t slot) {
+  return pgm_read_byte(&board.adjacency[point][slot]);
+}
+
+BoardVisualLine visualLine(const BoardDefinition &board, uint8_t index) {
+  BoardVisualLine line;
+  memcpy_P(&line, &board.visualLines[index], sizeof(BoardVisualLine));
+  return line;
 }
