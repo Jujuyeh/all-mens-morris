@@ -121,9 +121,37 @@ function drawBoardConnection(board, pair) {
   drawLine(board, pair, "#f7f7f7", 1.5, [8, 5]);
 }
 
+function millSegments(mill) {
+  return [
+    [mill[0], mill[1]],
+    [mill[1], mill[2]],
+  ];
+}
+
+function sameSegment(left, right) {
+  return left.length >= 2
+    && right.length >= 2
+    && ((left[0] === right[0] && left[1] === right[1])
+      || (left[0] === right[1] && left[1] === right[0]));
+}
+
+function millSegmentOverlap(board, pair, millIndex) {
+  const overlaps = [];
+  (board.mills || []).forEach((mill, index) => {
+    if (millSegments(mill).some((segment) => sameSegment(segment, pair))) {
+      overlaps.push(index);
+    }
+  });
+  return {
+    count: overlaps.length,
+    rank: overlaps.indexOf(millIndex),
+  };
+}
+
 function drawMillSegment(board, pair, millIndex) {
   const color = MILL_COLORS[millIndex % MILL_COLORS.length];
-  const width = 12 + (millIndex % 3) * 4;
+  const overlap = millSegmentOverlap(board, pair, millIndex);
+  const width = overlap.count > 1 ? 10 + (overlap.count - overlap.rank) * 4 : 10;
   drawLine(board, pair, color, width);
 }
 
