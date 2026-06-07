@@ -32,7 +32,7 @@ endif
 export ARDUINO_DIRECTORIES_DATA := $(ARDUINO_DATA_DIR)
 export ARDUINO_DIRECTORIES_USER := $(SKETCH_DIR)/.arduino-sketchbook
 
-.PHONY: all setup compile compile-debug upload upload-sketch clean hex size size-debug symbols symbols-debug check sim cloud libretro libretro-debug fx-entry tabletop-studio
+.PHONY: all setup compile compile-debug upload upload-sketch clean hex size size-debug symbols symbols-debug check sim cloud libretro libretro-debug fx-entry tabletop-studio board-data
 
 all: compile
 
@@ -107,7 +107,10 @@ fx-entry: compile
 tabletop-studio:
 	python tools/tabletop-studio/server.py --open
 
-check: compile
+board-data:
+	python tools/board-data/generate.py
+
+check: board-data compile
 
 clean:
 	rm -rf "$(BUILD_DIR)" "$(DIST_DIR)"

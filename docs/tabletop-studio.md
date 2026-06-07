@@ -90,7 +90,7 @@ This overlay is the contract between art and play:
 
 The overlay should be exportable as JSON and as generated C++/PROGMEM data.
 
-## Future Build Integration
+## Build Integration
 
 Implemented first:
 
@@ -113,13 +113,10 @@ Implemented first:
   a `64x64` board;
 - basic validation for missing points, duplicate/self edges, non-bidirectional
   adjacency, malformed mills, and core numeric rule fields;
-- JSON duplication/saving through local project endpoints.
-
-Still future:
+- JSON duplication/saving through local project endpoints;
+- `make board-data`, which validates board profiles and generates
+  `src/GeneratedBoards.*` for firmware.
 
 ```sh
 make board-data
 ```
-
-`make board-data` should validate selected board profiles and generate C++ data
-files consumed by `Board.*`.

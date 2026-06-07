@@ -1,17 +1,5 @@
 #include "Rules.h"
 
-const RuleSet ClassicRuleSet = {
-  "classic-nine",
-  9,
-  3,
-  3,
-  DRAW_NO_CAPTURE_TURN_LIMIT,
-  true,
-  true,
-  true,
-  true,
-};
-
 void resetMorrisGame(MorrisGameState &game, const BoardDefinition &board, const RuleSet &rules) {
   game.board = &board;
   game.rules = &rules;

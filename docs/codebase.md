@@ -12,17 +12,20 @@ The implementation is split into:
 
 - `src/Game.cpp`: Arduboy setup, custom boot animation, input, rendering,
   sound/RGB feedback, main menu, quick menu, and current UI.
-- `src/Board.*`: `BoardDefinition` data for board graph coordinates, mill
-  triples, and adjacency. Adjacency is both the visible board connection and
-  the legal movement edge.
+- `src/Board.*`: board helper APIs for `BoardDefinition` graph coordinates,
+  mill triples, and adjacency. Adjacency is both the visible board connection
+  and the legal movement edge.
 - `src/Rules.*`: mutable game state, `RuleSet` configuration, legal actions,
   mill capture rules, flying, win detection, and phase transitions.
+- `src/GeneratedBoards.*`: generated firmware board and rule data from
+  `boards/*.json`, currently Classic Nine Men's Morris and Six Men's Morris.
 - `src/Assets.*`: shared PROGMEM sprites, currently including title and boot
   logo assets.
 - `boards/*.json`: editable board/rule profiles consumed by TableTop Studio and
-  intended to become the source for generated firmware board data.
+  used as the source for generated firmware board data.
 - `tools/tabletop-studio/`: local browser tool for inspecting board graphs,
   validating profiles, and editing JSON board/rule data.
+- `tools/board-data/`: JSON validator/generator for `src/GeneratedBoards.*`.
 
 Startup uses `arduboy.beginDoFirst()` and `arduboy.waitNoButtons()` instead of
 `arduboy.begin()` so the stock Arduboy boot logo and LED animation are skipped.
@@ -38,16 +41,16 @@ The rule engine should not know about screen layout. It should operate on point
 indices and board data so later variants can swap topology without rewriting the
 state machine.
 
-Board and rules data are deliberately separate. Future TableTop Studio output
-should generate a board definition from the graph overlay, and a rule set from
-variant settings such as piece count, flying, capture protection, material wins,
-blocked wins, and draw counters.
+Board and rules data are deliberately separate. `make board-data` generates a
+board definition from the graph overlay, and a rule set from variant settings
+such as piece count, flying, capture protection, material wins, blocked wins,
+and draw counters.
 
 ## Near-Term Refactor Targets
 
 - Separate scene state from match state.
-- Add the first non-classic board definition once Classic is stable on the new
-  `BoardDefinition`/`RuleSet` contract.
+- Continue moving variant-specific menu/debug behavior onto generated profile
+  metadata.
 - Add debug-only helpers behind `ALL_MENS_MORRIS_DEBUG`.
 - Add save/settings support only after gameplay rules settle.
 - Use the TableTop Studio plan in `docs/tabletop-studio.md` when board variant

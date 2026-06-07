@@ -3,10 +3,10 @@
 All Men's Morris is an Arduboy / Arduboy FX strategy game built around Nine
 Men's Morris and related board variants.
 
-The first playable slice implements the classic 24-point board, local two-player
-piece placement, movement, flying with three pieces, mill detection, mandatory
-capture after a mill, basic win detection, and sound/RGB feedback. The project
-is structured so future modes can add different boards, rule variants, AI, and
+The first playable slice implements local two-player Morris variants with piece
+placement, movement, flying with three pieces, mill detection, mandatory capture
+after a mill, basic win detection, and sound/RGB feedback. The project is
+structured so future modes can add different boards, rule variants, AI, and
 campaign-style ideas without mixing rule logic into rendering code.
 
 ## Status
@@ -16,8 +16,8 @@ yet. Current controls:
 
 - Main menu up/down: switch between board selection and first-player setting.
 - Main menu left/right: change the selected board or first-player setting.
-- Main menu B: start Classic, toggle the first-player setting, or show `SOON`
-  for unavailable boards.
+- Main menu B: start the selected playable board, toggle the first-player
+  setting, or show `SOON` for unavailable boards.
 - In game d-pad: move the cursor in that board direction.
 - B: place/select/confirm/capture.
 - Hold A: show quick menu.
@@ -53,6 +53,12 @@ Compile debug:
 make compile-debug
 ```
 
+Regenerate firmware board/rule data from `boards/*.json`:
+
+```sh
+make board-data
+```
+
 Run with libretro:
 
 ```sh
@@ -75,8 +81,9 @@ make tabletop-studio
 
 The first Studio slice loads board profiles from `boards/`, draws and edits the
 playable graph overlay, validates connections/mills/rule settings, and can
-create, duplicate, or save profile JSON. It includes Classic Nine Men's Morris
-and a Studio-only Six Men's Morris study profile.
+create, duplicate, or save profile JSON. `make board-data` converts those
+profiles into firmware C++ data for Classic Nine Men's Morris and Six Men's
+Morris.
 
 ## Layout
 
@@ -92,6 +99,7 @@ and a Studio-only Six Men's Morris study profile.
 |   `-- AllMensMorrisGame.h
 |-- docs/
 |-- tools/tabletop-studio/
+|-- tools/board-data/
 |-- skills/
 |-- nix/
 |-- .github/workflows/

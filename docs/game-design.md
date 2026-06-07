@@ -37,15 +37,15 @@ Implemented:
 - Win/loss detection when an opponent is reduced below three pieces after all
   reserves are placed, or when the active player has no legal move.
 - Draw detection after 50 movement turns without a capture.
-- Main menu scaffold for choosing modes, with Classic Nine Men's Morris active
-  and smaller variants listed as future entries.
+- Main menu scaffold for choosing modes, with Classic Nine Men's Morris and Six
+  Men's Morris active and future entries marked as `SOON`.
 - Horizontal board selector in the main menu, with left/right cycling board
   titles and up/down moving between board and first-player settings.
-- Data-backed `BoardDefinition` and `RuleSet` scaffolding for future board and
-  rule variants.
-- Initial TableTop Studio for studying board profiles before adding them to
-  firmware.
-- Studio-only Six Men's Morris profile with a two-square board, six pieces per
+- Data-backed `BoardDefinition` and `RuleSet` generation for board and rule
+  variants.
+- Initial TableTop Studio for studying and editing board profiles before
+  regenerating firmware data.
+- Playable Six Men's Morris profile with a two-square board, six pieces per
   player, and side-line mill triples.
 - Main menu setting for whether white or black moves first.
 - Directional cursor navigation that follows the board geometry.
@@ -63,7 +63,7 @@ Implemented:
 Not implemented yet:
 
 - AI.
-- Playable alternate boards and modes.
+- Three Men's Morris and other alternate boards.
 
 ## Variant Ideas
 

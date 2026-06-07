@@ -2,6 +2,7 @@
 
 #include "Assets.h"
 #include "Board.h"
+#include "GeneratedBoards.h"
 #include "Rules.h"
 
 #include <Arduboy2.h>
@@ -25,7 +26,7 @@ constexpr uint8_t HUD_LEFT_X = 1;
 constexpr uint8_t HUD_RIGHT_X = 99;
 constexpr uint8_t NO_POINT = 255;
 constexpr uint8_t MENU_ITEM_COUNT = 2;
-constexpr uint8_t BOARD_MENU_COUNT = 3;
+constexpr uint8_t BOARD_MENU_COUNT = MORRIS_BOARD_PROFILE_COUNT + 1;
 constexpr uint8_t BOOT_LOGO_X = 52;
 constexpr uint8_t BOOT_LOGO_Y = 26;
 constexpr uint8_t BOOT_DUST_START_FRAMES = framesAtGameFps(20);
@@ -70,6 +71,24 @@ uint8_t debugScenario = DEBUG_SCENARIO_MILL;
 #endif
 const char *message = "";
 
+const BoardDefinition *boardProfile(uint8_t index) {
+  if (index >= MORRIS_BOARD_PROFILE_COUNT) {
+    return nullptr;
+  }
+  return reinterpret_cast<const BoardDefinition *>(pgm_read_ptr(&MorrisBoardProfiles[index]));
+}
+
+const RuleSet *ruleProfile(uint8_t index) {
+  if (index >= MORRIS_BOARD_PROFILE_COUNT) {
+    return nullptr;
+  }
+  return reinterpret_cast<const RuleSet *>(pgm_read_ptr(&MorrisRuleProfiles[index]));
+}
+
+bool selectedBoardIsPlayable() {
+  return boardProfile(selectedBoardMenuItem) != nullptr && ruleProfile(selectedBoardMenuItem) != nullptr;
+}
+
 void setMessage(const char *text) {
   message = text;
   messageFrames = 45;
@@ -112,7 +131,13 @@ bool gameStateChanged(const MorrisGameState &before, const MorrisGameState &afte
 }
 
 void startMatch() {
-  resetMorrisGame(game, ClassicBoardDefinition, ClassicRuleSet);
+  const BoardDefinition *board = boardProfile(selectedBoardMenuItem);
+  const RuleSet *rules = ruleProfile(selectedBoardMenuItem);
+  if (board == nullptr || rules == nullptr) {
+    board = &ClassicBoardDefinition;
+    rules = &ClassicRuleSet;
+  }
+  resetMorrisGame(game, *board, *rules);
   game.currentPlayer = firstPlayer;
   hasUndo = false;
   millFlashFrames = 0;
@@ -564,10 +589,11 @@ void drawCenteredPanel(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
 }
 
 const char *boardMenuTitle() {
-  if (selectedBoardMenuItem == 1) {
-    return "SIX MEN";
+  const BoardDefinition *board = boardProfile(selectedBoardMenuItem);
+  if (board != nullptr) {
+    return board->label;
   }
-  if (selectedBoardMenuItem == 2) {
+  if (selectedBoardMenuItem == MORRIS_BOARD_PROFILE_COUNT) {
     return "THREE MEN";
   }
   return "CLASSIC 9";
@@ -640,7 +666,7 @@ void drawMainMenu() {
   if (selectedMenuItem == 0) {
     drawDashedRect(leftX - 3, 35, rightX - leftX + 11, 11, animationFrame / 5, WHITE);
   }
-  if (selectedBoardMenuItem != 0) {
+  if (!selectedBoardIsPlayable()) {
     tinyfont.setCursor(108, 56);
     tinyfont.print("SOON");
   }
@@ -744,7 +770,7 @@ void handleMainMenuInput() {
     sound.tone(587, 35);
   }
   if (arduboy.justPressed(B_BUTTON)) {
-    if (selectedMenuItem == 0 && selectedBoardMenuItem == 0) {
+    if (selectedMenuItem == 0 && selectedBoardIsPlayable()) {
       startMatch();
       sound.tone(660, 45, 880, 70);
     } else if (selectedMenuItem == 1) {

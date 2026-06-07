@@ -21,12 +21,14 @@
 - Added the first TableTop Studio slice for board profile viewing, graph
   editing, validation, duplication, and JSON editing.
 - Added a Six Men's Morris study profile in TableTop Studio.
+- Added `make board-data` generation from board profiles into firmware
+  `BoardDefinition`/`RuleSet` data.
+- Made Six Men's Morris playable from the main menu.
 
 ## Next Cycle
 
-1. Review the Six Men's Morris Studio profile and tune its graph/art direction.
-2. Add `make board-data` generation from validated board profiles into C++
-   `BoardDefinition`/`RuleSet` data.
+1. Test Six Men's Morris on device/libretro and tune its graph/art direction.
+2. Add a Three Men's Morris profile and decide whether it should be playable.
 3. Continue the pixel-art pass for pieces and final board/menu assets.
 
 ## Later
