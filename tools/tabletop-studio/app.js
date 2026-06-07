@@ -66,9 +66,11 @@ function canvasToBoard(event) {
   const board = selectedBoard();
   const rect = el.canvas.getBoundingClientRect();
   const canvas = board?.canvas || { width: 64, height: 64 };
+  const x = ((event.clientX - rect.left) / rect.width) * canvas.width;
+  const y = ((event.clientY - rect.top) / rect.height) * canvas.height;
   return {
-    x: Math.round(((event.clientX - rect.left) / rect.width) * canvas.width),
-    y: Math.round(((event.clientY - rect.top) / rect.height) * canvas.height),
+    x: Math.max(0, Math.min(canvas.width - 1, Math.floor(x))),
+    y: Math.max(0, Math.min(canvas.height - 1, Math.floor(y))),
   };
 }
 

@@ -105,8 +105,9 @@ Implemented first:
   above mill bands, while every mill gets a distinct deterministic color. Mill
   bands only get wider when multiple mills share the same edge, not merely when
   they share a point;
-- hover coordinate tracking on the board canvas, using the board profile's
-  logical coordinate space;
+- hover coordinate tracking on the board canvas, using zero-based pixel
+  indices in the board profile's logical coordinate space, such as `0..63` for
+  a `64x64` board;
 - basic validation for missing points, duplicate/self edges, non-bidirectional
   adjacency, malformed mills, and core numeric rule fields;
 - JSON duplication/saving through local project endpoints.
