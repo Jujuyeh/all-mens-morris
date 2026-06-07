@@ -32,17 +32,6 @@ const el = {
 };
 
 const ctx = el.canvas.getContext("2d");
-const MILL_COLORS = [
-  "#ffcf5a",
-  "#ff7474",
-  "#7ee787",
-  "#b48cff",
-  "#ff9f5a",
-  "#5de4ff",
-  "#f778ba",
-  "#d7ff72",
-];
-
 function setStatus(text) {
   el.status.textContent = text;
 }
@@ -121,6 +110,12 @@ function drawBoardConnection(board, pair) {
   drawLine(board, pair, "#f7f7f7", 1.5, [8, 5]);
 }
 
+function millColor(index) {
+  const hue = (index * 137.508) % 360;
+  const lightness = index % 2 === 0 ? 62 : 72;
+  return `hsl(${hue.toFixed(1)} 92% ${lightness}%)`;
+}
+
 function millSegments(mill) {
   return [
     [mill[0], mill[1]],
@@ -149,10 +144,9 @@ function millSegmentOverlap(board, pair, millIndex) {
 }
 
 function drawMillSegment(board, pair, millIndex) {
-  const color = MILL_COLORS[millIndex % MILL_COLORS.length];
   const overlap = millSegmentOverlap(board, pair, millIndex);
   const width = overlap.count > 1 ? 10 + (overlap.count - overlap.rank) * 4 : 10;
-  drawLine(board, pair, color, width);
+  drawLine(board, pair, millColor(millIndex), width);
 }
 
 function ensureGraphArrays(board) {

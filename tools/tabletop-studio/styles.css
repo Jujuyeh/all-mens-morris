@@ -215,7 +215,7 @@ canvas {
 }
 
 .legend .mill {
-  background: linear-gradient(90deg, #ffcf5a, #ff7474, #7ee787, #b48cff);
+  background: linear-gradient(90deg, hsl(0 92% 62%), hsl(137.5 92% 72%), hsl(275 92% 62%), hsl(52.5 92% 72%));
   height: 7px;
 }
 

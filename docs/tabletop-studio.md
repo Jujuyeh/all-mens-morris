@@ -102,8 +102,9 @@ Implemented first:
 - layer toggles so board connections and mill bands can be inspected
   separately;
 - board connections render as a thin black/white dashed line and always draw
-  above mill bands, while mills use rotating colors. Mill bands only get wider
-  when multiple mills share the same edge, not merely when they share a point;
+  above mill bands, while every mill gets a distinct deterministic color. Mill
+  bands only get wider when multiple mills share the same edge, not merely when
+  they share a point;
 - basic validation for missing points, duplicate/self edges, non-bidirectional
   adjacency, malformed mills, and core numeric rule fields;
 - JSON duplication/saving through local project endpoints.
