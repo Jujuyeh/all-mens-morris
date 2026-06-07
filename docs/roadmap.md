@@ -20,10 +20,11 @@
   change board graph data and rule knobs independently.
 - Added the first TableTop Studio slice for board profile viewing, graph
   editing, validation, duplication, and JSON editing.
+- Added a Six Men's Morris study profile in TableTop Studio.
 
 ## Next Cycle
 
-1. Use TableTop Studio to draft Six Men's Morris as a board profile.
+1. Review the Six Men's Morris Studio profile and tune its graph/art direction.
 2. Add `make board-data` generation from validated board profiles into C++
    `BoardDefinition`/`RuleSet` data.
 3. Continue the pixel-art pass for pieces and final board/menu assets.

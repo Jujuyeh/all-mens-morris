@@ -45,6 +45,8 @@ Implemented:
   rule variants.
 - Initial TableTop Studio for studying board profiles before adding them to
   firmware.
+- Studio-only Six Men's Morris profile with a two-square board, six pieces per
+  player, and side-line mill triples.
 - Main menu setting for whether white or black moves first.
 - Directional cursor navigation that follows the board geometry.
 - Hold-A quick menu for reset, one-state rewind, and returning to the main menu.

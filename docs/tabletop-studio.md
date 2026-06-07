@@ -95,6 +95,9 @@ The overlay should be exportable as JSON and as generated C++/PROGMEM data.
 Implemented first:
 
 - `boards/classic-nine.json` as the first board profile;
+- `boards/six-men.json` as the first non-classic study profile, using the
+  two-square European Six Men's Morris layout with six pieces per player and
+  mill triples on the square sides;
 - `make tabletop-studio`, serving `tools/tabletop-studio/`;
 - graph overlay preview from points, adjacency, and mills;
 - direct graph editing modes for points, board connections, mill triples, and

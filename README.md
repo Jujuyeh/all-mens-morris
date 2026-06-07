@@ -75,7 +75,8 @@ make tabletop-studio
 
 The first Studio slice loads board profiles from `boards/`, draws and edits the
 playable graph overlay, validates connections/mills/rule settings, and can
-create, duplicate, or save profile JSON.
+create, duplicate, or save profile JSON. It includes Classic Nine Men's Morris
+and a Studio-only Six Men's Morris study profile.
 
 ## Layout
 
