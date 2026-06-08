@@ -29,6 +29,10 @@ constexpr uint8_t NO_POINT = 255;
 constexpr uint8_t MENU_ITEM_COUNT = 3;
 constexpr uint8_t BOARD_MENU_COUNT = MORRIS_BOARD_PROFILE_COUNT;
 constexpr uint8_t CPU_THINK_FRAMES = 14;
+constexpr uint8_t CPU_ANIMATION_TARGET_FRAMES = 30;
+constexpr uint8_t CPU_ACTION_PAUSE_FRAMES = 3;
+constexpr uint8_t CPU_MIN_STEP_FRAMES = 2;
+constexpr uint8_t CPU_MAX_STEP_FRAMES = 7;
 constexpr uint8_t BOOT_LOGO_X = 52;
 constexpr uint8_t BOOT_LOGO_Y = 26;
 constexpr uint8_t BOOT_DUST_START_FRAMES = framesAtGameFps(20);
@@ -45,6 +49,14 @@ enum ConfirmAction : uint8_t {
   CONFIRM_NONE,
   CONFIRM_RESET,
   CONFIRM_MAIN_MENU,
+};
+
+enum CpuAnimationPhase : uint8_t {
+  CPU_ANIM_IDLE,
+  CPU_ANIM_TO_FROM,
+  CPU_ANIM_PICK,
+  CPU_ANIM_TO_TO,
+  CPU_ANIM_DROP,
 };
 
 #ifdef ALL_MENS_MORRIS_DEBUG
@@ -68,6 +80,13 @@ Player cpuPlayer = PLAYER_ONE;
 bool hasUndo = false;
 bool versusCpu = false;
 uint8_t cpuThinkFrames = 0;
+CpuAnimationPhase cpuAnimationPhase = CPU_ANIM_IDLE;
+AiAction cpuAnimationAction = {NO_POINT, NO_POINT, TURN_ACTION_MOVE};
+GamePhase cpuAnimationPhaseBeforeAction = PHASE_PLACING;
+uint8_t cpuAnimationTarget = NO_POINT;
+uint8_t cpuAnimationStepFrames = CPU_MIN_STEP_FRAMES;
+uint8_t cpuAnimationStepTimer = 0;
+uint8_t cpuAnimationPauseFrames = 0;
 uint8_t messageFrames = 0;
 uint8_t millFlashFrames = 0;
 uint8_t animationFrame = 0;
@@ -100,6 +119,10 @@ bool isCpuTurn() {
       && confirmAction == CONFIRM_NONE
       && game.phase != PHASE_GAME_OVER
       && game.currentPlayer == cpuPlayer;
+}
+
+bool isCpuAnimating() {
+  return cpuAnimationPhase != CPU_ANIM_IDLE;
 }
 
 void startMillEffects();
@@ -340,6 +363,78 @@ void moveCursorToward(int8_t dx, int8_t dy) {
   if (next != NO_POINT) {
     game.cursor = next;
   }
+}
+
+uint8_t nextGraphPointToward(uint8_t start, uint8_t target) {
+  if (start == target || start >= game.board->pointCount || target >= game.board->pointCount) {
+    return target;
+  }
+
+  uint8_t queue[MORRIS_MAX_POINT_COUNT];
+  uint8_t previous[MORRIS_MAX_POINT_COUNT];
+  uint8_t head = 0;
+  uint8_t tail = 0;
+  for (uint8_t i = 0; i < MORRIS_MAX_POINT_COUNT; i++) {
+    previous[i] = NO_POINT;
+  }
+
+  queue[tail++] = start;
+  previous[start] = start;
+  while (head < tail) {
+    uint8_t point = queue[head++];
+    if (point == target) {
+      break;
+    }
+    for (uint8_t slot = 0; slot < game.board->adjacencySlots; slot++) {
+      uint8_t adjacent = adjacentPoint(*game.board, point, slot);
+      if (adjacent != 255 && previous[adjacent] == NO_POINT) {
+        previous[adjacent] = point;
+        queue[tail++] = adjacent;
+      }
+    }
+  }
+
+  if (previous[target] == NO_POINT) {
+    return target;
+  }
+
+  uint8_t step = target;
+  while (previous[step] != start) {
+    step = previous[step];
+  }
+  return step;
+}
+
+uint8_t graphDistance(uint8_t start, uint8_t target) {
+  if (start == target) {
+    return 0;
+  }
+
+  uint8_t queue[MORRIS_MAX_POINT_COUNT];
+  uint8_t distance[MORRIS_MAX_POINT_COUNT];
+  uint8_t head = 0;
+  uint8_t tail = 0;
+  for (uint8_t i = 0; i < MORRIS_MAX_POINT_COUNT; i++) {
+    distance[i] = NO_POINT;
+  }
+
+  queue[tail++] = start;
+  distance[start] = 0;
+  while (head < tail) {
+    uint8_t point = queue[head++];
+    for (uint8_t slot = 0; slot < game.board->adjacencySlots; slot++) {
+      uint8_t adjacent = adjacentPoint(*game.board, point, slot);
+      if (adjacent == 255 || distance[adjacent] != NO_POINT) {
+        continue;
+      }
+      distance[adjacent] = distance[point] + 1;
+      if (adjacent == target) {
+        return distance[adjacent];
+      }
+      queue[tail++] = adjacent;
+    }
+  }
+  return 1;
 }
 
 void ledsOff() {
@@ -910,29 +1005,6 @@ void handleQuickMenuInput() {
   }
 }
 
-void updateCpuTurn() {
-  if (!isCpuTurn()) {
-    cpuThinkFrames = 0;
-    return;
-  }
-
-  if (cpuThinkFrames > 0) {
-    cpuThinkFrames--;
-    return;
-  }
-
-  MorrisGameState afterAction;
-  GamePhase phaseBeforeAction = game.phase;
-  if (chooseAiAction(game, afterAction)) {
-    game = afterAction;
-    showActionFeedback(phaseBeforeAction, true);
-  } else {
-    setMessage("CPU WAIT");
-  }
-
-  cpuThinkFrames = isCpuTurn() ? CPU_THINK_FRAMES : 0;
-}
-
 void handleInput() {
   if (scene == SCENE_MAIN_MENU) {
     handleMainMenuInput();
@@ -984,6 +1056,155 @@ void handleInput() {
       cpuThinkFrames = isCpuTurn() ? CPU_THINK_FRAMES : 0;
     }
   }
+}
+
+void playCpuCursorStepSound() {
+  sound.tone(740, 12);
+}
+
+void playCpuActionSound() {
+  sound.tone(220, 35);
+}
+
+uint8_t cpuAnimationStepCount(const AiAction &action) {
+  uint8_t cursor = game.cursor;
+  uint8_t steps = 0;
+  if (action.from != NO_POINT) {
+    steps += graphDistance(cursor, action.from);
+    cursor = action.from;
+  }
+  steps += graphDistance(cursor, action.to);
+  return steps == 0 ? 1 : steps;
+}
+
+void setCpuAnimationStepRate(const AiAction &action) {
+  uint8_t steps = cpuAnimationStepCount(action);
+  uint8_t pauses = action.from == NO_POINT ? CPU_ACTION_PAUSE_FRAMES : CPU_ACTION_PAUSE_FRAMES * 2;
+  uint8_t moveFrames = CPU_ANIMATION_TARGET_FRAMES > pauses
+      ? CPU_ANIMATION_TARGET_FRAMES - pauses
+      : CPU_ANIMATION_TARGET_FRAMES;
+  uint8_t frames = moveFrames / steps;
+  if (frames < CPU_MIN_STEP_FRAMES) {
+    frames = CPU_MIN_STEP_FRAMES;
+  } else if (frames > CPU_MAX_STEP_FRAMES) {
+    frames = CPU_MAX_STEP_FRAMES;
+  }
+  cpuAnimationStepFrames = frames;
+  cpuAnimationStepTimer = 0;
+}
+
+void enterCpuPickPause() {
+  game.cursor = cpuAnimationAction.from;
+  game.selected = cpuAnimationAction.from;
+  game.actionMode = cpuAnimationAction.mode;
+  cpuAnimationPauseFrames = CPU_ACTION_PAUSE_FRAMES;
+  cpuAnimationPhase = CPU_ANIM_PICK;
+  playCpuActionSound();
+}
+
+void enterCpuDropPause() {
+  game.cursor = cpuAnimationAction.to;
+  cpuAnimationPauseFrames = CPU_ACTION_PAUSE_FRAMES;
+  cpuAnimationPhase = CPU_ANIM_DROP;
+  playCpuActionSound();
+}
+
+void finishCpuAnimation() {
+  cpuAnimationPhase = CPU_ANIM_IDLE;
+  bool moved = applyPrimaryAction(game);
+  if (moved) {
+    showActionFeedback(cpuAnimationPhaseBeforeAction, true);
+  } else {
+    setMessage("CPU WAIT");
+  }
+  cpuThinkFrames = isCpuTurn() ? CPU_THINK_FRAMES : 0;
+}
+
+void startCpuAnimation() {
+  cpuAnimationPhaseBeforeAction = game.phase;
+  MorrisGameState plannedResult;
+  if (!chooseAiAction(game, cpuAnimationAction, plannedResult)) {
+    setMessage("CPU WAIT");
+    cpuThinkFrames = CPU_THINK_FRAMES;
+    return;
+  }
+
+  game.actionMode = cpuAnimationAction.mode;
+  game.selected = NO_POINT;
+  setCpuAnimationStepRate(cpuAnimationAction);
+  if (cpuAnimationAction.from != NO_POINT) {
+    cpuAnimationTarget = cpuAnimationAction.from;
+    cpuAnimationPhase = CPU_ANIM_TO_FROM;
+    if (game.cursor == cpuAnimationTarget) {
+      enterCpuPickPause();
+    }
+  } else {
+    cpuAnimationTarget = cpuAnimationAction.to;
+    cpuAnimationPhase = CPU_ANIM_TO_TO;
+    if (game.cursor == cpuAnimationTarget) {
+      enterCpuDropPause();
+    }
+  }
+}
+
+void updateCpuMoveToTarget(CpuAnimationPhase nextPause) {
+  if (game.cursor == cpuAnimationTarget) {
+    if (nextPause == CPU_ANIM_PICK) {
+      enterCpuPickPause();
+    } else {
+      enterCpuDropPause();
+    }
+    return;
+  }
+
+  if (cpuAnimationStepTimer > 0) {
+    cpuAnimationStepTimer--;
+    return;
+  }
+
+  game.cursor = nextGraphPointToward(game.cursor, cpuAnimationTarget);
+  cpuAnimationStepTimer = cpuAnimationStepFrames > 0 ? cpuAnimationStepFrames - 1 : 0;
+  playCpuCursorStepSound();
+}
+
+void updateCpuAnimation() {
+  if (cpuAnimationPhase == CPU_ANIM_TO_FROM) {
+    updateCpuMoveToTarget(CPU_ANIM_PICK);
+  } else if (cpuAnimationPhase == CPU_ANIM_PICK) {
+    if (cpuAnimationPauseFrames > 0) {
+      cpuAnimationPauseFrames--;
+      return;
+    }
+    cpuAnimationTarget = cpuAnimationAction.to;
+    cpuAnimationPhase = CPU_ANIM_TO_TO;
+  } else if (cpuAnimationPhase == CPU_ANIM_TO_TO) {
+    updateCpuMoveToTarget(CPU_ANIM_DROP);
+  } else if (cpuAnimationPhase == CPU_ANIM_DROP) {
+    if (cpuAnimationPauseFrames > 0) {
+      cpuAnimationPauseFrames--;
+      return;
+    }
+    finishCpuAnimation();
+  }
+}
+
+void updateCpuTurn() {
+  if (isCpuAnimating()) {
+    updateCpuAnimation();
+    return;
+  }
+
+  if (!isCpuTurn()) {
+    cpuThinkFrames = 0;
+    return;
+  }
+
+  if (cpuThinkFrames > 0) {
+    cpuThinkFrames--;
+    return;
+  }
+
+  startCpuAnimation();
 }
 }
 

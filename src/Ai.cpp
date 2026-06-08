@@ -4,12 +4,6 @@ namespace {
 constexpr int16_t WIN_SCORE = 30000;
 constexpr uint8_t NO_POINT = 255;
 
-struct AiAction {
-  uint8_t from;
-  uint8_t to;
-  TurnActionMode mode;
-};
-
 int16_t absoluteScore(int16_t value) {
   return value < 0 ? -value : value;
 }
@@ -210,6 +204,11 @@ void considerCaptureActions(const MorrisGameState &game, Player aiPlayer, bool &
 }
 
 bool chooseAiAction(const MorrisGameState &game, MorrisGameState &result) {
+  AiAction action;
+  return chooseAiAction(game, action, result);
+}
+
+bool chooseAiAction(const MorrisGameState &game, AiAction &action, MorrisGameState &result) {
   if (game.phase == PHASE_GAME_OVER) {
     return false;
   }
@@ -230,5 +229,6 @@ bool chooseAiAction(const MorrisGameState &game, MorrisGameState &result) {
     considerMoveActions(game, aiPlayer, hasBest, bestScore, bestAction);
   }
 
+  action = bestAction;
   return hasBest && applyAiAction(game, bestAction, result);
 }

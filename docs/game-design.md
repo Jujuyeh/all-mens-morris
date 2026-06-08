@@ -76,6 +76,9 @@ Implemented:
   testing.
 - Generic CPU opponent for all generated board/rule profiles, using one-ply
   action simulation and a compact tactical heuristic.
+- CPU turns animate the cursor over valid board connections, with short cursor
+  step tones and lower select/confirm tones before the simulated action is
+  applied.
 
 Not implemented yet:
 
