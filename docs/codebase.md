@@ -11,7 +11,10 @@ all-mens-morris.ino -> gameSetup() / gameLoop()
 The implementation is split into:
 
 - `src/Game.cpp`: Arduboy setup, custom boot animation, input, rendering,
-  sound/RGB feedback, main menu, quick menu, and current UI.
+  sound/RGB feedback, main menu, quick menu, CPU turn dispatch, and current UI.
+- `src/Ai.*`: generic one-ply CPU opponent. It enumerates legal rule actions,
+  simulates them on `MorrisGameState`, and scores the resulting state without
+  knowing about screen coordinates.
 - `src/Board.*`: board helper APIs for `BoardDefinition` graph coordinates,
   mill triples, and adjacency. Adjacency is both the visible board connection
   and the legal movement edge.
@@ -53,6 +56,8 @@ counters.
 - Separate scene state from match state.
 - Continue moving variant-specific menu/debug behavior onto generated profile
   metadata.
+- Keep the CPU opponent generic by adding rule/board helpers instead of
+  variant-specific AI branches.
 - Add debug-only helpers behind `ALL_MENS_MORRIS_DEBUG`.
 - Add save/settings support only after gameplay rules settle.
 - Use the TableTop Studio plan in `docs/tabletop-studio.md` when board variant

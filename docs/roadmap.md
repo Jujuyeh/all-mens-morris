@@ -30,18 +30,20 @@
 - Added Long Morris as a playable custom variant with mixed placement/movement
   rules on the classic board.
 - Added Flower as a playable custom 20-point board profile.
+- Added a generic CPU opponent that works across generated board/rule profiles.
 
 ## Next Cycle
 
-1. Test Six Men's Morris, Three Men's Morris, Long Morris, and Flower on
-   device/libretro and tune their graph/art direction.
-2. Add generated profile metadata for menu labels, availability, and future
+1. Test CPU behavior across Classic, Six Men's Morris, Three Men's Morris, Long
+   Morris, and Flower on device/libretro.
+2. Tune board graph/art direction after CPU and human playtests.
+3. Add generated profile metadata for menu labels, availability, and future
    variant descriptions.
-3. Continue the pixel-art pass for pieces and final board/menu assets.
+4. Continue the pixel-art pass for pieces and final board/menu assets.
 
 ## Later
 
-- AI opponent.
+- Stronger AI difficulty levels.
 - More board/rule variant definitions.
 - More advanced draw rules, such as repeated-position detection.
 - TableTop Studio for designing board sprites and playable graph data together.

@@ -39,8 +39,11 @@ Implemented:
 - Draw detection after 50 movement turns without a capture.
 - Main menu scaffold for choosing modes, with Classic Nine Men's Morris, Six
   Men's Morris, Three Men's Morris, Long Morris, and Flower active.
+- Main menu opponent setting for local two-player or human-vs-CPU play. In CPU
+  mode, the human takes the selected first-player color and the CPU plays the
+  opposite color.
 - Horizontal board selector in the main menu, with left/right cycling board
-  titles and up/down moving between board and first-player settings.
+  titles and up/down moving between board, first-player, and opponent settings.
 - Data-backed `BoardDefinition` and `RuleSet` generation for board and rule
   variants.
 - Initial TableTop Studio for studying and editing board profiles before
@@ -71,10 +74,12 @@ Implemented:
 - Sound effects for menu/action feedback and RGB LED flashing on mills.
 - Debug-only quick-menu scenarios for mill, flying, blocked-game-over, and draw
   testing.
+- Generic CPU opponent for all generated board/rule profiles, using one-ply
+  action simulation and a compact tactical heuristic.
 
 Not implemented yet:
 
-- AI.
+- Stronger AI difficulty levels.
 - More alternate boards.
 
 ## Variant Ideas

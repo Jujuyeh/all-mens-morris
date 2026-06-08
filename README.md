@@ -14,10 +14,12 @@ campaign-style ideas without mixing rule logic into rendering code.
 Early scaffold. The project compiles and runs, but the full game is not complete
 yet. Current controls:
 
-- Main menu up/down: switch between board selection and first-player setting.
-- Main menu left/right: change the selected board or first-player setting.
+- Main menu up/down: switch between board selection, first-player setting, and
+  opponent setting.
+- Main menu left/right: change the selected board, first-player setting, or
+  opponent setting.
 - Main menu B: start the selected playable board, toggle the first-player
-  setting, or show `SOON` for unavailable boards.
+  setting, toggle `VS HUMAN`/`VS CPU`, or show `SOON` for unavailable boards.
 - In game d-pad: move the cursor in that board direction.
 - B: place/select/confirm/capture.
 - Hold A: show quick menu.

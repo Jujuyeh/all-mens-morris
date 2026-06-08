@@ -1,5 +1,6 @@
 #include "AllMensMorrisGame.h"
 
+#include "Ai.h"
 #include "Assets.h"
 #include "Board.h"
 #include "GeneratedBoards.h"
@@ -25,8 +26,9 @@ constexpr uint8_t BOARD_OFFSET_Y = 0;
 constexpr uint8_t HUD_LEFT_X = 1;
 constexpr uint8_t HUD_RIGHT_X = 99;
 constexpr uint8_t NO_POINT = 255;
-constexpr uint8_t MENU_ITEM_COUNT = 2;
+constexpr uint8_t MENU_ITEM_COUNT = 3;
 constexpr uint8_t BOARD_MENU_COUNT = MORRIS_BOARD_PROFILE_COUNT;
+constexpr uint8_t CPU_THINK_FRAMES = 14;
 constexpr uint8_t BOOT_LOGO_X = 52;
 constexpr uint8_t BOOT_LOGO_Y = 26;
 constexpr uint8_t BOOT_DUST_START_FRAMES = framesAtGameFps(20);
@@ -62,7 +64,10 @@ ConfirmAction confirmAction = CONFIRM_NONE;
 uint8_t selectedMenuItem = 0;
 uint8_t selectedBoardMenuItem = 0;
 Player firstPlayer = PLAYER_TWO;
+Player cpuPlayer = PLAYER_ONE;
 bool hasUndo = false;
+bool versusCpu = false;
+uint8_t cpuThinkFrames = 0;
 uint8_t messageFrames = 0;
 uint8_t millFlashFrames = 0;
 uint8_t animationFrame = 0;
@@ -88,6 +93,16 @@ const RuleSet *ruleProfile(uint8_t index) {
 bool selectedBoardIsPlayable() {
   return boardProfile(selectedBoardMenuItem) != nullptr && ruleProfile(selectedBoardMenuItem) != nullptr;
 }
+
+bool isCpuTurn() {
+  return versusCpu
+      && scene == SCENE_PLAYING
+      && confirmAction == CONFIRM_NONE
+      && game.phase != PHASE_GAME_OVER
+      && game.currentPlayer == cpuPlayer;
+}
+
+void startMillEffects();
 
 void setMessage(const char *text) {
   message = text;
@@ -140,11 +155,38 @@ void startMatch() {
   }
   resetMorrisGame(game, *board, *rules);
   game.currentPlayer = firstPlayer;
+  cpuPlayer = opponentOf(firstPlayer);
+  cpuThinkFrames = isCpuTurn() ? CPU_THINK_FRAMES : 0;
   hasUndo = false;
   millFlashFrames = 0;
   confirmAction = CONFIRM_NONE;
   scene = SCENE_PLAYING;
   setMessage("");
+}
+
+void showActionFeedback(GamePhase phaseBeforeAction, bool moved) {
+  if (!moved) {
+    return;
+  }
+
+  if (game.phase == PHASE_GAME_OVER) {
+    if (game.winner == PLAYER_NONE) {
+      setMessage("DRAW");
+      sound.tone(392, 80, 330, 80, 262, 140);
+    } else {
+      setMessage(game.winner == PLAYER_ONE ? "B WIN" : "W WIN");
+      sound.tone(523, 80, 659, 80, 1047, 160);
+    }
+  } else if (game.lastMoveMadeMill) {
+    setMessage("MILL!");
+    startMillEffects();
+  } else if (phaseBeforeAction == PHASE_CAPTURING) {
+    setMessage("TAKEN");
+    sound.tone(330, 60, 220, 80);
+  } else {
+    setMessage("");
+    sound.tone(440, 30);
+  }
 }
 
 #ifdef ALL_MENS_MORRIS_DEBUG
@@ -677,11 +719,18 @@ void drawMainMenu() {
     tinyfont.print("SOON");
   }
 
-  tinyfont.setCursor(38, 52);
+  tinyfont.setCursor(38, 48);
   tinyfont.print("FIRST ");
   tinyfont.print(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
   if (selectedMenuItem == 1) {
-    drawDashedRect(35, 49, 60, 11, animationFrame / 5, WHITE);
+    drawDashedRect(35, 45, 60, 10, animationFrame / 5, WHITE);
+  }
+
+  tinyfont.setCursor(42, 57);
+  tinyfont.print("VS ");
+  tinyfont.print(versusCpu ? "CPU" : "HUMAN");
+  if (selectedMenuItem == 2) {
+    drawDashedRect(39, 54, 50, 10, animationFrame / 5, WHITE);
   }
 }
 
@@ -762,16 +811,20 @@ void handleMainMenuInput() {
   if (arduboy.justPressed(LEFT_BUTTON)) {
     if (selectedMenuItem == 0) {
       selectedBoardMenuItem = selectedBoardMenuItem == 0 ? BOARD_MENU_COUNT - 1 : selectedBoardMenuItem - 1;
-    } else {
+    } else if (selectedMenuItem == 1) {
       firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
+    } else {
+      versusCpu = !versusCpu;
     }
     sound.tone(494, 35);
   }
   if (arduboy.justPressed(RIGHT_BUTTON)) {
     if (selectedMenuItem == 0) {
       selectedBoardMenuItem = (selectedBoardMenuItem + 1) % BOARD_MENU_COUNT;
-    } else {
+    } else if (selectedMenuItem == 1) {
       firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
+    } else {
+      versusCpu = !versusCpu;
     }
     sound.tone(587, 35);
   }
@@ -782,6 +835,10 @@ void handleMainMenuInput() {
     } else if (selectedMenuItem == 1) {
       firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
       setMessage(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
+      sound.tone(784, 45);
+    } else if (selectedMenuItem == 2) {
+      versusCpu = !versusCpu;
+      setMessage(versusCpu ? "CPU" : "HUMAN");
       sound.tone(784, 45);
     } else {
       setMessage("SOON");
@@ -853,6 +910,29 @@ void handleQuickMenuInput() {
   }
 }
 
+void updateCpuTurn() {
+  if (!isCpuTurn()) {
+    cpuThinkFrames = 0;
+    return;
+  }
+
+  if (cpuThinkFrames > 0) {
+    cpuThinkFrames--;
+    return;
+  }
+
+  MorrisGameState afterAction;
+  GamePhase phaseBeforeAction = game.phase;
+  if (chooseAiAction(game, afterAction)) {
+    game = afterAction;
+    showActionFeedback(phaseBeforeAction, true);
+  } else {
+    setMessage("CPU WAIT");
+  }
+
+  cpuThinkFrames = isCpuTurn() ? CPU_THINK_FRAMES : 0;
+}
+
 void handleInput() {
   if (scene == SCENE_MAIN_MENU) {
     handleMainMenuInput();
@@ -861,6 +941,10 @@ void handleInput() {
 
   if (confirmAction != CONFIRM_NONE) {
     handleConfirmInput();
+    return;
+  }
+
+  if (isCpuTurn()) {
     return;
   }
 
@@ -895,23 +979,9 @@ void handleInput() {
 
     if (!moved) {
       return;
-    } else if (game.phase == PHASE_GAME_OVER) {
-      if (game.winner == PLAYER_NONE) {
-        setMessage("DRAW");
-        sound.tone(392, 80, 330, 80, 262, 140);
-      } else {
-        setMessage(game.winner == PLAYER_ONE ? "B WIN" : "W WIN");
-        sound.tone(523, 80, 659, 80, 1047, 160);
-      }
-    } else if (game.lastMoveMadeMill) {
-      setMessage("MILL!");
-      startMillEffects();
-    } else if (phaseBeforeAction == PHASE_CAPTURING) {
-      setMessage("TAKEN");
-      sound.tone(330, 60, 220, 80);
     } else {
-      setMessage("");
-      sound.tone(440, 30);
+      showActionFeedback(phaseBeforeAction, true);
+      cpuThinkFrames = isCpuTurn() ? CPU_THINK_FRAMES : 0;
     }
   }
 }
@@ -937,6 +1007,7 @@ void gameLoop() {
   animationFrame++;
   arduboy.pollButtons();
   handleInput();
+  updateCpuTurn();
   updateMillLed();
   if (messageFrames > 0) {
     messageFrames--;
