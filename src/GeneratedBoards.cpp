@@ -104,6 +104,108 @@ const RuleSet ClassicRuleSet = {
   false,
 };
 
+const BoardPoint FlowerBoardPoints[MORRIS_MAX_POINT_COUNT] PROGMEM = {
+  {18, 4},
+  {9, 13},
+  {18, 13},
+  {18, 32},
+  {27, 32},
+  {13, 46},
+  {4, 46},
+  {13, 55},
+  {32, 46},
+  {32, 37},
+  {46, 51},
+  {46, 60},
+  {55, 51},
+  {46, 32},
+  {37, 32},
+  {51, 18},
+  {60, 18},
+  {51, 9},
+  {32, 18},
+  {32, 27},
+  {0, 0},
+  {0, 0},
+  {0, 0},
+  {0, 0},
+};
+
+const MillLine FlowerMills[MORRIS_MAX_MILL_COUNT] PROGMEM = {
+  {0, 2, 3},
+  {5, 4, 19},
+  {6, 5, 8},
+  {4, 9, 10},
+  {11, 10, 13},
+  {9, 14, 15},
+  {18, 15, 16},
+  {2, 19, 14},
+  {0, 0, 0},
+  {0, 0, 0},
+  {0, 0, 0},
+  {0, 0, 0},
+  {0, 0, 0},
+  {0, 0, 0},
+  {0, 0, 0},
+  {0, 0, 0},
+};
+
+const uint8_t FlowerAdjacency[MORRIS_MAX_POINT_COUNT][MORRIS_MAX_ADJACENCY_SLOTS] PROGMEM = {
+  {1, 2, 255, 255, 255, 255, 255, 255},
+  {0, 2, 255, 255, 255, 255, 255, 255},
+  {0, 1, 3, 19, 255, 255, 255, 255},
+  {2, 4, 255, 255, 255, 255, 255, 255},
+  {3, 5, 9, 19, 255, 255, 255, 255},
+  {4, 6, 7, 8, 255, 255, 255, 255},
+  {5, 7, 255, 255, 255, 255, 255, 255},
+  {5, 6, 255, 255, 255, 255, 255, 255},
+  {5, 9, 255, 255, 255, 255, 255, 255},
+  {4, 8, 10, 14, 255, 255, 255, 255},
+  {9, 11, 12, 13, 255, 255, 255, 255},
+  {10, 12, 255, 255, 255, 255, 255, 255},
+  {10, 11, 255, 255, 255, 255, 255, 255},
+  {10, 14, 255, 255, 255, 255, 255, 255},
+  {9, 13, 15, 19, 255, 255, 255, 255},
+  {14, 16, 17, 18, 255, 255, 255, 255},
+  {15, 17, 255, 255, 255, 255, 255, 255},
+  {15, 16, 255, 255, 255, 255, 255, 255},
+  {15, 19, 255, 255, 255, 255, 255, 255},
+  {2, 4, 14, 18, 255, 255, 255, 255},
+  {255, 255, 255, 255, 255, 255, 255, 255},
+  {255, 255, 255, 255, 255, 255, 255, 255},
+  {255, 255, 255, 255, 255, 255, 255, 255},
+  {255, 255, 255, 255, 255, 255, 255, 255},
+};
+
+const BoardDefinition FlowerBoardDefinition = {
+  "flower",
+  "FLOWER",
+  20,
+  8,
+  8,
+  FlowerBoardPoints,
+  FlowerMills,
+  FlowerAdjacency,
+};
+
+const RuleSet FlowerRuleSet = {
+  "flower",
+  9,
+  3,
+  3,
+  50,
+  0,
+  MILL_ACTION_CAPTURE,
+  true,
+  false,
+  true,
+  true,
+  true,
+  true,
+  true,
+  false,
+};
+
 const BoardPoint LongMorrisBoardPoints[MORRIS_MAX_POINT_COUNT] PROGMEM = {
   {4, 4},
   {32, 4},
@@ -410,5 +512,5 @@ const RuleSet ThreeMenRuleSet = {
   false,
 };
 
-const BoardDefinition *const MorrisBoardProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicBoardDefinition, &LongMorrisBoardDefinition, &SixMenBoardDefinition, &ThreeMenBoardDefinition};
-const RuleSet *const MorrisRuleProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicRuleSet, &LongMorrisRuleSet, &SixMenRuleSet, &ThreeMenRuleSet};
+const BoardDefinition *const MorrisBoardProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicBoardDefinition, &FlowerBoardDefinition, &LongMorrisBoardDefinition, &SixMenBoardDefinition, &ThreeMenBoardDefinition};
+const RuleSet *const MorrisRuleProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicRuleSet, &FlowerRuleSet, &LongMorrisRuleSet, &SixMenRuleSet, &ThreeMenRuleSet};

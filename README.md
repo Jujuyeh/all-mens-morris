@@ -84,8 +84,8 @@ make tabletop-studio
 The first Studio slice loads board profiles from `boards/`, draws and edits the
 playable graph overlay, validates connections/mills/rule settings, and can
 create, duplicate, or save profile JSON. `make board-data` converts those
-profiles into firmware C++ data for Classic Nine Men's Morris, Long Morris,
-Six Men's Morris, and Three Men's Morris.
+profiles into firmware C++ data for Classic Nine Men's Morris, Flower, Long
+Morris, Six Men's Morris, and Three Men's Morris.
 
 ## Layout
 

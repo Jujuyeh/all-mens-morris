@@ -29,11 +29,12 @@
 - Added a playable Three Men's Morris profile.
 - Added Long Morris as a playable custom variant with mixed placement/movement
   rules on the classic board.
+- Added Flower as a playable custom 20-point board profile.
 
 ## Next Cycle
 
-1. Test Six Men's Morris, Three Men's Morris, and Long Morris on device/libretro
-   and tune their graph/art direction.
+1. Test Six Men's Morris, Three Men's Morris, Long Morris, and Flower on
+   device/libretro and tune their graph/art direction.
 2. Add generated profile metadata for menu labels, availability, and future
    variant descriptions.
 3. Continue the pixel-art pass for pieces and final board/menu assets.

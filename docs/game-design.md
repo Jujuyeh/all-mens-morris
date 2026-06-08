@@ -38,7 +38,7 @@ Implemented:
   reserves are placed, or when the active player has no legal move.
 - Draw detection after 50 movement turns without a capture.
 - Main menu scaffold for choosing modes, with Classic Nine Men's Morris, Six
-  Men's Morris, Three Men's Morris, and Long Morris active.
+  Men's Morris, Three Men's Morris, Long Morris, and Flower active.
 - Horizontal board selector in the main menu, with left/right cycling board
   titles and up/down moving between board and first-player settings.
 - Data-backed `BoardDefinition` and `RuleSet` generation for board and rule
@@ -56,6 +56,8 @@ Implemented:
   after reserves are exhausted, material loss at two board pieces after the
   initial filling stage, block wins only after reserves are exhausted, blocked
   reserve turns skipped, and a 100-turn no-capture draw limit.
+- Playable Flower profile with a custom 20-point graph, eight mill lines, and
+  classic capture/flying rules.
 - Main menu setting for whether white or black moves first.
 - Directional cursor navigation that follows the board geometry.
 - Hold-A quick menu for reset, one-state rewind, and returning to the main menu.
