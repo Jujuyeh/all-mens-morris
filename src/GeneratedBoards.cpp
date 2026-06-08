@@ -190,7 +190,7 @@ const BoardDefinition FlowerBoardDefinition = {
 
 const RuleSet FlowerRuleSet = {
   "flower",
-  9,
+  8,
   3,
   3,
   50,
