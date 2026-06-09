@@ -24,11 +24,18 @@ constexpr uint8_t framesAtGameFps(uint8_t baseFrames) {
 }
 constexpr uint8_t BOARD_OFFSET_X = 32;
 constexpr uint8_t BOARD_OFFSET_Y = 0;
-constexpr uint8_t HUD_LEFT_X = 1;
-constexpr uint8_t HUD_RIGHT_X = 99;
+constexpr uint8_t HUD_LEFT_X = 0;
+constexpr uint8_t HUD_RIGHT_X = 100;
 constexpr uint8_t NO_POINT = 255;
 constexpr uint8_t MENU_ITEM_COUNT = 3;
 constexpr uint8_t BOARD_MENU_COUNT = MORRIS_BOARD_PROFILE_COUNT;
+constexpr uint16_t MENU_IDLE_DEMO_FRAMES = GAME_FPS * 20;
+constexpr uint16_t DEMO_TOTAL_FRAMES = GAME_FPS * 30;
+constexpr uint8_t DEMO_WIN_EXTRA_FRAMES = GAME_FPS * 3;
+constexpr uint8_t FADE_FRAMES = 18;
+constexpr uint8_t CURTAIN_FRAMES = 20;
+constexpr uint8_t DEMO_MIN_PREFLIGHT_ACTIONS = 10;
+constexpr uint8_t DEMO_PREFLIGHT_ACTION_RANGE = 10;
 constexpr uint8_t CPU_THINK_FRAMES = 14;
 constexpr uint8_t CPU_ANIMATION_TARGET_FRAMES = 30;
 constexpr uint8_t CPU_ACTION_PAUSE_FRAMES = 3;
@@ -45,6 +52,14 @@ constexpr uint8_t MENU_MUSIC_RESTART_FRAMES = 12;
 enum AppScene : uint8_t {
   SCENE_MAIN_MENU,
   SCENE_PLAYING,
+  SCENE_DEMO,
+};
+
+enum TransitionMode : uint8_t {
+  TRANSITION_NONE,
+  TRANSITION_FADE_TO_DEMO,
+  TRANSITION_CURTAIN_TO_DEMO,
+  TRANSITION_CURTAIN_TO_MENU,
 };
 
 enum ConfirmAction : uint8_t {
@@ -98,6 +113,11 @@ uint8_t cpuAnimationPauseFrames = 0;
 uint8_t messageFrames = 0;
 uint8_t millFlashFrames = 0;
 uint8_t animationFrame = 0;
+uint16_t idleFrames = 0;
+uint16_t demoFrames = 0;
+uint8_t demoGameOverFrames = 0;
+TransitionMode transitionMode = TRANSITION_NONE;
+uint8_t transitionFrame = 0;
 uint8_t menuMusicRestartFrames = 0;
 uint8_t menuMusicFramesRemaining = 0;
 uint8_t menuMusicIndex = 0;
@@ -106,6 +126,9 @@ bool menuMusicActive = false;
 uint8_t debugScenario = DEBUG_SCENARIO_MILL;
 #endif
 const char *message = "";
+
+void ledsOff();
+void startMillEffects();
 
 const BoardDefinition *boardProfile(uint8_t index) {
   if (index >= MORRIS_BOARD_PROFILE_COUNT) {
@@ -126,18 +149,16 @@ bool selectedBoardIsPlayable() {
 }
 
 bool isCpuTurn() {
-  return opponentMode != OPPONENT_PLAYER_TWO
-      && scene == SCENE_PLAYING
+  return ((scene == SCENE_PLAYING && opponentMode != OPPONENT_PLAYER_TWO)
+          || scene == SCENE_DEMO)
       && confirmAction == CONFIRM_NONE
       && game.phase != PHASE_GAME_OVER
-      && game.currentPlayer == cpuPlayer;
+      && (scene == SCENE_DEMO || game.currentPlayer == cpuPlayer);
 }
 
 bool isCpuAnimating() {
   return cpuAnimationPhase != CPU_ANIM_IDLE;
 }
-
-void startMillEffects();
 
 void setMessage(const char *text) {
   message = text;
@@ -171,6 +192,12 @@ void stopMenuMusic() {
     menuMusicActive = false;
     menuMusicFramesRemaining = 0;
   }
+}
+
+void restartMenuMusic() {
+  stopMenuMusic();
+  menuMusicIndex = 0;
+  menuMusicRestartFrames = 0;
 }
 
 uint16_t menuMusicDurationMs(uint8_t duration) {
@@ -238,6 +265,9 @@ const char *opponentModeLabel() {
 }
 
 AiDifficulty selectedAiDifficulty() {
+  if (scene == SCENE_DEMO) {
+    return game.currentPlayer == PLAYER_ONE ? AI_EASY : AI_HARD;
+  }
   return opponentMode == OPPONENT_CPU_HARD ? AI_HARD : AI_EASY;
 }
 
@@ -301,9 +331,100 @@ void startMatch() {
   cpuThinkFrames = isCpuTurn() ? CPU_THINK_FRAMES : 0;
   hasUndo = false;
   millFlashFrames = 0;
+  idleFrames = 0;
+  demoFrames = 0;
+  demoGameOverFrames = 0;
   confirmAction = CONFIRM_NONE;
   scene = SCENE_PLAYING;
   setMessage("");
+}
+
+uint8_t randomPlayableBoardIndex() {
+  uint8_t start = random(BOARD_MENU_COUNT);
+  for (uint8_t offset = 0; offset < BOARD_MENU_COUNT; offset++) {
+    uint8_t index = (start + offset) % BOARD_MENU_COUNT;
+    if (boardProfile(index) != nullptr && ruleProfile(index) != nullptr) {
+      return index;
+    }
+  }
+  return 0;
+}
+
+void applyDemoPreflightActions(uint8_t actionCount) {
+  for (uint8_t i = 0; i < actionCount && game.phase != PHASE_GAME_OVER; i++) {
+    AiAction action;
+    MorrisGameState result;
+    AiDifficulty difficulty = game.currentPlayer == PLAYER_ONE ? AI_EASY : AI_HARD;
+    if (!chooseAiAction(game, difficulty, action, result)) {
+      break;
+    }
+    game = result;
+  }
+}
+
+void startDemoMatch() {
+  uint8_t boardIndex = randomPlayableBoardIndex();
+  const BoardDefinition *board = boardProfile(boardIndex);
+  const RuleSet *rules = ruleProfile(boardIndex);
+  if (board == nullptr || rules == nullptr) {
+    board = &ClassicBoardDefinition;
+    rules = &ClassicRuleSet;
+  }
+
+  resetMorrisGame(game, *board, *rules);
+  game.currentPlayer = random(2) == 0 ? PLAYER_ONE : PLAYER_TWO;
+  game.cursor = random(game.board->pointCount);
+  game.selected = NO_POINT;
+  applyDemoPreflightActions(DEMO_MIN_PREFLIGHT_ACTIONS + random(DEMO_PREFLIGHT_ACTION_RANGE));
+  if (game.phase == PHASE_GAME_OVER) {
+    resetMorrisGame(game, *board, *rules);
+  }
+
+  hasUndo = false;
+  millFlashFrames = 0;
+  confirmAction = CONFIRM_NONE;
+  scene = SCENE_DEMO;
+  demoFrames = 0;
+  demoGameOverFrames = 0;
+  cpuThinkFrames = CPU_THINK_FRAMES;
+  setMessage("DEMO");
+  stopMenuMusic();
+}
+
+void returnToMainMenu() {
+  scene = SCENE_MAIN_MENU;
+  confirmAction = CONFIRM_NONE;
+  hasUndo = false;
+  cpuAnimationPhase = CPU_ANIM_IDLE;
+  idleFrames = 0;
+  demoFrames = 0;
+  demoGameOverFrames = 0;
+  millFlashFrames = 0;
+  setMessage("");
+  ledsOff();
+  restartMenuMusic();
+}
+
+void startTransition(TransitionMode mode) {
+  transitionMode = mode;
+  transitionFrame = 0;
+  if (mode == TRANSITION_FADE_TO_DEMO) {
+    stopMenuMusic();
+  }
+}
+
+bool winnerIsCpu() {
+  return scene == SCENE_DEMO || (opponentMode != OPPONENT_PLAYER_TWO && game.winner == cpuPlayer);
+}
+
+void playGameOverFanfare() {
+  if (game.winner == PLAYER_NONE) {
+    playEffect(392, 90, 330, 90, 262, 180);
+  } else if (winnerIsCpu()) {
+    playEffect(330, 90, 247, 100, 196, 180);
+  } else {
+    playEffect(523, 80, 659, 80, 1047, 180);
+  }
 }
 
 void showActionFeedback(GamePhase phaseBeforeAction, bool moved) {
@@ -314,11 +435,10 @@ void showActionFeedback(GamePhase phaseBeforeAction, bool moved) {
   if (game.phase == PHASE_GAME_OVER) {
     if (game.winner == PLAYER_NONE) {
       setMessage("DRAW");
-      playEffect(392, 80, 330, 80, 262, 140);
     } else {
       setMessage(game.winner == PLAYER_ONE ? "B WIN" : "W WIN");
-      playEffect(523, 80, 659, 80, 1047, 160);
     }
+    playGameOverFanfare();
   } else if (game.lastMoveMadeMill) {
     setMessage("MILL!");
     startMillEffects();
@@ -996,6 +1116,36 @@ void drawConfirm() {
   tinyfont.print("B YES  LEFT NO");
 }
 
+void drawPanelTextCentered(uint8_t y, const char *text, uint8_t color) {
+  tinyfont.setTextColor(color);
+  tinyfont.setCursor(64 - textPixelWidth(text) / 2, y);
+  tinyfont.print(text);
+}
+
+void drawResultPanel() {
+  if (game.phase != PHASE_GAME_OVER) {
+    return;
+  }
+
+  bool invert = ((animationFrame / 15) % 2) == 0;
+  uint8_t bg = invert ? BLACK : WHITE;
+  uint8_t fg = invert ? WHITE : BLACK;
+  arduboy.fillRect(24, 18, 80, 29, bg);
+  arduboy.drawRect(24, 18, 80, 29, fg);
+
+  if (game.winner == PLAYER_NONE) {
+    drawPanelTextCentered(25, "IT'S A TIE...", fg);
+  } else if (winnerIsCpu()) {
+    drawPanelTextCentered(25, "CPU WINS!", fg);
+  } else if (game.winner == PLAYER_ONE) {
+    drawPanelTextCentered(25, "PLAYER 1", fg);
+    drawPanelTextCentered(34, "WINS!", fg);
+  } else {
+    drawPanelTextCentered(25, "PLAYER 2", fg);
+    drawPanelTextCentered(34, "WINS!", fg);
+  }
+}
+
 void drawGame() {
   tinyfont.setTextColor(BLACK);
   drawBoard();
@@ -1009,6 +1159,7 @@ void drawGame() {
   } else if (arduboy.pressed(A_BUTTON)) {
     drawQuickMenu();
   }
+  drawResultPanel();
 }
 
 void drawScene() {
@@ -1018,6 +1169,106 @@ void drawScene() {
   }
 
   drawGame();
+}
+
+void drawFadeOverlay(uint8_t frame) {
+  uint8_t phase = frame / 3;
+  if (phase >= 6) {
+    arduboy.fillScreen(BLACK);
+    return;
+  }
+
+  for (uint8_t y = 0; y < 64; y++) {
+    for (uint8_t x = 0; x < 128; x++) {
+      if (((x + y * 3 + phase) & 7) <= phase) {
+        arduboy.drawPixel(x, y, BLACK);
+      }
+    }
+  }
+}
+
+void drawCurtainOverlay(bool opening) {
+  uint8_t progress = (static_cast<uint16_t>(transitionFrame) * 128) / CURTAIN_FRAMES;
+  if (progress > 128) {
+    progress = 128;
+  }
+  uint8_t width = opening ? 128 - progress : progress;
+  for (uint8_t bar = 0; bar < 8; bar++) {
+    uint8_t y = bar * 8;
+    if ((bar & 1) == 0) {
+      arduboy.fillRect(0, y, width, 8, BLACK);
+    } else {
+      arduboy.fillRect(128 - width, y, width, 8, BLACK);
+    }
+  }
+}
+
+void drawTransitionOverlay() {
+  if (transitionMode == TRANSITION_FADE_TO_DEMO) {
+    drawFadeOverlay(transitionFrame);
+  } else if (transitionMode == TRANSITION_CURTAIN_TO_DEMO) {
+    drawCurtainOverlay(true);
+  } else if (transitionMode == TRANSITION_CURTAIN_TO_MENU) {
+    drawCurtainOverlay(false);
+  }
+}
+
+void updateTransition() {
+  if (transitionMode == TRANSITION_NONE) {
+    return;
+  }
+
+  transitionFrame++;
+  if (transitionMode == TRANSITION_FADE_TO_DEMO && transitionFrame >= FADE_FRAMES) {
+    startDemoMatch();
+    transitionMode = TRANSITION_CURTAIN_TO_DEMO;
+    transitionFrame = 0;
+  } else if (transitionMode == TRANSITION_CURTAIN_TO_DEMO && transitionFrame >= CURTAIN_FRAMES) {
+    transitionMode = TRANSITION_NONE;
+  } else if (transitionMode == TRANSITION_CURTAIN_TO_MENU && transitionFrame >= CURTAIN_FRAMES) {
+    returnToMainMenu();
+    transitionMode = TRANSITION_NONE;
+  }
+}
+
+void updateIdleDemoTimer(bool hasInput) {
+  if (transitionMode != TRANSITION_NONE) {
+    return;
+  }
+
+  if (scene == SCENE_MAIN_MENU) {
+    if (hasInput) {
+      idleFrames = 0;
+    } else if (idleFrames < MENU_IDLE_DEMO_FRAMES) {
+      idleFrames++;
+    } else {
+      startTransition(TRANSITION_FADE_TO_DEMO);
+    }
+  } else if (scene != SCENE_DEMO) {
+    idleFrames = 0;
+  }
+}
+
+void updateDemoTimer(bool hasInput) {
+  if (transitionMode != TRANSITION_NONE || scene != SCENE_DEMO) {
+    return;
+  }
+
+  if (hasInput) {
+    startTransition(TRANSITION_CURTAIN_TO_MENU);
+    return;
+  }
+
+  demoFrames++;
+  if (game.phase == PHASE_GAME_OVER) {
+    if (demoGameOverFrames < DEMO_WIN_EXTRA_FRAMES) {
+      demoGameOverFrames++;
+    } else {
+      startTransition(TRANSITION_CURTAIN_TO_MENU);
+    }
+  } else if (demoFrames >= DEMO_TOTAL_FRAMES) {
+    startTransition(TRANSITION_CURTAIN_TO_MENU);
+  }
 }
 
 void handleMainMenuInput() {
@@ -1126,6 +1377,10 @@ void handleQuickMenuInput() {
 void handleInput() {
   if (scene == SCENE_MAIN_MENU) {
     handleMainMenuInput();
+    return;
+  }
+
+  if (scene == SCENE_DEMO) {
     return;
   }
 
@@ -1346,8 +1601,22 @@ void gameLoop() {
 
   animationFrame++;
   arduboy.pollButtons();
-  handleInput();
-  updateCpuTurn();
+  bool hasInput = arduboy.buttonsState() != 0;
+  if (transitionMode == TRANSITION_NONE) {
+    updateIdleDemoTimer(hasInput);
+  }
+  if (transitionMode == TRANSITION_NONE) {
+    if (scene == SCENE_DEMO) {
+      updateDemoTimer(hasInput);
+    } else {
+      handleInput();
+    }
+  }
+  if (transitionMode == TRANSITION_NONE) {
+    updateCpuTurn();
+  } else {
+    updateTransition();
+  }
   updateMillLed();
   updateMenuMusic();
   if (messageFrames > 0) {
@@ -1356,5 +1625,6 @@ void gameLoop() {
 
   arduboy.fillScreen(WHITE);
   drawScene();
+  drawTransitionOverlay();
   arduboy.display();
 }

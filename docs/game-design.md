@@ -79,6 +79,14 @@ Implemented:
   from Mutopia's public-domain MIDI source for Scott Joplin's "The
   Entertainer"; the firmware voice keeps the main melody in range and fills
   melody rests with lower-octave bass notes. Gameplay remains effects-only.
+- Attract/demo mode after 20 seconds of main-menu inactivity. The game fades
+  out, opens with alternating horizontal curtain bars, then runs a silent CPU
+  Easy vs CPU Hard demo on a random playable board from a legally generated
+  mid-game state. Any button returns to the main menu through the curtain and
+  restarts menu music; otherwise the demo returns after 30 seconds or three
+  seconds after a demo win/draw.
+- Blinking result panel for completed games, with local player, CPU, and tie
+  labels plus short win/lose/draw fanfares.
 - Debug-only hold-A/up scenarios for mill, flying, blocked-game-over, and draw
   testing.
 - Generic CPU opponent for all generated board/rule profiles. Easy uses one-ply
