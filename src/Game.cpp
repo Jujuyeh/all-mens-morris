@@ -50,6 +50,7 @@ constexpr uint8_t BOOT_FILL_START_FRAMES = framesAtGameFps(32);
 constexpr uint8_t BOOT_CURTAIN_START_FRAMES = framesAtGameFps(47);
 constexpr uint8_t BOOT_TOTAL_FRAMES = framesAtGameFps(52);
 constexpr uint8_t MENU_MUSIC_RESTART_FRAMES = 12;
+constexpr uint8_t MENU_MUSIC_INITIAL_DELAY_FRAMES = GAME_FPS;
 
 enum AppScene : uint8_t {
   SCENE_MAIN_MENU,
@@ -199,7 +200,7 @@ void stopMenuMusic() {
 void restartMenuMusic() {
   stopMenuMusic();
   menuMusicIndex = 0;
-  menuMusicRestartFrames = 0;
+  menuMusicRestartFrames = MENU_MUSIC_INITIAL_DELAY_FRAMES;
 }
 
 uint16_t menuMusicDurationMs(uint8_t duration) {
@@ -1601,6 +1602,7 @@ void gameSetup() {
   tinyfont.setTextColor(BLACK);
   resetMorrisGame(game, ClassicBoardDefinition, ClassicRuleSet);
   playBootAnimation();
+  restartMenuMusic();
 }
 
 void gameLoop() {

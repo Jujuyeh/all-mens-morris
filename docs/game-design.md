@@ -78,7 +78,8 @@ Implemented:
 - Menu music loop generated from TableTop Studio audio data, initially derived
   from Mutopia's public-domain MIDI source for Scott Joplin's "The
   Entertainer"; the firmware voice keeps the main melody in range and fills
-  melody rests with lower-octave bass notes. Gameplay remains effects-only.
+  melody rests with lower-octave bass notes. Menu music starts after a one
+  second pause, and gameplay remains effects-only.
 - Attract/demo mode after 20 seconds of main-menu inactivity. The game fades
   out, opens with alternating horizontal curtain bars, then runs a silent CPU
   Easy vs CPU Hard demo on a random playable board from a legally generated
