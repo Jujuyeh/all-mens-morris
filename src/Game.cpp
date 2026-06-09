@@ -4,6 +4,7 @@
 #include "Assets.h"
 #include "Board.h"
 #include "GeneratedBoards.h"
+#include "MenuMusic.h"
 #include "Rules.h"
 
 #include <Arduboy2.h>
@@ -98,21 +99,13 @@ uint8_t messageFrames = 0;
 uint8_t millFlashFrames = 0;
 uint8_t animationFrame = 0;
 uint8_t menuMusicRestartFrames = 0;
+uint8_t menuMusicFramesRemaining = 0;
+uint8_t menuMusicIndex = 0;
 bool menuMusicActive = false;
 #ifdef ALL_MENS_MORRIS_DEBUG
 uint8_t debugScenario = DEBUG_SCENARIO_MILL;
 #endif
 const char *message = "";
-
-const uint16_t MenuMusic[] PROGMEM = {
-  0, 120,
-  587, 95, 622, 95, 659, 95, 784, 190, 659, 95, 784, 190,
-  659, 95, 784, 95, 1047, 190, 988, 95, 880, 95, 784, 190,
-  659, 95, 784, 95, 880, 190, 831, 95, 784, 95, 740, 190,
-  784, 260,
-  0, 480,
-  TONES_REPEAT
-};
 
 const BoardDefinition *boardProfile(uint8_t index) {
   if (index >= MORRIS_BOARD_PROFILE_COUNT) {
@@ -176,6 +169,42 @@ void stopMenuMusic() {
   if (menuMusicActive) {
     sound.noTone();
     menuMusicActive = false;
+    menuMusicFramesRemaining = 0;
+  }
+}
+
+uint16_t menuMusicDurationMs(uint8_t duration) {
+  return static_cast<uint16_t>(duration) * MENU_MUSIC_TICK_MS;
+}
+
+uint8_t menuMusicDurationFrames(uint8_t duration) {
+  uint16_t frames = (static_cast<uint16_t>(duration) * MENU_MUSIC_TICK_MS * GAME_FPS + 999) / 1000;
+  return frames == 0 ? 1 : frames;
+}
+
+uint16_t menuMusicFrequency(uint8_t note) {
+  if (note < MENU_MUSIC_MIN_NOTE || note > MENU_MUSIC_MAX_NOTE) {
+    return 0;
+  }
+  return pgm_read_word(&MenuMusicFrequencies[note - MENU_MUSIC_MIN_NOTE]);
+}
+
+void startMenuMusicEvent() {
+  if (menuMusicIndex >= MENU_MUSIC_EVENT_COUNT) {
+    menuMusicIndex = 0;
+  }
+
+  uint8_t note = pgm_read_byte(&MenuMusicNotes[menuMusicIndex]);
+  uint8_t duration = pgm_read_byte(&MenuMusicDurations[menuMusicIndex]);
+  menuMusicIndex++;
+  menuMusicFramesRemaining = menuMusicDurationFrames(duration);
+  menuMusicActive = true;
+
+  uint16_t frequency = menuMusicFrequency(note);
+  if (frequency == 0) {
+    sound.noTone();
+  } else {
+    sound.tone(frequency, menuMusicDurationMs(duration));
   }
 }
 
@@ -185,7 +214,8 @@ void updateMenuMusic() {
     return;
   }
 
-  if (menuMusicActive && sound.playing()) {
+  if (menuMusicActive && menuMusicFramesRemaining > 0) {
+    menuMusicFramesRemaining--;
     return;
   }
 
@@ -194,8 +224,7 @@ void updateMenuMusic() {
     return;
   }
 
-  sound.tones(MenuMusic);
-  menuMusicActive = true;
+  startMenuMusicEvent();
 }
 
 const char *opponentModeLabel() {

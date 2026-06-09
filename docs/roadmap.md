@@ -34,6 +34,8 @@
 - Added visible CPU cursor/action animation with turn-paced movement sounds.
 - Added CPU Easy and CPU Hard opponent settings, with Hard using depth-2
   minimax over the shared heuristic and weighted top-action choice.
+- Added reproducible menu music generation from Mutopia's public-domain MIDI
+  source for Scott Joplin's "The Entertainer".
 
 ## Next Cycle
 

@@ -63,6 +63,12 @@ Regenerate firmware board/rule data from `boards/*.json`:
 make board-data
 ```
 
+Regenerate menu music from the public-domain Mutopia MIDI source:
+
+```sh
+make music-data
+```
+
 Run with libretro:
 
 ```sh
