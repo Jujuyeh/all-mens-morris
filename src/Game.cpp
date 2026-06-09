@@ -47,7 +47,6 @@ enum AppScene : uint8_t {
 
 enum ConfirmAction : uint8_t {
   CONFIRM_NONE,
-  CONFIRM_RESET,
   CONFIRM_MAIN_MENU,
 };
 
@@ -638,21 +637,24 @@ void drawCursor() {
 
 void drawHudRule(uint8_t x) {
   for (uint8_t y = 2; y < 62; y += 4) {
-    arduboy.drawPixel(x, y, BLACK);
-    arduboy.drawPixel(x, y + 1, BLACK);
+    arduboy.drawPixel(x, y, WHITE);
+    arduboy.drawPixel(x, y + 1, WHITE);
   }
 }
 
 void drawHudPiece(uint8_t x, uint8_t y, Player player) {
   if (player == PLAYER_ONE) {
-    arduboy.fillCircle(x, y, 2, BLACK);
+    arduboy.drawCircle(x, y, 2, WHITE);
   } else {
     arduboy.fillCircle(x, y, 2, WHITE);
-    arduboy.drawCircle(x, y, 2, BLACK);
   }
 }
 
 void drawHud() {
+  arduboy.fillRect(0, 0, 30, 64, BLACK);
+  arduboy.fillRect(98, 0, 30, 64, BLACK);
+  tinyfont.setTextColor(WHITE);
+
   drawHudRule(29);
   drawHudRule(98);
 
@@ -732,6 +734,7 @@ void drawHud() {
 void drawCenteredPanel(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
   arduboy.fillRect(x, y, w, h, WHITE);
   arduboy.drawRect(x, y, w, h, BLACK);
+  tinyfont.setTextColor(BLACK);
 }
 
 const char *boardMenuTitle() {
@@ -840,32 +843,35 @@ void drawQuickMenu() {
   tinyfont.print("QUICK");
 #ifdef ALL_MENS_MORRIS_DEBUG
   tinyfont.setCursor(27, 24);
+  tinyfont.print("UP DEBUG");
 #else
   tinyfont.setCursor(27, 27);
+  tinyfont.print("LEFT REWIND");
 #endif
-  tinyfont.print("UP RESET");
 #ifdef ALL_MENS_MORRIS_DEBUG
   tinyfont.setCursor(27, 31);
+  tinyfont.print("LEFT REWIND");
 #else
   tinyfont.setCursor(27, 34);
+  tinyfont.print("DOWN MENU");
 #endif
-  tinyfont.print("LEFT REWIND");
 #ifdef ALL_MENS_MORRIS_DEBUG
   tinyfont.setCursor(27, 38);
+  tinyfont.print("DOWN MENU");
 #else
   tinyfont.setCursor(27, 41);
+  tinyfont.print("RIGHT MODE");
 #endif
-  tinyfont.print("DOWN MENU");
 #ifdef ALL_MENS_MORRIS_DEBUG
   tinyfont.setCursor(27, 45);
-  tinyfont.print("RIGHT DBG");
+  tinyfont.print("RIGHT MODE");
 #endif
 }
 
 void drawConfirm() {
   drawCenteredPanel(18, 20, 92, 25);
   tinyfont.setCursor(32, 25);
-  tinyfont.print(confirmAction == CONFIRM_RESET ? "RESET GAME?" : "MAIN MENU?");
+  tinyfont.print("MAIN MENU?");
   tinyfont.setCursor(27, 36);
   tinyfont.print("B YES  LEFT NO");
 }
@@ -944,11 +950,7 @@ void handleMainMenuInput() {
 
 void handleConfirmInput() {
   if (arduboy.justPressed(B_BUTTON)) {
-    if (confirmAction == CONFIRM_RESET) {
-      startMatch();
-      setMessage("RESET");
-      sound.tone(262, 45, 392, 65);
-    } else if (confirmAction == CONFIRM_MAIN_MENU) {
+    if (confirmAction == CONFIRM_MAIN_MENU) {
       scene = SCENE_MAIN_MENU;
       confirmAction = CONFIRM_NONE;
       hasUndo = false;
@@ -977,9 +979,9 @@ void handleQuickMenuInput() {
   }
 
   if (arduboy.justPressed(UP_BUTTON)) {
-    confirmAction = CONFIRM_RESET;
-    setMessage("");
-    sound.tone(523, 35);
+#ifdef ALL_MENS_MORRIS_DEBUG
+    loadDebugScenario();
+#endif
   } else if (arduboy.justPressed(LEFT_BUTTON)) {
     if (hasUndo) {
       game = undoGame;
@@ -997,10 +999,6 @@ void handleQuickMenuInput() {
   } else if (arduboy.justPressed(RIGHT_BUTTON)) {
     if (canToggleActionMode(game)) {
       toggleLongActionMode();
-#ifdef ALL_MENS_MORRIS_DEBUG
-    } else {
-      loadDebugScenario();
-#endif
     }
   }
 }

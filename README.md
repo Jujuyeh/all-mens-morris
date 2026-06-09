@@ -23,13 +23,12 @@ yet. Current controls:
 - In game d-pad: move the cursor in that board direction.
 - B: place/select/confirm/capture.
 - Hold A: show quick menu.
-- Hold A + up: reset the match, with confirmation.
 - Hold A + left: rewind one game state.
 - Hold A + down: return to the main menu, with confirmation.
 - Hold A + right: toggle `PUT`/`MOVE` in variants that support mixed placement
   and movement.
-- Debug build only, hold A + right when no mixed action is available: cycle
-  test scenarios for mill, flying, blocked-game-over, and draw states.
+- Debug build only, hold A + up: cycle test scenarios for mill, flying,
+  blocked-game-over, and draw states.
 
 ## Development
 

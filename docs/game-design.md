@@ -63,16 +63,19 @@ Implemented:
   classic capture/flying rules.
 - Main menu setting for whether white or black moves first.
 - Directional cursor navigation that follows the board geometry.
-- Hold-A quick menu for reset, one-state rewind, and returning to the main menu.
+- Hold-A quick menu for debug scenarios in debug builds, one-state rewind, and
+  returning to the main menu.
 - Hold-A/right action toggle for mixed placement/movement variants.
 - Centered board layout with compact side HUD panels.
+- In-game side HUD panels use inverted colors so the central board remains
+  visually separate.
 - Animated dashed cursor selector.
 - First visual pass for the simplified board, side HUD, and inverted main menu
   with lightweight pattern decoration.
 - Custom inverted boot animation, with the stock Arduboy boot logo and LED
   animation skipped.
 - Sound effects for menu/action feedback and RGB LED flashing on mills.
-- Debug-only quick-menu scenarios for mill, flying, blocked-game-over, and draw
+- Debug-only hold-A/up scenarios for mill, flying, blocked-game-over, and draw
   testing.
 - Generic CPU opponent for all generated board/rule profiles, using one-ply
   action simulation and a compact tactical heuristic.
