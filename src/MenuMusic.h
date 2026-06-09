@@ -2,11 +2,16 @@
 
 #include <Arduino.h>
 
-constexpr uint8_t MENU_MUSIC_EVENT_COUNT = 153;
+constexpr uint8_t MENU_MUSIC_THEME_COUNT = 2;
 constexpr uint8_t MENU_MUSIC_MIN_NOTE = 43;
-constexpr uint8_t MENU_MUSIC_MAX_NOTE = 76;
+constexpr uint8_t MENU_MUSIC_MAX_NOTE = 78;
 constexpr uint8_t MENU_MUSIC_TICK_MS = 69;
 
-extern const uint8_t MenuMusicNotes[] PROGMEM;
-extern const uint8_t MenuMusicDurations[] PROGMEM;
+extern const uint8_t MenuMusicThemeEventCounts[] PROGMEM;
+extern const uint8_t MenuMusicTheme0Notes[] PROGMEM;
+extern const uint8_t MenuMusicTheme0Durations[] PROGMEM;
+extern const uint8_t MenuMusicTheme1Notes[] PROGMEM;
+extern const uint8_t MenuMusicTheme1Durations[] PROGMEM;
+extern const uint8_t *const MenuMusicNotesByTheme[] PROGMEM;
+extern const uint8_t *const MenuMusicDurationsByTheme[] PROGMEM;
 extern const uint16_t MenuMusicFrequencies[] PROGMEM;

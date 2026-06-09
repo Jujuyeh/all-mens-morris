@@ -22,7 +22,8 @@ yet. Current controls:
   setting, cycle `VS PLAYER 2`/`VS CPU EASY`/`VS CPU HARD`, or show `SOON` for
   unavailable boards.
 - Main menu idle: after 20 seconds without input, enter a silent CPU demo.
-- Demo mode: any button returns to the main menu and restarts menu music.
+- Demo mode: any button returns to the main menu and restarts menu music,
+  alternating between two menu themes.
 - In game d-pad: move the cursor in that board direction.
 - B: place/select/confirm/capture.
 - Hold A: show quick menu.

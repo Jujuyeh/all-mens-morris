@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 import audio_data
@@ -14,6 +15,7 @@ RIGHT_HAND_TRACK = 1
 LEFT_HAND_TRACK = 2
 TICKS_PER_EVENT_UNIT = 48
 MEASURES_TO_EXPORT = 32
+DEFAULT_THEME_START_MEASURES = (0, 32)
 MIDI_TRANSPOSE = -12
 REST_NOTE = 0
 TEMPO_SCALE = 2 / 3
@@ -155,13 +157,46 @@ def format_values(values: list[int], indent: str = "  ") -> str:
     return "\n".join(lines)
 
 
-def generated_header(count: int, min_note: int, max_note: int, tick_ms: int) -> str:
-    return audio_data.generated_header(count, min_note, max_note, tick_ms)
+def generated_header(themes: list[dict], min_note: int, max_note: int, tick_ms: int) -> str:
+    return audio_data.generated_header(themes, min_note, max_note, tick_ms)
 
 
-def generated_source(events: list[tuple[int, int]], min_note: int, max_note: int) -> str:
-    payload = [{"note": note, "duration": duration} for note, duration in events]
-    return audio_data.generated_source(payload, min_note, max_note)
+def generated_source(themes: list[dict], min_note: int, max_note: int) -> str:
+    return audio_data.generated_source(themes, min_note, max_note)
+
+
+def slice_notes(
+    notes: list[tuple[int, int, int]],
+    start_tick: int,
+    end_tick: int,
+) -> list[tuple[int, int, int]]:
+    return [
+        (max(start, start_tick) - start_tick, min(end, end_tick) - start_tick, note)
+        for start, end, note in notes
+        if start < end_tick and end > start_tick
+    ]
+
+
+def theme_from_measure_range(
+    name: str,
+    melody_notes: list[tuple[int, int, int]],
+    bass_notes: list[tuple[int, int, int]],
+    ppq: int,
+    start_measure: int,
+    measures: int,
+) -> dict:
+    start_tick = start_measure * ppq * 2
+    end_tick = (start_measure + measures) * ppq * 2
+    events = mono_voice_events(
+        slice_notes(melody_notes, start_tick, end_tick),
+        slice_notes(bass_notes, start_tick, end_tick),
+        end_tick - start_tick,
+    )
+    return {
+        "id": name.lower().replace(" ", "-"),
+        "name": name,
+        "events": [{"note": note, "duration": duration} for note, duration in events],
+    }
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -178,8 +213,9 @@ def main() -> int:
     args = build_parser().parse_args()
     if args.edited.exists() and not args.force_midi:
         payload = audio_data.load_menu_music(Path("."))
-        audio_data.save_menu_music(Path("."), payload)
-        print(f"Generated {len(payload['events'])} edited menu music event(s).")
+        saved = audio_data.save_menu_music(Path("."), payload)
+        counts = ", ".join(str(len(theme["events"])) for theme in saved["themes"])
+        print(f"Generated {len(saved['themes'])} edited menu music theme(s), events {counts}.")
         return 0
 
     ppq, tracks = read_tracks(args.midi)
@@ -189,9 +225,23 @@ def main() -> int:
         raise ValueError(f"{args.midi}: missing left-hand track {LEFT_HAND_TRACK}")
     melody_notes, _tempos = read_track_notes(tracks[RIGHT_HAND_TRACK])
     bass_notes, _tempos = read_track_notes(tracks[LEFT_HAND_TRACK])
-    end_tick = args.measures * ppq * 2
-    events = mono_voice_events(melody_notes, bass_notes, end_tick)
-    used_notes = [note for note, _duration in events if note != REST_NOTE]
+    themes = [
+        theme_from_measure_range(
+            f"Theme {index + 1}",
+            melody_notes,
+            bass_notes,
+            ppq,
+            start_measure,
+            args.measures,
+        )
+        for index, start_measure in enumerate(DEFAULT_THEME_START_MEASURES)
+    ]
+    used_notes = [
+        event["note"]
+        for theme in themes
+        for event in theme["events"]
+        if event["note"] != REST_NOTE
+    ]
     min_note = min(used_notes)
     max_note = max(used_notes)
 
@@ -201,14 +251,24 @@ def main() -> int:
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     (args.out_dir / "MenuMusic.h").write_text(
-        generated_header(len(events), min_note, max_note, tick_ms),
+        generated_header(themes, min_note, max_note, tick_ms),
         encoding="utf-8",
     )
     (args.out_dir / "MenuMusic.cpp").write_text(
-        generated_source(events, min_note, max_note),
+        generated_source(themes, min_note, max_note),
         encoding="utf-8",
     )
-    print(f"Generated {len(events)} menu music event(s), notes {min_note}-{max_note}.")
+    edited = {
+        "id": "menu-music",
+        "name": "Menu Music",
+        "kind": "music",
+        "tickMs": tick_ms,
+        "themes": themes,
+    }
+    args.edited.parent.mkdir(parents=True, exist_ok=True)
+    args.edited.write_text(json.dumps(edited, indent=2) + "\n", encoding="utf-8")
+    event_counts = ", ".join(str(len(theme["events"])) for theme in themes)
+    print(f"Generated {len(themes)} menu music theme(s), events {event_counts}, notes {min_note}-{max_note}.")
     return 0
 
 

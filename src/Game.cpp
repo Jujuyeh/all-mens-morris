@@ -124,6 +124,7 @@ uint8_t transitionFrame = 0;
 uint8_t menuMusicRestartFrames = 0;
 uint8_t menuMusicFramesRemaining = 0;
 uint8_t menuMusicIndex = 0;
+uint8_t menuMusicTheme = 0;
 bool menuMusicActive = false;
 #ifdef ALL_MENS_MORRIS_DEBUG
 uint8_t debugScenario = DEBUG_SCENARIO_MILL;
@@ -203,6 +204,13 @@ void restartMenuMusic() {
   menuMusicRestartFrames = MENU_MUSIC_INITIAL_DELAY_FRAMES;
 }
 
+void nextMenuMusicTheme() {
+  menuMusicTheme++;
+  if (menuMusicTheme >= MENU_MUSIC_THEME_COUNT) {
+    menuMusicTheme = 0;
+  }
+}
+
 uint16_t menuMusicDurationMs(uint8_t duration) {
   return static_cast<uint16_t>(duration) * MENU_MUSIC_TICK_MS;
 }
@@ -220,12 +228,15 @@ uint16_t menuMusicFrequency(uint8_t note) {
 }
 
 void startMenuMusicEvent() {
-  if (menuMusicIndex >= MENU_MUSIC_EVENT_COUNT) {
+  uint8_t eventCount = pgm_read_byte(&MenuMusicThemeEventCounts[menuMusicTheme]);
+  if (menuMusicIndex >= eventCount) {
     menuMusicIndex = 0;
   }
 
-  uint8_t note = pgm_read_byte(&MenuMusicNotes[menuMusicIndex]);
-  uint8_t duration = pgm_read_byte(&MenuMusicDurations[menuMusicIndex]);
+  const uint8_t *notes = reinterpret_cast<const uint8_t *>(pgm_read_ptr(&MenuMusicNotesByTheme[menuMusicTheme]));
+  const uint8_t *durations = reinterpret_cast<const uint8_t *>(pgm_read_ptr(&MenuMusicDurationsByTheme[menuMusicTheme]));
+  uint8_t note = pgm_read_byte(&notes[menuMusicIndex]);
+  uint8_t duration = pgm_read_byte(&durations[menuMusicIndex]);
   menuMusicIndex++;
   menuMusicFramesRemaining = menuMusicDurationFrames(duration);
   menuMusicActive = true;
@@ -412,6 +423,7 @@ void returnToMainMenu() {
   millFlashFrames = 0;
   setMessage("");
   ledsOff();
+  nextMenuMusicTheme();
   restartMenuMusic();
 }
 

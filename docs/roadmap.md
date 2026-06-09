@@ -38,6 +38,8 @@
   source for Scott Joplin's "The Entertainer".
 - Added a TableTop Studio piano-roll audio editor for menu music and sound
   effect drafts.
+- Added a second generated menu music section that alternates after attract
+  mode demos.
 
 ## Next Cycle
 
@@ -45,13 +47,10 @@
    Morris, and Flower on device/libretro.
 2. Keep future CPU tuning under a strict flash/RAM budget so linked multiplayer
    support for two Arduboy FX-C units over USB-C still has room.
-3. Consider a second menu music section for attract-mode variety. Measures
-   33-64 of the current MIDI source would add about 374 bytes of note/duration
-   data plus a few bytes of shared frequency table and playback selection code.
-4. Tune board graph/art direction after CPU and human playtests.
-5. Add generated profile metadata for menu labels, availability, and future
+3. Tune board graph/art direction after CPU and human playtests.
+4. Add generated profile metadata for menu labels, availability, and future
    variant descriptions.
-6. Continue the pixel-art pass for pieces and final board/menu assets.
+5. Continue the pixel-art pass for pieces and final board/menu assets.
 
 ## Later
 
