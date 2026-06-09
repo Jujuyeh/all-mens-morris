@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import re
 import sys
@@ -14,6 +15,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 BOARDS_DIR = ROOT / "boards"
+GLOBAL_ASSET_PATHS = {
+    "assets/fx/banner.png",
+}
 
 
 def safe_slug(value: str) -> str:
@@ -61,6 +65,9 @@ class TableTopStudioHandler(SimpleHTTPRequestHandler):
         if self.path == "/api/save-board":
             self.save_board()
             return
+        if self.path == "/api/save-global-asset":
+            self.save_global_asset()
+            return
         self.send_error(404)
 
     def read_payload(self) -> dict:
@@ -91,6 +98,24 @@ class TableTopStudioHandler(SimpleHTTPRequestHandler):
                     "data": data,
                 }
             )
+        except Exception as exc:
+            self.send_json({"ok": False, "error": str(exc)}, status=400)
+
+    def save_global_asset(self) -> None:
+        try:
+            payload = self.read_payload()
+            asset_path = str(payload.get("path") or "")
+            data_url = str(payload.get("dataUrl") or "")
+            if asset_path not in GLOBAL_ASSET_PATHS:
+                raise ValueError("Unsupported global asset path")
+            prefix = "data:image/png;base64,"
+            if not data_url.startswith(prefix):
+                raise ValueError("Asset payload must be a PNG data URL")
+
+            path = ROOT / asset_path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(base64.b64decode(data_url[len(prefix):], validate=True))
+            self.send_json({"ok": True, "path": asset_path})
         except Exception as exc:
             self.send_json({"ok": False, "error": str(exc)}, status=400)
 

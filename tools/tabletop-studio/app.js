@@ -7,6 +7,8 @@ const state = {
   dragPoint: null,
   edgeStart: null,
   millDraft: [],
+  spriteTool: "black",
+  spriteDrawing: false,
 };
 
 const el = {
@@ -27,12 +29,21 @@ const el = {
   canvas: document.querySelector("#boardCanvas"),
   graphTab: document.querySelector("#graphTab"),
   rulesTab: document.querySelector("#rulesTab"),
+  spritesTab: document.querySelector("#spritesTab"),
   rawTab: document.querySelector("#rawTab"),
   rulesForm: document.querySelector("#rulesForm"),
   rawJson: document.querySelector("#rawJson"),
+  spriteCanvas: document.querySelector("#spriteCanvas"),
+  spriteTools: Array.from(document.querySelectorAll("[data-sprite-tool]")),
+  spriteCursorInfo: document.querySelector("#spriteCursorInfo"),
+  invertSprite: document.querySelector("#invertSprite"),
+  reloadSprite: document.querySelector("#reloadSprite"),
+  saveSprite: document.querySelector("#saveSprite"),
 };
 
 const ctx = el.canvas.getContext("2d");
+const spriteCtx = el.spriteCanvas.getContext("2d", { willReadFrequently: true });
+spriteCtx.imageSmoothingEnabled = false;
 function setStatus(text) {
   el.status.textContent = text;
 }
@@ -423,6 +434,7 @@ function syncStateFromRaw() {
 function renderTabs() {
   el.graphTab.classList.toggle("hidden", state.tab !== "graph");
   el.rulesTab.classList.toggle("hidden", state.tab !== "rules");
+  el.spritesTab.classList.toggle("hidden", state.tab !== "sprites");
   el.rawTab.classList.toggle("hidden", state.tab !== "raw");
   el.tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === state.tab));
 }
@@ -465,10 +477,6 @@ function makeBlankBoard(name) {
     points: [],
     mills: [],
     adjacency: [],
-    assets: {
-      boardSprite: null,
-      banner: "assets/fx/banner.png",
-    },
   };
 }
 
@@ -497,6 +505,59 @@ async function loadBoards() {
   populateSelect();
   selectBoard(state.boards[0]?.slug);
   setStatus(`${payload.count} board profile(s)`);
+}
+
+async function loadGlobalSprite() {
+  const image = new Image();
+  image.onload = () => {
+    spriteCtx.clearRect(0, 0, el.spriteCanvas.width, el.spriteCanvas.height);
+    spriteCtx.drawImage(image, 0, 0, el.spriteCanvas.width, el.spriteCanvas.height);
+    setStatus("Loaded global FX banner");
+  };
+  image.onerror = () => setStatus("Could not load assets/fx/banner.png");
+  image.src = `/assets/fx/banner.png?cache=${Date.now()}`;
+}
+
+function spritePoint(event) {
+  const rect = el.spriteCanvas.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * el.spriteCanvas.width;
+  const y = ((event.clientY - rect.top) / rect.height) * el.spriteCanvas.height;
+  return {
+    x: Math.max(0, Math.min(el.spriteCanvas.width - 1, Math.floor(x))),
+    y: Math.max(0, Math.min(el.spriteCanvas.height - 1, Math.floor(y))),
+  };
+}
+
+function paintSpritePixel(event) {
+  const point = spritePoint(event);
+  spriteCtx.fillStyle = state.spriteTool === "black" ? "#000" : "#fff";
+  spriteCtx.fillRect(point.x, point.y, 1, 1);
+  el.spriteCursorInfo.textContent = `x ${point.x} y ${point.y}`;
+}
+
+function invertSprite() {
+  const image = spriteCtx.getImageData(0, 0, el.spriteCanvas.width, el.spriteCanvas.height);
+  for (let i = 0; i < image.data.length; i += 4) {
+    image.data[i] = 255 - image.data[i];
+    image.data[i + 1] = 255 - image.data[i + 1];
+    image.data[i + 2] = 255 - image.data[i + 2];
+  }
+  spriteCtx.putImageData(image, 0, 0);
+  setStatus("Inverted global FX banner draft");
+}
+
+async function saveGlobalSprite() {
+  const response = await fetch("/api/save-global-asset", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      path: "assets/fx/banner.png",
+      dataUrl: el.spriteCanvas.toDataURL("image/png"),
+    }),
+  });
+  const payload = await response.json();
+  if (!payload.ok) throw new Error(payload.error || "Save failed");
+  setStatus(`Saved ${payload.path}`);
 }
 
 async function saveBoard() {
@@ -635,6 +696,15 @@ el.tabs.forEach((tab) => {
     render();
   });
 });
+el.spriteTools.forEach((tool) => {
+  tool.addEventListener("click", () => {
+    state.spriteTool = tool.dataset.spriteTool;
+    el.spriteTools.forEach((button) => button.classList.toggle("active", button === tool));
+  });
+});
+el.invertSprite.addEventListener("click", invertSprite);
+el.reloadSprite.addEventListener("click", loadGlobalSprite);
+el.saveSprite.addEventListener("click", () => saveGlobalSprite().catch((error) => setStatus(error.message)));
 el.tools.forEach((tool) => {
   tool.addEventListener("click", () => {
     state.tool = tool.dataset.tool;
@@ -652,6 +722,23 @@ el.tools.forEach((tool) => {
 el.canvas.addEventListener("mousedown", handleCanvasDown);
 el.canvas.addEventListener("mousemove", handleCanvasMove);
 el.canvas.addEventListener("mouseleave", handleCanvasLeave);
+el.spriteCanvas.addEventListener("mousedown", (event) => {
+  state.spriteDrawing = true;
+  paintSpritePixel(event);
+});
+el.spriteCanvas.addEventListener("mousemove", (event) => {
+  const point = spritePoint(event);
+  el.spriteCursorInfo.textContent = `x ${point.x} y ${point.y}`;
+  if (state.spriteDrawing) paintSpritePixel(event);
+});
+el.spriteCanvas.addEventListener("mouseleave", () => {
+  el.spriteCursorInfo.textContent = "x -- y --";
+  state.spriteDrawing = false;
+});
 window.addEventListener("mouseup", handleCanvasUp);
+window.addEventListener("mouseup", () => {
+  state.spriteDrawing = false;
+});
 
 loadBoards().catch((error) => setStatus(error.message));
+loadGlobalSprite();

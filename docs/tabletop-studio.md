@@ -10,7 +10,11 @@ Each board profile should describe:
 
 - the board connections players see and pieces use for legal movement;
 - the mill triples that define scoring/capture patterns;
-- optional sprite/banner assets for richer presentation.
+- optional board-specific reference art, if a future board needs it.
+
+Global UI sprites and the FX catalog banner belong to project assets, not to
+individual board profiles. TableTop Studio should edit those in a separate
+global sprite workflow.
 
 The important constraint is that graph and rules data stay explicit. Board
 connections are both visual lines and movement edges. Mill lines remain separate
@@ -24,7 +28,7 @@ Use Pocket Pixel's `tools/pet-studio/` as the starting point for:
 - the local browser editor structure;
 - profile loading/saving from JSON files;
 - sprite canvas editing and PNG/header export;
-- banner editing workflow for FX catalog images;
+- global banner editing workflow for FX catalog images;
 - project-local server target, similar to `make pet-studio`.
 
 Rename and reshape the concepts rather than carrying over pet-specific language.
@@ -45,8 +49,7 @@ profile should include:
 - optional rule flags, such as flying enabled or capture restrictions;
 - mill behavior, currently capture after mill or immediate win after mill;
 - placement/movement behavior, including variants that stop initial placement
-  with empty points left and later mix placing with moving;
-- asset paths for board sprite, FX banner, and preview art.
+  with empty points left and later mix placing with moving.
 
 The generated firmware data should stay data-first, matching the current
 `Board.*` direction. Rules should consume point indices, adjacency, and mill
@@ -69,7 +72,8 @@ Initial TableTop Studio modes:
 - `Boards`: choose, duplicate, rename, and edit board JSON profiles.
 - `Graph`: place numbered points over a board reference image, draw board
   connections/legal movement edges, and define mill triples.
-- `Sprites`: draw or import the visible board sprite and FX banner.
+- `Sprites`: draw global project sprites, starting with the shared FX catalog
+  banner in `assets/fx/banner.png`.
 - `Validate`: check graph consistency before generation.
 
 Validation should catch:
@@ -117,6 +121,8 @@ Implemented first:
 - basic validation for missing points, duplicate/self edges, non-bidirectional
   adjacency, malformed mills, and core numeric rule fields;
 - JSON duplication/saving through local project endpoints;
+- a global `Sprites` tab that can edit, invert, reload, and save the shared FX
+  banner without storing banner paths in board profiles;
 - `make board-data`, which validates board profiles and generates
   `src/GeneratedBoards.*` for firmware;
 - generated `RuleSet` mill behavior, allowing Nine/Six Men's Morris to capture

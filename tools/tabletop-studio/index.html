@@ -28,6 +28,7 @@
       <div class="tabs">
         <button class="active" data-tab="graph">Graph</button>
         <button data-tab="rules">Rules</button>
+        <button data-tab="sprites">Sprites</button>
         <button data-tab="raw">Raw JSON</button>
       </div>
     </section>
@@ -66,6 +67,26 @@
 
       <section id="rulesTab" class="editor hidden">
         <div id="rulesForm" class="rulesForm"></div>
+      </section>
+
+      <section id="spritesTab" class="editor hidden">
+        <div class="spriteTools">
+          <div>
+            <h2>Global Sprites</h2>
+            <p>FX banner and shared UI sprites belong to the project, not to a board profile.</p>
+          </div>
+          <div class="modeGroup">
+            <button class="active" data-sprite-tool="black">Black</button>
+            <button data-sprite-tool="white">White</button>
+            <button id="invertSprite" type="button">Invert</button>
+            <button id="reloadSprite" type="button">Reload</button>
+            <button id="saveSprite" type="button">Save</button>
+          </div>
+          <span id="spriteCursorInfo" class="cursorInfo">x -- y --</span>
+        </div>
+        <div class="spriteCanvasFrame">
+          <canvas id="spriteCanvas" width="128" height="64"></canvas>
+        </div>
       </section>
 
       <section id="rawTab" class="editor hidden">

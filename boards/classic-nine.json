@@ -93,9 +93,5 @@
     [9, 22],
     [19, 21, 23],
     [14, 22]
-  ],
-  "assets": {
-    "boardSprite": null,
-    "banner": "assets/fx/banner.png"
-  }
+  ]
 }

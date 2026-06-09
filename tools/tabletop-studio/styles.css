@@ -171,6 +171,26 @@ textarea {
   margin-bottom: 12px;
 }
 
+.spriteTools {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.spriteTools h2 {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.spriteTools p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
 .graphTools label {
   display: inline-flex;
   align-items: center;
@@ -197,6 +217,19 @@ canvas {
   width: 100%;
   height: 100%;
   image-rendering: pixelated;
+}
+
+.spriteCanvasFrame {
+  width: min(86vw, 768px);
+  aspect-ratio: 2;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(45deg, #222 25%, transparent 25% 75%, #222 75%),
+    linear-gradient(45deg, #222 25%, #151515 25% 75%, #222 75%);
+  background-position: 0 0, 8px 8px;
+  background-size: 16px 16px;
+  border: 1px solid #343434;
 }
 
 .legend {
