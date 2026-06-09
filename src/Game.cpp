@@ -36,6 +36,8 @@ constexpr uint8_t FADE_FRAMES = 18;
 constexpr uint8_t CURTAIN_FRAMES = 20;
 constexpr uint8_t DEMO_MIN_PREFLIGHT_ACTIONS = 10;
 constexpr uint8_t DEMO_PREFLIGHT_ACTION_RANGE = 10;
+constexpr uint8_t DEMO_CPU_MIN_THINK_FRAMES = 6;
+constexpr uint8_t DEMO_CPU_MAX_THINK_FRAMES = 24;
 constexpr uint8_t CPU_THINK_FRAMES = 14;
 constexpr uint8_t CPU_ANIMATION_TARGET_FRAMES = 30;
 constexpr uint8_t CPU_ACTION_PAUSE_FRAMES = 3;
@@ -271,6 +273,13 @@ AiDifficulty selectedAiDifficulty() {
   return opponentMode == OPPONENT_CPU_HARD ? AI_HARD : AI_EASY;
 }
 
+uint8_t cpuThinkDelayFrames() {
+  if (scene == SCENE_DEMO) {
+    return random(DEMO_CPU_MIN_THINK_FRAMES, DEMO_CPU_MAX_THINK_FRAMES + 1);
+  }
+  return CPU_THINK_FRAMES;
+}
+
 void nextOpponentMode() {
   opponentMode = static_cast<OpponentMode>((opponentMode + 1) % OPPONENT_MODE_COUNT);
 }
@@ -328,7 +337,6 @@ void startMatch() {
   resetMorrisGame(game, *board, *rules);
   game.currentPlayer = firstPlayer;
   cpuPlayer = opponentOf(firstPlayer);
-  cpuThinkFrames = isCpuTurn() ? CPU_THINK_FRAMES : 0;
   hasUndo = false;
   millFlashFrames = 0;
   idleFrames = 0;
@@ -336,6 +344,7 @@ void startMatch() {
   demoGameOverFrames = 0;
   confirmAction = CONFIRM_NONE;
   scene = SCENE_PLAYING;
+  cpuThinkFrames = isCpuTurn() ? cpuThinkDelayFrames() : 0;
   setMessage("");
 }
 
@@ -386,7 +395,7 @@ void startDemoMatch() {
   scene = SCENE_DEMO;
   demoFrames = 0;
   demoGameOverFrames = 0;
-  cpuThinkFrames = CPU_THINK_FRAMES;
+  cpuThinkFrames = cpuThinkDelayFrames();
   setMessage("DEMO");
   stopMenuMusic();
 }
@@ -414,7 +423,7 @@ void startTransition(TransitionMode mode) {
 }
 
 bool winnerIsCpu() {
-  return scene == SCENE_DEMO || (opponentMode != OPPONENT_PLAYER_TWO && game.winner == cpuPlayer);
+  return scene != SCENE_DEMO && opponentMode != OPPONENT_PLAYER_TWO && game.winner == cpuPlayer;
 }
 
 void playGameOverFanfare() {
@@ -1426,7 +1435,7 @@ void handleInput() {
       return;
     } else {
       showActionFeedback(phaseBeforeAction, true);
-      cpuThinkFrames = isCpuTurn() ? CPU_THINK_FRAMES : 0;
+      cpuThinkFrames = isCpuTurn() ? cpuThinkDelayFrames() : 0;
     }
   }
 }
@@ -1490,7 +1499,7 @@ void finishCpuAnimation() {
   } else {
     setMessage("CPU WAIT");
   }
-  cpuThinkFrames = isCpuTurn() ? CPU_THINK_FRAMES : 0;
+  cpuThinkFrames = isCpuTurn() ? cpuThinkDelayFrames() : 0;
 }
 
 void startCpuAnimation() {
@@ -1498,7 +1507,7 @@ void startCpuAnimation() {
   MorrisGameState plannedResult;
   if (!chooseAiAction(game, selectedAiDifficulty(), cpuAnimationAction, plannedResult)) {
     setMessage("CPU WAIT");
-    cpuThinkFrames = CPU_THINK_FRAMES;
+    cpuThinkFrames = cpuThinkDelayFrames();
     return;
   }
 

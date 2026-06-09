@@ -84,7 +84,8 @@ Implemented:
   Easy vs CPU Hard demo on a random playable board from a legally generated
   mid-game state. Any button returns to the main menu through the curtain and
   restarts menu music; otherwise the demo returns after 30 seconds or three
-  seconds after a demo win/draw.
+  seconds after a demo win/draw. Demo CPU turns wait a random 0.2-0.8 seconds,
+  and demo results are labeled as Player 1/Player 2 rather than CPU.
 - Blinking result panel for completed games, with local player, CPU, and tie
   labels plus short win/lose/draw fanfares.
 - Debug-only hold-A/up scenarios for mill, flying, blocked-game-over, and draw
