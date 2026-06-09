@@ -28,7 +28,9 @@ The implementation is split into:
   Six Men's Morris, and Three Men's Morris.
 - `src/MenuMusic.*`: generated compact menu music arrays from TableTop Studio
   audio data, initially derived from Mutopia's public-domain MIDI source for
-  Scott Joplin's "The Entertainer".
+  Scott Joplin's "The Entertainer". The MIDI converter emits one firmware voice
+  by prioritizing the right-hand melody and using left-hand bass notes when the
+  melody rests.
 - `src/Assets.*`: shared PROGMEM sprites, currently including title and boot
   logo assets.
 - `boards/*.json`: editable board/rule profiles consumed by TableTop Studio and

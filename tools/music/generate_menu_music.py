@@ -11,6 +11,7 @@ import audio_data
 
 PPQ_FALLBACK = 384
 RIGHT_HAND_TRACK = 1
+LEFT_HAND_TRACK = 2
 TICKS_PER_EVENT_UNIT = 48
 MEASURES_TO_EXPORT = 32
 MIDI_TRANSPOSE = -12
@@ -109,19 +110,30 @@ def read_track_notes(track: bytes) -> tuple[list[tuple[int, int, int]], list[tup
     return notes, tempos
 
 
-def top_voice_events(notes: list[tuple[int, int, int]], end_tick: int) -> list[tuple[int, int]]:
+def mono_voice_events(
+    melody_notes: list[tuple[int, int, int]],
+    bass_notes: list[tuple[int, int, int]],
+    end_tick: int,
+) -> list[tuple[int, int]]:
     changes = {0, end_tick}
-    for start, end, _note in notes:
-        if start < end_tick:
-            changes.add(start)
-            changes.add(min(end, end_tick))
+    for source in (melody_notes, bass_notes):
+        for start, end, _note in source:
+            if start < end_tick:
+                changes.add(start)
+                changes.add(min(end, end_tick))
 
     events: list[tuple[int, int]] = []
     for start, end in zip(sorted(changes), sorted(changes)[1:]):
         if end <= start:
             continue
-        active = [note for note_start, note_end, note in notes if note_start <= start and note_end > start]
-        note = max(active) + MIDI_TRANSPOSE if active else REST_NOTE
+        melody_active = [note for note_start, note_end, note in melody_notes if note_start <= start and note_end > start]
+        bass_active = [note for note_start, note_end, note in bass_notes if note_start <= start and note_end > start]
+        if melody_active:
+            note = max(melody_active) + MIDI_TRANSPOSE
+        elif bass_active:
+            note = min(bass_active)
+        else:
+            note = REST_NOTE
         duration = end - start
         units = max(1, round(duration / TICKS_PER_EVENT_UNIT))
         if events and events[-1][0] == note:
@@ -173,9 +185,12 @@ def main() -> int:
     ppq, tracks = read_tracks(args.midi)
     if RIGHT_HAND_TRACK >= len(tracks):
         raise ValueError(f"{args.midi}: missing right-hand track {RIGHT_HAND_TRACK}")
-    notes, _tempos = read_track_notes(tracks[RIGHT_HAND_TRACK])
+    if LEFT_HAND_TRACK >= len(tracks):
+        raise ValueError(f"{args.midi}: missing left-hand track {LEFT_HAND_TRACK}")
+    melody_notes, _tempos = read_track_notes(tracks[RIGHT_HAND_TRACK])
+    bass_notes, _tempos = read_track_notes(tracks[LEFT_HAND_TRACK])
     end_tick = args.measures * ppq * 2
-    events = top_voice_events(notes, end_tick)
+    events = mono_voice_events(melody_notes, bass_notes, end_tick)
     used_notes = [note for note, _duration in events if note != REST_NOTE]
     min_note = min(used_notes)
     max_note = max(used_notes)

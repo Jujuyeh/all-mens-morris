@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-constexpr uint8_t MENU_MUSIC_EVENT_COUNT = 148;
-constexpr uint8_t MENU_MUSIC_MIN_NOTE = 48;
+constexpr uint8_t MENU_MUSIC_EVENT_COUNT = 153;
+constexpr uint8_t MENU_MUSIC_MIN_NOTE = 43;
 constexpr uint8_t MENU_MUSIC_MAX_NOTE = 76;
 constexpr uint8_t MENU_MUSIC_TICK_MS = 69;
 
