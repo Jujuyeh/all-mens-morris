@@ -37,14 +37,19 @@
 
 1. Test CPU behavior across Classic, Six Men's Morris, Three Men's Morris, Long
    Morris, and Flower on device/libretro.
-2. Tune board graph/art direction after CPU and human playtests.
-3. Add generated profile metadata for menu labels, availability, and future
+2. Prototype CPU difficulty levels with a strict flash/RAM budget so future
+   linked multiplayer support for two Arduboy FX-C units over USB-C still has
+   room.
+3. Tune board graph/art direction after CPU and human playtests.
+4. Add generated profile metadata for menu labels, availability, and future
    variant descriptions.
-4. Continue the pixel-art pass for pieces and final board/menu assets.
+5. Continue the pixel-art pass for pieces and final board/menu assets.
 
 ## Later
 
 - Stronger AI difficulty levels.
+- Linked multiplayer between two Arduboy FX-C units, with protocol and UI kept
+  small enough to coexist with board variants and CPU difficulty levels.
 - More board/rule variant definitions.
 - More advanced draw rules, such as repeated-position detection.
 - TableTop Studio for designing board sprites and playable graph data together.
