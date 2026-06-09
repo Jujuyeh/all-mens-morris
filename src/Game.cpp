@@ -50,6 +50,13 @@ enum ConfirmAction : uint8_t {
   CONFIRM_MAIN_MENU,
 };
 
+enum OpponentMode : uint8_t {
+  OPPONENT_PLAYER_TWO,
+  OPPONENT_CPU_EASY,
+  OPPONENT_CPU_HARD,
+  OPPONENT_MODE_COUNT,
+};
+
 enum CpuAnimationPhase : uint8_t {
   CPU_ANIM_IDLE,
   CPU_ANIM_TO_FROM,
@@ -77,7 +84,7 @@ uint8_t selectedBoardMenuItem = 0;
 Player firstPlayer = PLAYER_TWO;
 Player cpuPlayer = PLAYER_ONE;
 bool hasUndo = false;
-bool versusCpu = false;
+OpponentMode opponentMode = OPPONENT_PLAYER_TWO;
 uint8_t cpuThinkFrames = 0;
 CpuAnimationPhase cpuAnimationPhase = CPU_ANIM_IDLE;
 AiAction cpuAnimationAction = {NO_POINT, NO_POINT, TURN_ACTION_MOVE};
@@ -113,7 +120,7 @@ bool selectedBoardIsPlayable() {
 }
 
 bool isCpuTurn() {
-  return versusCpu
+  return opponentMode != OPPONENT_PLAYER_TWO
       && scene == SCENE_PLAYING
       && confirmAction == CONFIRM_NONE
       && game.phase != PHASE_GAME_OVER
@@ -129,6 +136,30 @@ void startMillEffects();
 void setMessage(const char *text) {
   message = text;
   messageFrames = 45;
+}
+
+const char *opponentModeLabel() {
+  if (opponentMode == OPPONENT_CPU_EASY) {
+    return "CPU EASY";
+  }
+  if (opponentMode == OPPONENT_CPU_HARD) {
+    return "CPU HARD";
+  }
+  return "PLAYER2";
+}
+
+AiDifficulty selectedAiDifficulty() {
+  return opponentMode == OPPONENT_CPU_HARD ? AI_HARD : AI_EASY;
+}
+
+void nextOpponentMode() {
+  opponentMode = static_cast<OpponentMode>((opponentMode + 1) % OPPONENT_MODE_COUNT);
+}
+
+void previousOpponentMode() {
+  opponentMode = opponentMode == OPPONENT_PLAYER_TWO
+      ? OPPONENT_CPU_HARD
+      : static_cast<OpponentMode>(opponentMode - 1);
 }
 
 BoardPoint screenPoint(uint8_t index) {
@@ -826,9 +857,9 @@ void drawMainMenu() {
 
   tinyfont.setCursor(42, 57);
   tinyfont.print("VS ");
-  tinyfont.print(versusCpu ? "CPU" : "HUMAN");
+  tinyfont.print(opponentModeLabel());
   if (selectedMenuItem == 2) {
-    drawDashedRect(39, 54, 50, 10, animationFrame / 5, WHITE);
+    drawDashedRect(39, 54, 66, 10, animationFrame / 5, WHITE);
   }
 }
 
@@ -915,7 +946,7 @@ void handleMainMenuInput() {
     } else if (selectedMenuItem == 1) {
       firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
     } else {
-      versusCpu = !versusCpu;
+      previousOpponentMode();
     }
     sound.tone(494, 35);
   }
@@ -925,7 +956,7 @@ void handleMainMenuInput() {
     } else if (selectedMenuItem == 1) {
       firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
     } else {
-      versusCpu = !versusCpu;
+      nextOpponentMode();
     }
     sound.tone(587, 35);
   }
@@ -938,8 +969,8 @@ void handleMainMenuInput() {
       setMessage(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
       sound.tone(784, 45);
     } else if (selectedMenuItem == 2) {
-      versusCpu = !versusCpu;
-      setMessage(versusCpu ? "CPU" : "HUMAN");
+      nextOpponentMode();
+      setMessage(opponentModeLabel());
       sound.tone(784, 45);
     } else {
       setMessage("SOON");
@@ -1121,7 +1152,7 @@ void finishCpuAnimation() {
 void startCpuAnimation() {
   cpuAnimationPhaseBeforeAction = game.phase;
   MorrisGameState plannedResult;
-  if (!chooseAiAction(game, cpuAnimationAction, plannedResult)) {
+  if (!chooseAiAction(game, selectedAiDifficulty(), cpuAnimationAction, plannedResult)) {
     setMessage("CPU WAIT");
     cpuThinkFrames = CPU_THINK_FRAMES;
     return;
@@ -1213,6 +1244,7 @@ void gameSetup() {
   arduboy.setFrameRate(GAME_FPS);
   arduboy.setTextColor(BLACK);
   arduboy.audio.begin();
+  randomSeed(static_cast<unsigned long>(micros()) ^ analogRead(A0));
   tinyfont.setTextColor(BLACK);
   resetMorrisGame(game, ClassicBoardDefinition, ClassicRuleSet);
   playBootAnimation();

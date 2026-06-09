@@ -3,6 +3,12 @@
 namespace {
 constexpr int16_t WIN_SCORE = 30000;
 constexpr uint8_t NO_POINT = 255;
+constexpr uint8_t TOP_ACTION_COUNT = 3;
+
+struct RankedAction {
+  AiAction action;
+  int16_t score;
+};
 
 int16_t absoluteScore(int16_t value) {
   return value < 0 ? -value : value;
@@ -150,31 +156,64 @@ int16_t scoreAction(const MorrisGameState &game, const AiAction &action, Player 
   return score;
 }
 
-bool considerAction(const MorrisGameState &game, const AiAction &action, Player aiPlayer,
-                    bool &hasBest, int16_t &bestScore, AiAction &bestAction) {
-  int16_t score = scoreAction(game, action, aiPlayer);
-  if (!hasBest || score > bestScore) {
-    hasBest = true;
-    bestScore = score;
-    bestAction = action;
+int16_t minimaxScore(const MorrisGameState &game, Player aiPlayer, uint8_t depth);
+
+int16_t scoreActionForDifficulty(const MorrisGameState &game, const AiAction &action,
+                                 Player aiPlayer, AiDifficulty difficulty) {
+  if (difficulty == AI_EASY) {
+    return scoreAction(game, action, aiPlayer);
   }
-  return hasBest;
+
+  MorrisGameState after;
+  if (!applyAiAction(game, action, after)) {
+    return -WIN_SCORE;
+  }
+  int16_t score = minimaxScore(after, aiPlayer, 1);
+  if (after.phase == PHASE_CAPTURING && after.currentPlayer == aiPlayer) {
+    score += 120;
+  }
+  score -= absoluteScore(static_cast<int16_t>(action.to) - static_cast<int16_t>(game.cursor)) / 2;
+  return score;
 }
 
-void considerPlaceActions(const MorrisGameState &game, Player aiPlayer, bool &hasBest,
-                          int16_t &bestScore, AiAction &bestAction, TurnActionMode mode) {
+void addRankedAction(RankedAction ranked[], uint8_t &count, const AiAction &action, int16_t score) {
+  uint8_t insertAt = count;
+  while (insertAt > 0 && score > ranked[insertAt - 1].score) {
+    if (insertAt < TOP_ACTION_COUNT) {
+      ranked[insertAt] = ranked[insertAt - 1];
+    }
+    insertAt--;
+  }
+
+  if (insertAt >= TOP_ACTION_COUNT) {
+    return;
+  }
+  if (count < TOP_ACTION_COUNT) {
+    count++;
+  }
+  ranked[insertAt] = {action, score};
+}
+
+void rankAction(const MorrisGameState &game, const AiAction &action, Player aiPlayer,
+                AiDifficulty difficulty, RankedAction ranked[], uint8_t &count) {
+  int16_t score = scoreActionForDifficulty(game, action, aiPlayer, difficulty);
+  addRankedAction(ranked, count, action, score);
+}
+
+void rankPlaceActions(const MorrisGameState &game, Player aiPlayer, TurnActionMode mode,
+                      AiDifficulty difficulty, RankedAction ranked[], uint8_t &count) {
   for (uint8_t point = 0; point < game.board->pointCount; point++) {
     MorrisGameState candidate = game;
     candidate.actionMode = mode;
     candidate.cursor = point;
     if (canPlaceAt(candidate, point)) {
-      considerAction(game, {NO_POINT, point, mode}, aiPlayer, hasBest, bestScore, bestAction);
+      rankAction(game, {NO_POINT, point, mode}, aiPlayer, difficulty, ranked, count);
     }
   }
 }
 
-void considerMoveActions(const MorrisGameState &game, Player aiPlayer, bool &hasBest,
-                         int16_t &bestScore, AiAction &bestAction) {
+void rankMoveActions(const MorrisGameState &game, Player aiPlayer, AiDifficulty difficulty,
+                     RankedAction ranked[], uint8_t &count) {
   for (uint8_t from = 0; from < game.board->pointCount; from++) {
     if (game.points[from] != aiPlayer) {
       continue;
@@ -185,21 +224,150 @@ void considerMoveActions(const MorrisGameState &game, Player aiPlayer, bool &has
       candidate.cursor = to;
       candidate.actionMode = TURN_ACTION_MOVE;
       if (canMovePiece(candidate, from, to)) {
-        considerAction(game, {from, to, TURN_ACTION_MOVE}, aiPlayer, hasBest, bestScore, bestAction);
+        rankAction(game, {from, to, TURN_ACTION_MOVE}, aiPlayer, difficulty, ranked, count);
       }
     }
   }
 }
 
-void considerCaptureActions(const MorrisGameState &game, Player aiPlayer, bool &hasBest,
-                            int16_t &bestScore, AiAction &bestAction) {
+void rankCaptureActions(const MorrisGameState &game, Player aiPlayer, AiDifficulty difficulty,
+                        RankedAction ranked[], uint8_t &count) {
   for (uint8_t point = 0; point < game.board->pointCount; point++) {
     MorrisGameState candidate = game;
     candidate.cursor = point;
     if (canCaptureAt(candidate, point)) {
-      considerAction(game, {NO_POINT, point, game.actionMode}, aiPlayer, hasBest, bestScore, bestAction);
+      rankAction(game, {NO_POINT, point, game.actionMode}, aiPlayer, difficulty, ranked, count);
     }
   }
+}
+
+uint16_t actionWeight(int16_t score, int16_t floorScore) {
+  int16_t delta = score - floorScore;
+  if (delta < 0) {
+    delta = 0;
+  } else if (delta > 180) {
+    delta = 180;
+  }
+  return static_cast<uint16_t>(delta) + 1;
+}
+
+bool chooseRankedAction(const MorrisGameState &game, Player aiPlayer, AiDifficulty difficulty,
+                        AiAction &action) {
+  RankedAction ranked[TOP_ACTION_COUNT];
+  uint8_t count = 0;
+
+  if (game.phase == PHASE_CAPTURING) {
+    rankCaptureActions(game, aiPlayer, difficulty, ranked, count);
+  } else if (game.phase == PHASE_PLACING) {
+    rankPlaceActions(game, aiPlayer, TURN_ACTION_PLACE, difficulty, ranked, count);
+  } else if (game.phase == PHASE_MOVING) {
+    if (game.rules->mixedPlacementMovement) {
+      rankPlaceActions(game, aiPlayer, TURN_ACTION_PLACE, difficulty, ranked, count);
+    }
+    rankMoveActions(game, aiPlayer, difficulty, ranked, count);
+  }
+
+  if (count == 0) {
+    return false;
+  }
+
+  int16_t floorScore = ranked[count - 1].score;
+  uint16_t totalWeight = 0;
+  for (uint8_t i = 0; i < count; i++) {
+    totalWeight += actionWeight(ranked[i].score, floorScore);
+  }
+
+  uint16_t pick = random(totalWeight);
+  for (uint8_t i = 0; i < count; i++) {
+    uint16_t weight = actionWeight(ranked[i].score, floorScore);
+    if (pick < weight) {
+      action = ranked[i].action;
+      return true;
+    }
+    pick -= weight;
+  }
+
+  action = ranked[0].action;
+  return true;
+}
+
+int16_t minimaxActionScore(const MorrisGameState &game, const AiAction &action,
+                           Player aiPlayer, uint8_t depth) {
+  MorrisGameState after;
+  if (!applyAiAction(game, action, after)) {
+    return game.currentPlayer == aiPlayer ? -WIN_SCORE : WIN_SCORE;
+  }
+  return minimaxScore(after, aiPlayer, depth - 1);
+}
+
+void considerMinimaxAction(const MorrisGameState &game, const AiAction &action, Player aiPlayer,
+                           uint8_t depth, bool maximizing, bool &hasBest, int16_t &bestScore) {
+  int16_t score = minimaxActionScore(game, action, aiPlayer, depth);
+  if (!hasBest || (maximizing && score > bestScore) || (!maximizing && score < bestScore)) {
+    hasBest = true;
+    bestScore = score;
+  }
+}
+
+int16_t minimaxScore(const MorrisGameState &game, Player aiPlayer, uint8_t depth) {
+  if (depth == 0 || game.phase == PHASE_GAME_OVER) {
+    return evaluateState(game, aiPlayer);
+  }
+
+  Player player = game.currentPlayer;
+  bool maximizing = player == aiPlayer;
+  bool hasBest = false;
+  int16_t bestScore = maximizing ? -WIN_SCORE : WIN_SCORE;
+
+  if (game.phase == PHASE_CAPTURING) {
+    for (uint8_t point = 0; point < game.board->pointCount; point++) {
+      MorrisGameState candidate = game;
+      candidate.cursor = point;
+      if (canCaptureAt(candidate, point)) {
+        considerMinimaxAction(game, {NO_POINT, point, game.actionMode}, aiPlayer, depth,
+                              maximizing, hasBest, bestScore);
+      }
+    }
+  } else if (game.phase == PHASE_PLACING) {
+    for (uint8_t point = 0; point < game.board->pointCount; point++) {
+      MorrisGameState candidate = game;
+      candidate.actionMode = TURN_ACTION_PLACE;
+      candidate.cursor = point;
+      if (canPlaceAt(candidate, point)) {
+        considerMinimaxAction(game, {NO_POINT, point, TURN_ACTION_PLACE}, aiPlayer, depth,
+                              maximizing, hasBest, bestScore);
+      }
+    }
+  } else if (game.phase == PHASE_MOVING) {
+    if (game.rules->mixedPlacementMovement) {
+      for (uint8_t point = 0; point < game.board->pointCount; point++) {
+        MorrisGameState candidate = game;
+        candidate.actionMode = TURN_ACTION_PLACE;
+        candidate.cursor = point;
+        if (canPlaceAt(candidate, point)) {
+          considerMinimaxAction(game, {NO_POINT, point, TURN_ACTION_PLACE}, aiPlayer, depth,
+                                maximizing, hasBest, bestScore);
+        }
+      }
+    }
+    for (uint8_t from = 0; from < game.board->pointCount; from++) {
+      if (game.points[from] != player) {
+        continue;
+      }
+      for (uint8_t to = 0; to < game.board->pointCount; to++) {
+        MorrisGameState candidate = game;
+        candidate.selected = from;
+        candidate.cursor = to;
+        candidate.actionMode = TURN_ACTION_MOVE;
+        if (canMovePiece(candidate, from, to)) {
+          considerMinimaxAction(game, {from, to, TURN_ACTION_MOVE}, aiPlayer, depth,
+                                maximizing, hasBest, bestScore);
+        }
+      }
+    }
+  }
+
+  return hasBest ? bestScore : evaluateState(game, aiPlayer);
 }
 }
 
@@ -209,26 +377,21 @@ bool chooseAiAction(const MorrisGameState &game, MorrisGameState &result) {
 }
 
 bool chooseAiAction(const MorrisGameState &game, AiAction &action, MorrisGameState &result) {
+  return chooseAiAction(game, AI_EASY, action, result);
+}
+
+bool chooseAiAction(const MorrisGameState &game, AiDifficulty difficulty,
+                    AiAction &action, MorrisGameState &result) {
   if (game.phase == PHASE_GAME_OVER) {
     return false;
   }
 
   Player aiPlayer = game.currentPlayer;
-  bool hasBest = false;
-  int16_t bestScore = -WIN_SCORE;
   AiAction bestAction = {NO_POINT, game.cursor, game.actionMode};
-
-  if (game.phase == PHASE_CAPTURING) {
-    considerCaptureActions(game, aiPlayer, hasBest, bestScore, bestAction);
-  } else if (game.phase == PHASE_PLACING) {
-    considerPlaceActions(game, aiPlayer, hasBest, bestScore, bestAction, TURN_ACTION_PLACE);
-  } else if (game.phase == PHASE_MOVING) {
-    if (game.rules->mixedPlacementMovement) {
-      considerPlaceActions(game, aiPlayer, hasBest, bestScore, bestAction, TURN_ACTION_PLACE);
-    }
-    considerMoveActions(game, aiPlayer, hasBest, bestScore, bestAction);
+  if (!chooseRankedAction(game, aiPlayer, difficulty, bestAction)) {
+    return false;
   }
 
   action = bestAction;
-  return hasBest && applyAiAction(game, bestAction, result);
+  return applyAiAction(game, bestAction, result);
 }

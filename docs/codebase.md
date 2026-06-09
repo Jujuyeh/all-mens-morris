@@ -13,10 +13,11 @@ The implementation is split into:
 - `src/Game.cpp`: Arduboy setup, custom boot animation, input, rendering,
   sound/RGB feedback, main menu, quick menu, CPU turn animation/dispatch, and
   current UI.
-- `src/Ai.*`: generic one-ply CPU opponent. It enumerates legal rule actions,
-  simulates them on `MorrisGameState`, and scores the resulting state without
-  knowing about screen coordinates. `Game.cpp` owns the visible cursor
-  animation before applying the chosen result.
+- `src/Ai.*`: generic CPU opponent. It enumerates legal rule actions, simulates
+  them on `MorrisGameState`, and scores the resulting state without knowing
+  about screen coordinates. Easy uses the direct heuristic, while Hard reuses
+  the same evaluator through a depth-2 minimax pass. `Game.cpp` owns the
+  visible cursor animation before applying the chosen result.
 - `src/Board.*`: board helper APIs for `BoardDefinition` graph coordinates,
   mill triples, and adjacency. Adjacency is both the visible board connection
   and the legal movement edge.

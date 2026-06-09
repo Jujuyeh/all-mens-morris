@@ -32,14 +32,15 @@
 - Added Flower as a playable custom 20-point board profile.
 - Added a generic CPU opponent that works across generated board/rule profiles.
 - Added visible CPU cursor/action animation with turn-paced movement sounds.
+- Added CPU Easy and CPU Hard opponent settings, with Hard using depth-2
+  minimax over the shared heuristic and weighted top-action choice.
 
 ## Next Cycle
 
-1. Test CPU behavior across Classic, Six Men's Morris, Three Men's Morris, Long
+1. Test CPU Easy/Hard behavior across Classic, Six Men's Morris, Three Men's Morris, Long
    Morris, and Flower on device/libretro.
-2. Prototype CPU difficulty levels with a strict flash/RAM budget so future
-   linked multiplayer support for two Arduboy FX-C units over USB-C still has
-   room.
+2. Keep future CPU tuning under a strict flash/RAM budget so linked multiplayer
+   support for two Arduboy FX-C units over USB-C still has room.
 3. Tune board graph/art direction after CPU and human playtests.
 4. Add generated profile metadata for menu labels, availability, and future
    variant descriptions.
@@ -47,7 +48,6 @@
 
 ## Later
 
-- Stronger AI difficulty levels.
 - Linked multiplayer between two Arduboy FX-C units, with protocol and UI kept
   small enough to coexist with board variants and CPU difficulty levels.
 - More board/rule variant definitions.

@@ -39,9 +39,9 @@ Implemented:
 - Draw detection after 50 movement turns without a capture.
 - Main menu scaffold for choosing modes, with Classic Nine Men's Morris, Six
   Men's Morris, Three Men's Morris, Long Morris, and Flower active.
-- Main menu opponent setting for local two-player or human-vs-CPU play. In CPU
-  mode, the human takes the selected first-player color and the CPU plays the
-  opposite color.
+- Main menu opponent setting for local two-player, CPU Easy, or CPU Hard play.
+  In CPU mode, the human takes the selected first-player color and the CPU
+  plays the opposite color.
 - Horizontal board selector in the main menu, with left/right cycling board
   titles and up/down moving between board, first-player, and opponent settings.
 - Data-backed `BoardDefinition` and `RuleSet` generation for board and rule
@@ -77,15 +77,17 @@ Implemented:
 - Sound effects for menu/action feedback and RGB LED flashing on mills.
 - Debug-only hold-A/up scenarios for mill, flying, blocked-game-over, and draw
   testing.
-- Generic CPU opponent for all generated board/rule profiles, using one-ply
-  action simulation and a compact tactical heuristic.
+- Generic CPU opponent for all generated board/rule profiles. Easy uses one-ply
+  action simulation and a compact tactical heuristic; Hard uses the same
+  heuristic through a depth-2 minimax pass.
+- CPU action choice is weighted among the highest-scored legal options so CPU
+  games are less deterministic.
 - CPU turns animate the cursor over valid board connections, with short cursor
   step tones and lower select/confirm tones before the simulated action is
   applied.
 
 Not implemented yet:
 
-- Stronger AI difficulty levels.
 - More alternate boards.
 
 ## Variant Ideas
