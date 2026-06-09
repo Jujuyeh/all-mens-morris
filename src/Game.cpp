@@ -39,6 +39,7 @@ constexpr uint8_t BOOT_DUST_START_FRAMES = framesAtGameFps(20);
 constexpr uint8_t BOOT_FILL_START_FRAMES = framesAtGameFps(32);
 constexpr uint8_t BOOT_CURTAIN_START_FRAMES = framesAtGameFps(47);
 constexpr uint8_t BOOT_TOTAL_FRAMES = framesAtGameFps(52);
+constexpr uint8_t MENU_MUSIC_RESTART_FRAMES = 12;
 
 enum AppScene : uint8_t {
   SCENE_MAIN_MENU,
@@ -96,10 +97,22 @@ uint8_t cpuAnimationPauseFrames = 0;
 uint8_t messageFrames = 0;
 uint8_t millFlashFrames = 0;
 uint8_t animationFrame = 0;
+uint8_t menuMusicRestartFrames = 0;
+bool menuMusicActive = false;
 #ifdef ALL_MENS_MORRIS_DEBUG
 uint8_t debugScenario = DEBUG_SCENARIO_MILL;
 #endif
 const char *message = "";
+
+const uint16_t MenuMusic[] PROGMEM = {
+  0, 120,
+  587, 95, 622, 95, 659, 95, 784, 190, 659, 95, 784, 190,
+  659, 95, 784, 95, 1047, 190, 988, 95, 880, 95, 784, 190,
+  659, 95, 784, 95, 880, 190, 831, 95, 784, 95, 740, 190,
+  784, 260,
+  0, 480,
+  TONES_REPEAT
+};
 
 const BoardDefinition *boardProfile(uint8_t index) {
   if (index >= MORRIS_BOARD_PROFILE_COUNT) {
@@ -136,6 +149,53 @@ void startMillEffects();
 void setMessage(const char *text) {
   message = text;
   messageFrames = 45;
+}
+
+void markSoundEffect() {
+  menuMusicActive = false;
+  menuMusicRestartFrames = MENU_MUSIC_RESTART_FRAMES;
+}
+
+void playEffect(uint16_t freq, uint16_t dur) {
+  markSoundEffect();
+  sound.tone(freq, dur);
+}
+
+void playEffect(uint16_t freq1, uint16_t dur1, uint16_t freq2, uint16_t dur2) {
+  markSoundEffect();
+  sound.tone(freq1, dur1, freq2, dur2);
+}
+
+void playEffect(uint16_t freq1, uint16_t dur1, uint16_t freq2, uint16_t dur2,
+                uint16_t freq3, uint16_t dur3) {
+  markSoundEffect();
+  sound.tone(freq1, dur1, freq2, dur2, freq3, dur3);
+}
+
+void stopMenuMusic() {
+  if (menuMusicActive) {
+    sound.noTone();
+    menuMusicActive = false;
+  }
+}
+
+void updateMenuMusic() {
+  if (scene != SCENE_MAIN_MENU) {
+    stopMenuMusic();
+    return;
+  }
+
+  if (menuMusicActive && sound.playing()) {
+    return;
+  }
+
+  if (menuMusicRestartFrames > 0) {
+    menuMusicRestartFrames--;
+    return;
+  }
+
+  sound.tones(MenuMusic);
+  menuMusicActive = true;
 }
 
 const char *opponentModeLabel() {
@@ -225,20 +285,20 @@ void showActionFeedback(GamePhase phaseBeforeAction, bool moved) {
   if (game.phase == PHASE_GAME_OVER) {
     if (game.winner == PLAYER_NONE) {
       setMessage("DRAW");
-      sound.tone(392, 80, 330, 80, 262, 140);
+      playEffect(392, 80, 330, 80, 262, 140);
     } else {
       setMessage(game.winner == PLAYER_ONE ? "B WIN" : "W WIN");
-      sound.tone(523, 80, 659, 80, 1047, 160);
+      playEffect(523, 80, 659, 80, 1047, 160);
     }
   } else if (game.lastMoveMadeMill) {
     setMessage("MILL!");
     startMillEffects();
   } else if (phaseBeforeAction == PHASE_CAPTURING) {
     setMessage("TAKEN");
-    sound.tone(330, 60, 220, 80);
+    playEffect(330, 60, 220, 80);
   } else {
     setMessage("");
-    sound.tone(440, 30);
+    playEffect(440, 30);
   }
 }
 
@@ -351,7 +411,7 @@ void loadDebugScenario() {
   }
 
   debugScenario = (debugScenario + 1) % DEBUG_SCENARIO_COUNT;
-  sound.tone(988, 35, 740, 50);
+  playEffect(988, 35, 740, 50);
 }
 #endif
 
@@ -583,7 +643,7 @@ void playBootAnimation() {
 
 void startMillEffects() {
   millFlashFrames = 36;
-  sound.tone(659, 70, 880, 90, 1175, 120);
+  playEffect(659, 70, 880, 90, 1175, 120);
 }
 
 void updateMillLed() {
@@ -934,11 +994,11 @@ void drawScene() {
 void handleMainMenuInput() {
   if (arduboy.justPressed(UP_BUTTON)) {
     selectedMenuItem = selectedMenuItem == 0 ? MENU_ITEM_COUNT - 1 : selectedMenuItem - 1;
-    sound.tone(523, 35);
+    playEffect(523, 35);
   }
   if (arduboy.justPressed(DOWN_BUTTON)) {
     selectedMenuItem = selectedMenuItem == MENU_ITEM_COUNT - 1 ? 0 : selectedMenuItem + 1;
-    sound.tone(392, 35);
+    playEffect(392, 35);
   }
   if (arduboy.justPressed(LEFT_BUTTON)) {
     if (selectedMenuItem == 0) {
@@ -948,7 +1008,7 @@ void handleMainMenuInput() {
     } else {
       previousOpponentMode();
     }
-    sound.tone(494, 35);
+    playEffect(494, 35);
   }
   if (arduboy.justPressed(RIGHT_BUTTON)) {
     if (selectedMenuItem == 0) {
@@ -958,23 +1018,23 @@ void handleMainMenuInput() {
     } else {
       nextOpponentMode();
     }
-    sound.tone(587, 35);
+    playEffect(587, 35);
   }
   if (arduboy.justPressed(B_BUTTON)) {
     if (selectedMenuItem == 0 && selectedBoardIsPlayable()) {
       startMatch();
-      sound.tone(660, 45, 880, 70);
+      playEffect(660, 45, 880, 70);
     } else if (selectedMenuItem == 1) {
       firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
       setMessage(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
-      sound.tone(784, 45);
+      playEffect(784, 45);
     } else if (selectedMenuItem == 2) {
       nextOpponentMode();
       setMessage(opponentModeLabel());
-      sound.tone(784, 45);
+      playEffect(784, 45);
     } else {
       setMessage("SOON");
-      sound.tone(180, 90);
+      playEffect(180, 90);
     }
   }
 }
@@ -986,7 +1046,7 @@ void handleConfirmInput() {
       confirmAction = CONFIRM_NONE;
       hasUndo = false;
       setMessage("");
-      sound.tone(392, 45, 262, 65);
+      playEffect(392, 45, 262, 65);
     }
     return;
   }
@@ -994,14 +1054,14 @@ void handleConfirmInput() {
   if (arduboy.justPressed(LEFT_BUTTON)) {
     confirmAction = CONFIRM_NONE;
     setMessage("");
-    sound.tone(220, 40);
+    playEffect(220, 40);
   }
 }
 
 void toggleLongActionMode() {
   toggleActionMode(game);
   setMessage(game.actionMode == TURN_ACTION_PLACE ? "PUT" : "MOVE");
-  sound.tone(698, 35);
+  playEffect(698, 35);
 }
 
 void handleQuickMenuInput() {
@@ -1018,15 +1078,15 @@ void handleQuickMenuInput() {
       game = undoGame;
       hasUndo = false;
       setMessage("REWIND");
-      sound.tone(440, 45, 330, 70);
+      playEffect(440, 45, 330, 70);
     } else {
       setMessage("NO UNDO");
-      sound.tone(160, 80);
+      playEffect(160, 80);
     }
   } else if (arduboy.justPressed(DOWN_BUTTON)) {
     confirmAction = CONFIRM_MAIN_MENU;
     setMessage("");
-    sound.tone(330, 35);
+    playEffect(330, 35);
   } else if (arduboy.justPressed(RIGHT_BUTTON)) {
     if (canToggleActionMode(game)) {
       toggleLongActionMode();
@@ -1072,7 +1132,7 @@ void handleInput() {
     bool moved = applyPrimaryAction(game);
     if (!moved) {
       setMessage("NOPE");
-      sound.tone(120, 80);
+      playEffect(120, 80);
     } else if (gameStateChanged(beforeAction, game)) {
       undoGame = beforeAction;
       hasUndo = true;
@@ -1088,11 +1148,11 @@ void handleInput() {
 }
 
 void playCpuCursorStepSound() {
-  sound.tone(740, 12);
+  playEffect(740, 12);
 }
 
 void playCpuActionSound() {
-  sound.tone(220, 35);
+  playEffect(220, 35);
 }
 
 uint8_t cpuAnimationStepCount(const AiAction &action) {
@@ -1260,6 +1320,7 @@ void gameLoop() {
   handleInput();
   updateCpuTurn();
   updateMillLed();
+  updateMenuMusic();
   if (messageFrames > 0) {
     messageFrames--;
   }
