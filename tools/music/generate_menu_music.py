@@ -13,6 +13,7 @@ TICKS_PER_EVENT_UNIT = 48
 MEASURES_TO_EXPORT = 32
 MIDI_TRANSPOSE = -12
 REST_NOTE = 0
+TEMPO_SCALE = 2 / 3
 
 
 def read_vlq(data: bytes, offset: int) -> tuple[int, int]:
@@ -199,9 +200,9 @@ def main() -> int:
     min_note = min(used_notes)
     max_note = max(used_notes)
 
-    # The MIDI tempo is 833333 microseconds per quarter note. With 48 MIDI ticks
-    # per generated event unit at 384 PPQ, one generated unit is about 104 ms.
-    tick_ms = round(833333 * TICKS_PER_EVENT_UNIT / ppq / 1000)
+    # The MIDI tempo is 833333 microseconds per quarter note. The menu uses a
+    # faster chiptune tempo so the rag reads better on the Arduboy speaker.
+    tick_ms = round(833333 * TICKS_PER_EVENT_UNIT / ppq / 1000 * TEMPO_SCALE)
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     (args.out_dir / "MenuMusic.h").write_text(
