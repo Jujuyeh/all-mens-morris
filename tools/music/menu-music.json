@@ -1,0 +1,600 @@
+{
+  "id": "menu-music",
+  "name": "Menu Music",
+  "kind": "music",
+  "tickMs": 69,
+  "events": [
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 69,
+      "duration": 4
+    },
+    {
+      "note": 71,
+      "duration": 2
+    },
+    {
+      "note": 67,
+      "duration": 4
+    },
+    {
+      "note": 62,
+      "duration": 2
+    },
+    {
+      "note": 64,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 2
+    },
+    {
+      "note": 57,
+      "duration": 4
+    },
+    {
+      "note": 59,
+      "duration": 2
+    },
+    {
+      "note": 55,
+      "duration": 4
+    },
+    {
+      "note": 50,
+      "duration": 2
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 48,
+      "duration": 2
+    },
+    {
+      "note": 0,
+      "duration": 18
+    },
+    {
+      "note": 67,
+      "duration": 4
+    },
+    {
+      "note": 50,
+      "duration": 2
+    },
+    {
+      "note": 51,
+      "duration": 2
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 4
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 4
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 12
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 75,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 4
+    },
+    {
+      "note": 71,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 4
+    },
+    {
+      "note": 72,
+      "duration": 12
+    },
+    {
+      "note": 50,
+      "duration": 2
+    },
+    {
+      "note": 51,
+      "duration": 2
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 4
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 4
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 14
+    },
+    {
+      "note": 69,
+      "duration": 2
+    },
+    {
+      "note": 67,
+      "duration": 2
+    },
+    {
+      "note": 66,
+      "duration": 2
+    },
+    {
+      "note": 69,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 4
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 69,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 12
+    },
+    {
+      "note": 50,
+      "duration": 2
+    },
+    {
+      "note": 51,
+      "duration": 2
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 4
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 4
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 12
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 75,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 4
+    },
+    {
+      "note": 71,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 4
+    },
+    {
+      "note": 72,
+      "duration": 14
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 4
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 4
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 4
+    },
+    {
+      "note": 71,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 4
+    },
+    {
+      "note": 72,
+      "duration": 12
+    },
+    {
+      "note": 50,
+      "duration": 2
+    },
+    {
+      "note": 51,
+      "duration": 2
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 4
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 4
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 12
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 75,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 4
+    },
+    {
+      "note": 71,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 4
+    },
+    {
+      "note": 72,
+      "duration": 12
+    },
+    {
+      "note": 50,
+      "duration": 2
+    },
+    {
+      "note": 51,
+      "duration": 2
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 4
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 4
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 14
+    },
+    {
+      "note": 69,
+      "duration": 2
+    },
+    {
+      "note": 67,
+      "duration": 2
+    },
+    {
+      "note": 66,
+      "duration": 2
+    },
+    {
+      "note": 69,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 4
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 69,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 12
+    },
+    {
+      "note": 50,
+      "duration": 2
+    },
+    {
+      "note": 51,
+      "duration": 2
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 4
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 4
+    },
+    {
+      "note": 52,
+      "duration": 2
+    },
+    {
+      "note": 60,
+      "duration": 12
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 75,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 2
+    },
+    {
+      "note": 72,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 2
+    },
+    {
+      "note": 76,
+      "duration": 4
+    },
+    {
+      "note": 71,
+      "duration": 2
+    },
+    {
+      "note": 74,
+      "duration": 4
+    },
+    {
+      "note": 72,
+      "duration": 14
+    },
+    {
+      "note": 74,
+      "duration": 2
+    }
+  ]
+}

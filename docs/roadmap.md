@@ -36,6 +36,8 @@
   minimax over the shared heuristic and weighted top-action choice.
 - Added reproducible menu music generation from Mutopia's public-domain MIDI
   source for Scott Joplin's "The Entertainer".
+- Added a TableTop Studio piano-roll audio editor for menu music and sound
+  effect drafts.
 
 ## Next Cycle
 

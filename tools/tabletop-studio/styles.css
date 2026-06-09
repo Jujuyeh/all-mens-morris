@@ -191,6 +191,26 @@ textarea {
   color: var(--muted);
 }
 
+.audioTools {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.audioTools label {
+  display: grid;
+  gap: 4px;
+  min-width: 140px;
+  color: var(--muted);
+}
+
+.audioTools input,
+.audioTools select {
+  width: 100%;
+}
+
 .graphTools label {
   display: inline-flex;
   align-items: center;
@@ -229,6 +249,93 @@ canvas {
     linear-gradient(45deg, #222 25%, #151515 25% 75%, #222 75%);
   background-position: 0 0, 8px 8px;
   background-size: 16px 16px;
+  border: 1px solid #343434;
+}
+
+.pianoRoll {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  max-width: 100%;
+  min-height: 360px;
+  max-height: 58vh;
+  overflow: auto;
+  background: #080808;
+  border: 1px solid #343434;
+  user-select: none;
+}
+
+.pianoLabels,
+.rollGrid {
+  position: relative;
+}
+
+.pianoLabel {
+  height: 16px;
+  padding: 1px 5px;
+  border-right: 1px solid #343434;
+  border-bottom: 1px solid #262626;
+  background: #f7f7f7;
+  color: #050505;
+  font: 10px/13px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.pianoLabel.sharp {
+  background: #101010;
+  color: #f7f7f7;
+}
+
+.rollGrid {
+  min-width: 860px;
+  cursor: crosshair;
+}
+
+.rollRow {
+  position: relative;
+  height: 16px;
+  border-bottom: 1px solid #262626;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.11) 1px, transparent 1px);
+  background-size: 40px 16px;
+}
+
+.rollRow.sharp {
+  background-color: #121212;
+}
+
+.rollNote,
+.rollPreview {
+  position: absolute;
+  top: 2px;
+  height: 12px;
+  min-width: 5px;
+  border-radius: 2px;
+}
+
+.rollNote {
+  border: 1px solid #050505;
+  background: var(--ok);
+}
+
+.rollPreview {
+  border: 1px dashed var(--point);
+  background: rgba(126, 231, 135, 0.35);
+  pointer-events: none;
+}
+
+.audioEvents {
+  display: grid;
+  gap: 8px;
+  max-height: 220px;
+  margin-top: 12px;
+  overflow: auto;
+}
+
+.audioRow {
+  display: grid;
+  grid-template-columns: 1fr 90px 42px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  background: var(--panel);
   border: 1px solid #343434;
 }
 

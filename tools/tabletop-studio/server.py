@@ -15,6 +15,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 BOARDS_DIR = ROOT / "boards"
+sys.path.insert(0, str(ROOT / "tools" / "music"))
+import audio_data  # noqa: E402
+
 GLOBAL_ASSET_PATHS = {
     "assets/fx/banner.png",
 }
@@ -59,6 +62,16 @@ class TableTopStudioHandler(SimpleHTTPRequestHandler):
                 )
             self.send_json({"count": len(boards), "boards": boards})
             return
+        if self.path == "/api/audio":
+            menu_music = audio_data.load_menu_music(ROOT)
+            effects = audio_data.load_effects(ROOT)
+            self.send_json(
+                {
+                    "count": 1 + len(effects),
+                    "sounds": [menu_music] + effects,
+                }
+            )
+            return
         super().do_GET()
 
     def do_POST(self) -> None:
@@ -67,6 +80,9 @@ class TableTopStudioHandler(SimpleHTTPRequestHandler):
             return
         if self.path == "/api/save-global-asset":
             self.save_global_asset()
+            return
+        if self.path == "/api/save-audio":
+            self.save_audio()
             return
         self.send_error(404)
 
@@ -116,6 +132,20 @@ class TableTopStudioHandler(SimpleHTTPRequestHandler):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(base64.b64decode(data_url[len(prefix):], validate=True))
             self.send_json({"ok": True, "path": asset_path})
+        except Exception as exc:
+            self.send_json({"ok": False, "error": str(exc)}, status=400)
+
+    def save_audio(self) -> None:
+        try:
+            payload = self.read_payload()
+            kind = str(payload.get("kind") or "")
+            if kind == "music" or payload.get("id") == "menu-music":
+                saved = audio_data.save_menu_music(ROOT, payload)
+            elif kind == "effect":
+                saved = audio_data.save_effect(ROOT, payload)
+            else:
+                raise ValueError("Audio payload kind must be music or effect")
+            self.send_json({"ok": True, "sound": saved})
         except Exception as exc:
             self.send_json({"ok": False, "error": str(exc)}, status=400)
 

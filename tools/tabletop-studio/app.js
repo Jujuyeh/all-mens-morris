@@ -9,6 +9,11 @@ const state = {
   millDraft: [],
   spriteTool: "black",
   spriteDrawing: false,
+  sounds: [],
+  selectedSound: null,
+  audioEvents: [],
+  audioKind: "music",
+  rollDrag: null,
 };
 
 const el = {
@@ -39,11 +44,28 @@ const el = {
   invertSprite: document.querySelector("#invertSprite"),
   reloadSprite: document.querySelector("#reloadSprite"),
   saveSprite: document.querySelector("#saveSprite"),
+  audioTab: document.querySelector("#audioTab"),
+  audioSelect: document.querySelector("#audioSelect"),
+  audioName: document.querySelector("#audioName"),
+  audioTickMs: document.querySelector("#audioTickMs"),
+  newEffect: document.querySelector("#newEffect"),
+  addRest: document.querySelector("#addRest"),
+  playAudio: document.querySelector("#playAudio"),
+  saveAudio: document.querySelector("#saveAudio"),
+  audioStats: document.querySelector("#audioStats"),
+  audioRoll: document.querySelector("#audioRoll"),
+  audioEvents: document.querySelector("#audioEvents"),
 };
 
 const ctx = el.canvas.getContext("2d");
 const spriteCtx = el.spriteCanvas.getContext("2d", { willReadFrequently: true });
 spriteCtx.imageSmoothingEnabled = false;
+
+const AUDIO_MIN_NOTE = 48;
+const AUDIO_MAX_NOTE = 88;
+const AUDIO_NOTE_HEIGHT = 16;
+const AUDIO_PX_PER_UNIT = 10;
+const AUDIO_SNAP_UNITS = 2;
 function setStatus(text) {
   el.status.textContent = text;
 }
@@ -435,6 +457,7 @@ function renderTabs() {
   el.graphTab.classList.toggle("hidden", state.tab !== "graph");
   el.rulesTab.classList.toggle("hidden", state.tab !== "rules");
   el.spritesTab.classList.toggle("hidden", state.tab !== "sprites");
+  el.audioTab.classList.toggle("hidden", state.tab !== "audio");
   el.rawTab.classList.toggle("hidden", state.tab !== "raw");
   el.tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === state.tab));
 }
@@ -558,6 +581,297 @@ async function saveGlobalSprite() {
   const payload = await response.json();
   if (!payload.ok) throw new Error(payload.error || "Save failed");
   setStatus(`Saved ${payload.path}`);
+}
+
+function midiName(note) {
+  if (note === 0) return "REST";
+  const names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  return `${names[note % 12]}${Math.floor(note / 12) - 1}`;
+}
+
+function midiFrequency(note) {
+  return note === 0 ? 0 : 440 * Math.pow(2, (note - 69) / 12);
+}
+
+function audioDraft() {
+  return {
+    id: state.selectedSound?.id || "menu-music",
+    name: el.audioName.value.trim() || "Menu Music",
+    kind: state.audioKind,
+    tickMs: Number(el.audioTickMs.value || 69),
+    events: state.audioEvents.map((event) => ({
+      note: Number(event.note || 0),
+      duration: Number(event.duration || 1),
+    })),
+  };
+}
+
+function audioUnitsTotal() {
+  return state.audioEvents.reduce((sum, event) => sum + Number(event.duration || 0), 0);
+}
+
+function audioSequenceNotes() {
+  const notes = [];
+  let start = 0;
+  state.audioEvents.forEach((event) => {
+    const duration = Number(event.duration || 0);
+    const note = Number(event.note || 0);
+    if (note > 0 && duration > 0) {
+      notes.push({ note, start, duration });
+    }
+    start += duration;
+  });
+  return notes;
+}
+
+function setAudioEventsFromSequence(notes) {
+  const sorted = notes
+    .filter((note) => note.duration > 0 && note.note >= AUDIO_MIN_NOTE && note.note <= AUDIO_MAX_NOTE)
+    .sort((left, right) => left.start - right.start);
+  const events = [];
+  let cursor = 0;
+  sorted.forEach((note) => {
+    const start = Math.max(note.start, cursor);
+    if (start > cursor) {
+      events.push({ note: 0, duration: start - cursor });
+    }
+    events.push({ note: note.note, duration: note.duration });
+    cursor = start + note.duration;
+  });
+  state.audioEvents = events.length ? events : [{ note: 0, duration: AUDIO_SNAP_UNITS }];
+  renderAudio();
+}
+
+function rollWidth(notes) {
+  const lastNoteEnd = notes.reduce((max, note) => Math.max(max, note.start + note.duration), 0);
+  const units = Math.max(audioUnitsTotal(), lastNoteEnd, 72);
+  return units * AUDIO_PX_PER_UNIT + 120;
+}
+
+function removeRollNote(target) {
+  const noteToRemove = {
+    note: Number(target.dataset.note),
+    start: Number(target.dataset.start),
+    duration: Number(target.dataset.duration),
+  };
+  const next = audioSequenceNotes().filter((note) => !(
+    note.note === noteToRemove.note
+    && note.start === noteToRemove.start
+    && note.duration === noteToRemove.duration
+  ));
+  setAudioEventsFromSequence(next);
+}
+
+function renderAudioRoll(preview = null) {
+  el.audioRoll.replaceChildren();
+  const notes = audioSequenceNotes();
+  const width = rollWidth(notes.concat(preview ? [preview] : []));
+  const labels = document.createElement("div");
+  labels.className = "pianoLabels";
+  const grid = document.createElement("div");
+  grid.className = "rollGrid";
+  grid.style.width = `${width}px`;
+
+  for (let note = AUDIO_MAX_NOTE; note >= AUDIO_MIN_NOTE; note--) {
+    const label = document.createElement("div");
+    label.className = `pianoLabel${[1, 3, 6, 8, 10].includes(note % 12) ? " sharp" : ""}`;
+    label.textContent = midiName(note);
+    labels.append(label);
+
+    const row = document.createElement("div");
+    row.className = `rollRow${[1, 3, 6, 8, 10].includes(note % 12) ? " sharp" : ""}`;
+    row.dataset.note = note;
+    row.style.width = `${width}px`;
+    grid.append(row);
+  }
+
+  function addBlock(note, className) {
+    const row = grid.querySelector(`[data-note="${note.note}"]`);
+    if (!row) return;
+    const block = document.createElement("div");
+    block.className = className;
+    block.style.left = `${note.start * AUDIO_PX_PER_UNIT}px`;
+    block.style.width = `${Math.max(5, note.duration * AUDIO_PX_PER_UNIT)}px`;
+    block.dataset.note = note.note;
+    block.dataset.start = note.start;
+    block.dataset.duration = note.duration;
+    block.title = `${midiName(note.note)} ${note.duration} unit(s)`;
+    row.append(block);
+  }
+
+  notes.forEach((note) => addBlock(note, "rollNote"));
+  if (preview) addBlock(preview, "rollPreview");
+
+  grid.addEventListener("contextmenu", (event) => event.preventDefault());
+  grid.addEventListener("pointerdown", (event) => {
+    if (event.button === 2) {
+      const target = event.target.closest(".rollNote");
+      if (target) removeRollNote(target);
+      return;
+    }
+    const row = event.target.closest(".rollRow");
+    if (!row) return;
+    const rect = grid.getBoundingClientRect();
+    const unit = Math.max(0, Math.round((event.clientX - rect.left) / AUDIO_PX_PER_UNIT / AUDIO_SNAP_UNITS) * AUDIO_SNAP_UNITS);
+    state.rollDrag = { note: Number(row.dataset.note), start: unit, current: unit };
+    grid.setPointerCapture(event.pointerId);
+    renderAudioRoll({ note: state.rollDrag.note, start: unit, duration: AUDIO_SNAP_UNITS });
+  });
+
+  el.audioRoll.append(labels, grid);
+}
+
+function updateRollDrag(event) {
+  if (!state.rollDrag) return;
+  const grid = el.audioRoll.querySelector(".rollGrid");
+  if (!grid) return;
+  const rect = grid.getBoundingClientRect();
+  const unit = Math.max(0, Math.round((event.clientX - rect.left) / AUDIO_PX_PER_UNIT / AUDIO_SNAP_UNITS) * AUDIO_SNAP_UNITS);
+  state.rollDrag.current = unit;
+  const start = Math.min(state.rollDrag.start, state.rollDrag.current);
+  const end = Math.max(state.rollDrag.start, state.rollDrag.current) + AUDIO_SNAP_UNITS;
+  renderAudioRoll({ note: state.rollDrag.note, start, duration: end - start });
+}
+
+function finishRollDrag() {
+  if (!state.rollDrag) return;
+  const start = Math.min(state.rollDrag.start, state.rollDrag.current);
+  const end = Math.max(state.rollDrag.start, state.rollDrag.current) + AUDIO_SNAP_UNITS;
+  const notes = audioSequenceNotes();
+  notes.push({ note: state.rollDrag.note, start, duration: end - start });
+  state.rollDrag = null;
+  setAudioEventsFromSequence(notes);
+}
+
+function renderAudioEvents() {
+  el.audioEvents.replaceChildren();
+  state.audioEvents.forEach((event, index) => {
+    const row = document.createElement("div");
+    row.className = "audioRow";
+
+    const note = document.createElement("select");
+    const rest = new Option("REST", "0");
+    note.add(rest);
+    for (let value = AUDIO_MAX_NOTE; value >= AUDIO_MIN_NOTE; value--) {
+      note.add(new Option(midiName(value), String(value)));
+    }
+    note.value = String(event.note || 0);
+    note.addEventListener("input", () => {
+      state.audioEvents[index].note = Number(note.value);
+      renderAudio();
+    });
+
+    const duration = document.createElement("input");
+    duration.type = "number";
+    duration.min = "1";
+    duration.max = "255";
+    duration.value = event.duration;
+    duration.addEventListener("input", () => {
+      state.audioEvents[index].duration = Number(duration.value || 1);
+      renderAudio();
+    });
+
+    const remove = document.createElement("button");
+    remove.textContent = "X";
+    remove.addEventListener("click", () => {
+      state.audioEvents.splice(index, 1);
+      renderAudio();
+    });
+
+    row.append(note, duration, remove);
+    el.audioEvents.append(row);
+  });
+}
+
+function updateAudioStats() {
+  const units = audioUnitsTotal();
+  const ms = units * Number(el.audioTickMs.value || 69);
+  el.audioStats.textContent = `${state.audioEvents.length} event(s), ${units} unit(s), ${Math.round(ms / 100) / 10}s`;
+}
+
+function renderAudio() {
+  renderAudioRoll();
+  renderAudioEvents();
+  updateAudioStats();
+}
+
+function populateAudioSelect() {
+  el.audioSelect.replaceChildren();
+  state.sounds.forEach((sound) => {
+    el.audioSelect.add(new Option(`${sound.name} (${sound.kind})`, sound.id));
+  });
+}
+
+function selectAudio(id) {
+  const sound = state.sounds.find((item) => item.id === id) || state.sounds[0];
+  if (!sound) return;
+  state.selectedSound = sound;
+  state.audioKind = sound.kind || "effect";
+  state.audioEvents = (sound.events || []).map((event) => ({ ...event }));
+  el.audioSelect.value = sound.id;
+  el.audioName.value = sound.name || sound.id;
+  el.audioName.disabled = sound.id === "menu-music";
+  el.audioTickMs.value = sound.tickMs || 69;
+  renderAudio();
+}
+
+async function loadAudio() {
+  const response = await fetch("/api/audio", { cache: "no-store" });
+  const payload = await response.json();
+  state.sounds = payload.sounds || [];
+  populateAudioSelect();
+  selectAudio(state.sounds[0]?.id);
+}
+
+function createEffectDraft() {
+  const id = `effect-${Date.now()}`;
+  const sound = {
+    id,
+    name: "New Effect",
+    kind: "effect",
+    tickMs: 50,
+    events: [{ note: 72, duration: 2 }],
+  };
+  state.sounds.push(sound);
+  populateAudioSelect();
+  selectAudio(id);
+}
+
+async function saveAudio() {
+  const response = await fetch("/api/save-audio", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(audioDraft()),
+  });
+  const payload = await response.json();
+  if (!payload.ok) throw new Error(payload.error || "Save failed");
+  await loadAudio();
+  selectAudio(payload.sound.id);
+  setStatus(`Saved ${payload.sound.path}`);
+}
+
+async function playAudio() {
+  const context = new AudioContext();
+  let time = context.currentTime;
+  const tickSeconds = Number(el.audioTickMs.value || 69) / 1000;
+  state.audioEvents.forEach((event) => {
+    const duration = Number(event.duration || 1) * tickSeconds;
+    const frequency = midiFrequency(Number(event.note || 0));
+    if (frequency > 0) {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = "square";
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.04, time);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(time);
+      oscillator.stop(time + duration);
+    }
+    time += duration;
+  });
+  setStatus("Played browser audio preview");
 }
 
 async function saveBoard() {
@@ -705,6 +1019,15 @@ el.spriteTools.forEach((tool) => {
 el.invertSprite.addEventListener("click", invertSprite);
 el.reloadSprite.addEventListener("click", loadGlobalSprite);
 el.saveSprite.addEventListener("click", () => saveGlobalSprite().catch((error) => setStatus(error.message)));
+el.audioSelect.addEventListener("change", () => selectAudio(el.audioSelect.value));
+el.audioTickMs.addEventListener("input", updateAudioStats);
+el.newEffect.addEventListener("click", createEffectDraft);
+el.addRest.addEventListener("click", () => {
+  state.audioEvents.push({ note: 0, duration: AUDIO_SNAP_UNITS });
+  renderAudio();
+});
+el.playAudio.addEventListener("click", () => playAudio().catch((error) => setStatus(error.message)));
+el.saveAudio.addEventListener("click", () => saveAudio().catch((error) => setStatus(error.message)));
 el.tools.forEach((tool) => {
   tool.addEventListener("click", () => {
     state.tool = tool.dataset.tool;
@@ -738,7 +1061,10 @@ el.spriteCanvas.addEventListener("mouseleave", () => {
 window.addEventListener("mouseup", handleCanvasUp);
 window.addEventListener("mouseup", () => {
   state.spriteDrawing = false;
+  finishRollDrag();
 });
+window.addEventListener("pointermove", updateRollDrag);
 
 loadBoards().catch((error) => setStatus(error.message));
 loadGlobalSprite();
+loadAudio().catch((error) => setStatus(error.message));

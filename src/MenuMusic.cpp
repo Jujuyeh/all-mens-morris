@@ -1,7 +1,7 @@
 #include "MenuMusic.h"
 
-// Generated from Mutopia's public-domain MIDI for Scott Joplin's The Entertainer.
-// Source: tools/music/sources/entertainer.mid
+// Generated from TableTop Studio menu music data.
+// Original source: Mutopia's public-domain MIDI for Scott Joplin's The Entertainer.
 
 const uint8_t MenuMusicNotes[] PROGMEM = {
   74, 76, 72, 69, 71, 67, 62, 64, 60, 57, 59, 55, 50, 52, 48, 0,

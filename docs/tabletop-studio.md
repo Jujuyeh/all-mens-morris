@@ -74,6 +74,8 @@ Initial TableTop Studio modes:
   connections/legal movement edges, and define mill triples.
 - `Sprites`: draw global project sprites, starting with the shared FX catalog
   banner in `assets/fx/banner.png`.
+- `Audio`: edit the menu music and effect drafts with a piano-roll view plus
+  browser preview.
 - `Validate`: check graph consistency before generation.
 
 Validation should catch:
@@ -123,6 +125,10 @@ Implemented first:
 - JSON duplication/saving through local project endpoints;
 - a global `Sprites` tab that can edit, invert, reload, and save the shared FX
   banner without storing banner paths in board profiles;
+- a global `Audio` tab with piano-roll editing. Saving Menu Music updates
+  `tools/music/menu-music.json` and regenerates `src/MenuMusic.*`; effect
+  drafts are stored in `tools/music/sound-effects.json` for later firmware
+  wiring;
 - `make board-data`, which validates board profiles and generates
   `src/GeneratedBoards.*` for firmware;
 - generated `RuleSet` mill behavior, allowing Nine/Six Men's Morris to capture

@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import audio_data
+
 
 PPQ_FALLBACK = 384
 RIGHT_HAND_TRACK = 1
@@ -142,54 +144,32 @@ def format_values(values: list[int], indent: str = "  ") -> str:
 
 
 def generated_header(count: int, min_note: int, max_note: int, tick_ms: int) -> str:
-    return f"""#pragma once
-
-#include <Arduino.h>
-
-constexpr uint8_t MENU_MUSIC_EVENT_COUNT = {count};
-constexpr uint8_t MENU_MUSIC_MIN_NOTE = {min_note};
-constexpr uint8_t MENU_MUSIC_MAX_NOTE = {max_note};
-constexpr uint8_t MENU_MUSIC_TICK_MS = {tick_ms};
-
-extern const uint8_t MenuMusicNotes[] PROGMEM;
-extern const uint8_t MenuMusicDurations[] PROGMEM;
-extern const uint16_t MenuMusicFrequencies[] PROGMEM;
-"""
+    return audio_data.generated_header(count, min_note, max_note, tick_ms)
 
 
 def generated_source(events: list[tuple[int, int]], min_note: int, max_note: int) -> str:
-    notes = [note for note, _duration in events]
-    durations = [duration for _note, duration in events]
-    frequencies = [midi_frequency(note) for note in range(min_note, max_note + 1)]
-    return f"""#include "MenuMusic.h"
-
-// Generated from Mutopia's public-domain MIDI for Scott Joplin's The Entertainer.
-// Source: tools/music/sources/entertainer.mid
-
-const uint8_t MenuMusicNotes[] PROGMEM = {{
-{format_values(notes)}
-}};
-
-const uint8_t MenuMusicDurations[] PROGMEM = {{
-{format_values(durations)}
-}};
-
-const uint16_t MenuMusicFrequencies[] PROGMEM = {{
-{format_values(frequencies)}
-}};
-"""
+    payload = [{"note": note, "duration": duration} for note, duration in events]
+    return audio_data.generated_source(payload, min_note, max_note)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--midi", type=Path, default=Path("tools/music/sources/entertainer.mid"))
     parser.add_argument("--out-dir", type=Path, default=Path("src"))
+    parser.add_argument("--edited", type=Path, default=audio_data.EDITED_MENU_PATH)
+    parser.add_argument("--force-midi", action="store_true")
     parser.add_argument("--measures", type=int, default=MEASURES_TO_EXPORT)
     return parser
 
 
 def main() -> int:
     args = build_parser().parse_args()
+    if args.edited.exists() and not args.force_midi:
+        payload = audio_data.load_menu_music(Path("."))
+        audio_data.save_menu_music(Path("."), payload)
+        print(f"Generated {len(payload['events'])} edited menu music event(s).")
+        return 0
+
     ppq, tracks = read_tracks(args.midi)
     if RIGHT_HAND_TRACK >= len(tracks):
         raise ValueError(f"{args.midi}: missing right-hand track {RIGHT_HAND_TRACK}")

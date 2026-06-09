@@ -8,3 +8,8 @@ Project edition of Scott Joplin's "The Entertainer".
 - Copyright status on Mutopia: public domain.
 
 Run `make music-data` to regenerate `src/MenuMusic.*` from the MIDI source.
+
+After TableTop Studio edits the menu music, `tools/music/menu-music.json`
+becomes the editable source used by `make music-data`. Use
+`tools/music/generate_menu_music.py --force-midi` to rebuild from the Mutopia
+MIDI source again.

@@ -75,8 +75,9 @@ Implemented:
 - Custom inverted boot animation, with the stock Arduboy boot logo and LED
   animation skipped.
 - Sound effects for menu/action feedback and RGB LED flashing on mills.
-- Menu music loop generated from Mutopia's public-domain MIDI source for Scott
-  Joplin's "The Entertainer"; gameplay remains effects-only.
+- Menu music loop generated from TableTop Studio audio data, initially derived
+  from Mutopia's public-domain MIDI source for Scott Joplin's "The
+  Entertainer"; gameplay remains effects-only.
 - Debug-only hold-A/up scenarios for mill, flying, blocked-game-over, and draw
   testing.
 - Generic CPU opponent for all generated board/rule profiles. Easy uses one-ply
