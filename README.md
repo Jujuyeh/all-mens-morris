@@ -19,7 +19,7 @@ yet. Current controls:
 - Main menu left/right: change the selected board, first-player setting, or
   opponent setting.
 - Main menu B: start the selected playable board, toggle the first-player
-  setting, cycle `VS PLAYER2`/`VS CPU EASY`/`VS CPU HARD`, or show `SOON` for
+  setting, cycle `VS PLAYER 2`/`VS CPU EASY`/`VS CPU HARD`, or show `SOON` for
   unavailable boards.
 - In game d-pad: move the cursor in that board direction.
 - B: place/select/confirm/capture.

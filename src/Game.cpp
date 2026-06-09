@@ -145,7 +145,7 @@ const char *opponentModeLabel() {
   if (opponentMode == OPPONENT_CPU_HARD) {
     return "CPU HARD";
   }
-  return "PLAYER2";
+  return "PLAYER 2";
 }
 
 AiDifficulty selectedAiDifficulty() {
@@ -822,9 +822,9 @@ void drawMainMenu() {
   tinyfont.setTextColor(WHITE);
   drawMenuPatterns();
 
-  tinyfont.setCursor(45, 5);
+  tinyfont.setCursor(44, 5);
   tinyfont.print("ALL MEN'S");
-  tinyfont.setCursor(51, 12);
+  tinyfont.setCursor(50, 12);
   tinyfont.print("MORRIS");
   arduboy.drawLine(30, 20, 98, 20, WHITE);
 
@@ -855,11 +855,11 @@ void drawMainMenu() {
     drawDashedRect(35, 45, 60, 10, animationFrame / 5, WHITE);
   }
 
-  tinyfont.setCursor(42, 57);
+  tinyfont.setCursor(38, 57);
   tinyfont.print("VS ");
   tinyfont.print(opponentModeLabel());
   if (selectedMenuItem == 2) {
-    drawDashedRect(39, 54, 66, 10, animationFrame / 5, WHITE);
+    drawDashedRect(35, 54, 62, 10, animationFrame / 5, WHITE);
   }
 }
 
