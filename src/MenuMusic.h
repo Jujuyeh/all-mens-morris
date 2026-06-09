@@ -3,8 +3,8 @@
 #include <Arduino.h>
 
 constexpr uint8_t MENU_MUSIC_EVENT_COUNT = 148;
-constexpr uint8_t MENU_MUSIC_MIN_NOTE = 36;
-constexpr uint8_t MENU_MUSIC_MAX_NOTE = 64;
+constexpr uint8_t MENU_MUSIC_MIN_NOTE = 48;
+constexpr uint8_t MENU_MUSIC_MAX_NOTE = 76;
 constexpr uint8_t MENU_MUSIC_TICK_MS = 69;
 
 extern const uint8_t MenuMusicNotes[] PROGMEM;
