@@ -61,8 +61,8 @@ const ctx = el.canvas.getContext("2d");
 const spriteCtx = el.spriteCanvas.getContext("2d", { willReadFrequently: true });
 spriteCtx.imageSmoothingEnabled = false;
 
-const AUDIO_MIN_NOTE = 48;
-const AUDIO_MAX_NOTE = 88;
+const AUDIO_MIN_NOTE = 36;
+const AUDIO_MAX_NOTE = 96;
 const AUDIO_NOTE_HEIGHT = 16;
 const AUDIO_PX_PER_UNIT = 10;
 const AUDIO_SNAP_UNITS = 2;

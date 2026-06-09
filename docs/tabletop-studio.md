@@ -128,7 +128,8 @@ Implemented first:
 - a global `Audio` tab with piano-roll editing. Saving Menu Music updates
   `tools/music/menu-music.json` and regenerates `src/MenuMusic.*`; effect
   drafts are stored in `tools/music/sound-effects.json` for later firmware
-  wiring;
+  wiring. The piano roll spans MIDI `36..96` (`C2..C7`) so low Arduboy tones
+  remain editable;
 - `make board-data`, which validates board profiles and generates
   `src/GeneratedBoards.*` for firmware;
 - generated `RuleSet` mill behavior, allowing Nine/Six Men's Morris to capture
