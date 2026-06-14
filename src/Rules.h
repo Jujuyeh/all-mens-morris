@@ -37,6 +37,20 @@ enum TurnActionMode : uint8_t {
   TURN_ACTION_MOVE,
 };
 
+constexpr uint8_t MORRIS_PACKED_POINT_BYTES = (MORRIS_MAX_POINT_COUNT + 3) / 4;
+
+enum RuleFlag : uint16_t {
+  RULE_MILL_ACTION_WIN = 1 << 0,
+  RULE_FLYING_ENABLED = 1 << 1,
+  RULE_MIXED_PLACEMENT_MOVEMENT = 1 << 2,
+  RULE_PROTECT_PIECES_IN_MILLS = 1 << 3,
+  RULE_BLOCK_WIN_ENABLED = 1 << 4,
+  RULE_MATERIAL_WIN_ENABLED = 1 << 5,
+  RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY = 1 << 6,
+  RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY = 1 << 7,
+  RULE_SKIP_BLOCKED_WITH_RESERVE = 1 << 8,
+};
+
 struct RuleSet {
   const char *id;
   uint8_t piecesPerPlayer;
@@ -44,23 +58,23 @@ struct RuleSet {
   uint8_t flyPieceCount;
   uint8_t noCaptureDrawTurnLimit;
   uint8_t placementStopEmptyPoints;
-  MillAction millAction;
-  bool flyingEnabled;
-  bool mixedPlacementMovement;
-  bool protectPiecesInMills;
-  bool blockWinEnabled;
-  bool materialWinEnabled;
-  bool blockWinRequiresReserveEmpty;
-  bool materialWinRequiresReserveEmpty;
-  bool skipBlockedWithReserve;
+  uint16_t flags;
 };
 
 extern const RuleSet ClassicRuleSet;
 
+inline bool ruleFlag(const RuleSet &rules, RuleFlag flag) {
+  return (rules.flags & flag) != 0;
+}
+
+inline MillAction millAction(const RuleSet &rules) {
+  return ruleFlag(rules, RULE_MILL_ACTION_WIN) ? MILL_ACTION_WIN : MILL_ACTION_CAPTURE;
+}
+
 struct MorrisGameState {
   const BoardDefinition *board = &ClassicBoardDefinition;
   const RuleSet *rules = &ClassicRuleSet;
-  Player points[MORRIS_MAX_POINT_COUNT] = {};
+  uint8_t points[MORRIS_PACKED_POINT_BYTES] = {};
   Player currentPlayer = PLAYER_ONE;
   Player winner = PLAYER_NONE;
   GamePhase phase = PHASE_PLACING;
@@ -80,6 +94,8 @@ void resetMorrisGame(MorrisGameState &game);
 void resetMorrisGame(MorrisGameState &game, const BoardDefinition &board, const RuleSet &rules);
 uint8_t playerIndex(Player player);
 Player opponentOf(Player player);
+Player pointAt(const MorrisGameState &game, uint8_t point);
+void setPointAt(MorrisGameState &game, uint8_t point, Player player);
 bool isMillAt(const MorrisGameState &game, uint8_t point, Player player);
 bool canPlaceAt(const MorrisGameState &game, uint8_t point);
 bool playerCanFly(const MorrisGameState &game, Player player);

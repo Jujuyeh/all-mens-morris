@@ -40,6 +40,9 @@
   effect drafts.
 - Added a second generated menu music section that alternates after attract
   mode demos.
+- Compact board/rule data pass: flat adjacency lists, packed mill triples,
+  bitwise rule flags, and two-bit board occupancy. This recovered about 790
+  bytes of stable flash and 66 bytes of RAM while keeping gameplay features.
 
 ## Next Cycle
 
@@ -47,10 +50,12 @@
    Morris, and Flower on device/libretro.
 2. Keep future CPU tuning under a strict flash/RAM budget so linked multiplayer
    support for two Arduboy FX-C units over USB-C still has room.
-3. Tune board graph/art direction after CPU and human playtests.
-4. Add generated profile metadata for menu labels, availability, and future
+3. Continue small data/code compaction passes before adding linked multiplayer
+   protocol and UI.
+4. Tune board graph/art direction after CPU and human playtests.
+5. Add generated profile metadata for menu labels, availability, and future
    variant descriptions.
-5. Continue the pixel-art pass for pieces and final board/menu assets.
+6. Continue the pixel-art pass for pieces and final board/menu assets.
 
 ## Later
 

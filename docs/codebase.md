@@ -18,11 +18,13 @@ The implementation is split into:
   about screen coordinates. Easy uses the direct heuristic, while Hard reuses
   the same evaluator through a depth-2 minimax pass. `Game.cpp` owns the
   visible cursor animation before applying the chosen result.
-- `src/Board.*`: board helper APIs for `BoardDefinition` graph coordinates,
-  mill triples, and adjacency. Adjacency is both the visible board connection
-  and the legal movement edge.
+- `src/Board.*`: board helper APIs for compact `BoardDefinition` graph
+  coordinates, packed mill triples, and flat adjacency lists. Adjacency is both
+  the visible board connection and the legal movement edge.
 - `src/Rules.*`: mutable game state, `RuleSet` configuration, legal actions,
-  mill capture rules, flying, win detection, and phase transitions.
+  mill capture rules, flying, win detection, and phase transitions. Rule
+  booleans are stored as bit flags, and board occupancy uses two bits per
+  point.
 - `src/GeneratedBoards.*`: generated firmware board and rule data from
   `boards/*.json`, currently Classic Nine Men's Morris, Flower, Long Morris,
   Six Men's Morris, and Three Men's Morris.
@@ -37,7 +39,8 @@ The implementation is split into:
   used as the source for generated firmware board data.
 - `tools/tabletop-studio/`: local browser tool for inspecting board graphs,
   validating profiles, and editing JSON board/rule data.
-- `tools/board-data/`: JSON validator/generator for `src/GeneratedBoards.*`.
+- `tools/board-data/`: JSON validator/generator for compact
+  `src/GeneratedBoards.*` board/rule data.
 - `tools/music/`: MIDI-to-Arduboy menu music generator, editable audio JSON
   sources, and checked-in public-domain source files.
 

@@ -337,7 +337,7 @@ bool gameStateChanged(const MorrisGameState &before, const MorrisGameState &afte
   }
 
   for (uint8_t point = 0; point < before.board->pointCount; point++) {
-    if (before.points[point] != after.points[point]) {
+    if (pointAt(before, point) != pointAt(after, point)) {
       return true;
     }
   }
@@ -484,7 +484,7 @@ void showActionFeedback(GamePhase phaseBeforeAction, bool moved) {
 #ifdef ALL_MENS_MORRIS_DEBUG
 void clearDebugBoard() {
   for (uint8_t point = 0; point < MORRIS_MAX_POINT_COUNT; point++) {
-    game.points[point] = PLAYER_NONE;
+    setPointAt(game, point, PLAYER_NONE);
   }
   game.cursor = 0;
   game.selected = NO_POINT;
@@ -501,7 +501,7 @@ void clearDebugBoard() {
 }
 
 void putDebugPiece(uint8_t point, Player player) {
-  game.points[point] = player;
+  setPointAt(game, point, player);
   if (player != PLAYER_NONE) {
     game.piecesOnBoard[playerIndex(player)]++;
   }
@@ -625,7 +625,7 @@ uint8_t cursorToward(int8_t dx, int8_t dy) {
       bestAny = point;
     }
 
-    for (uint8_t slot = 0; slot < game.board->adjacencySlots; slot++) {
+    for (uint8_t slot = 0; slot < adjacencyCount(*game.board, game.cursor); slot++) {
       if (adjacentPoint(*game.board, game.cursor, slot) == point && score < bestNeighborScore) {
         bestNeighborScore = score;
         bestNeighbor = point;
@@ -726,7 +726,7 @@ uint8_t nextGraphPointToward(uint8_t start, uint8_t target) {
     if (point == target) {
       break;
     }
-    for (uint8_t slot = 0; slot < game.board->adjacencySlots; slot++) {
+    for (uint8_t slot = 0; slot < adjacencyCount(*game.board, point); slot++) {
       uint8_t adjacent = adjacentPoint(*game.board, point, slot);
       if (adjacent != 255 && previous[adjacent] == NO_POINT) {
         previous[adjacent] = point;
@@ -763,7 +763,7 @@ uint8_t graphDistance(uint8_t start, uint8_t target) {
   distance[start] = 0;
   while (head < tail) {
     uint8_t point = queue[head++];
-    for (uint8_t slot = 0; slot < game.board->adjacencySlots; slot++) {
+    for (uint8_t slot = 0; slot < adjacencyCount(*game.board, point); slot++) {
       uint8_t adjacent = adjacentPoint(*game.board, point, slot);
       if (adjacent == 255 || distance[adjacent] != NO_POINT) {
         continue;
@@ -919,7 +919,7 @@ void drawBoardLine(uint8_t a, uint8_t b) {
 
 void drawBoard() {
   for (uint8_t point = 0; point < game.board->pointCount; point++) {
-    for (uint8_t slot = 0; slot < game.board->adjacencySlots; slot++) {
+    for (uint8_t slot = 0; slot < adjacencyCount(*game.board, point); slot++) {
       uint8_t adjacent = adjacentPoint(*game.board, point, slot);
       if (adjacent != 255 && adjacent > point) {
         drawBoardLine(point, adjacent);
@@ -1009,7 +1009,7 @@ void drawHud() {
     tinyfont.print("CAP");
   } else if (game.phase == PHASE_GAME_OVER) {
     tinyfont.print("OVER");
-  } else if (game.rules->mixedPlacementMovement && game.actionMode == TURN_ACTION_PLACE) {
+  } else if (ruleFlag(*game.rules, RULE_MIXED_PLACEMENT_MOVEMENT) && game.actionMode == TURN_ACTION_PLACE) {
     tinyfont.print("PUT");
   } else if (playerCanFly(game, game.currentPlayer)) {
     tinyfont.print("FLY");
@@ -1252,7 +1252,7 @@ void drawGame() {
   tinyfont.setTextColor(BLACK);
   drawBoard();
   for (uint8_t i = 0; i < game.board->pointCount; i++) {
-    drawPiece(i, game.points[i]);
+    drawPiece(i, pointAt(game, i));
   }
   drawCursor();
   drawHud();

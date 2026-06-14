@@ -18,9 +18,9 @@ uint8_t countCompleteMills(const MorrisGameState &game, Player player) {
   uint8_t count = 0;
   for (uint8_t i = 0; i < game.board->millCount; i++) {
     MillLine line = millLine(*game.board, i);
-    if (game.points[line.a] == player
-        && game.points[line.b] == player
-        && game.points[line.c] == player) {
+    if (pointAt(game, line.a) == player
+        && pointAt(game, line.b) == player
+        && pointAt(game, line.c) == player) {
       count++;
     }
   }
@@ -33,9 +33,9 @@ uint8_t countOpenTwoMills(const MorrisGameState &game, Player player) {
     MillLine line = millLine(*game.board, i);
     uint8_t owned = 0;
     uint8_t empty = 0;
-    Player a = game.points[line.a];
-    Player b = game.points[line.b];
-    Player c = game.points[line.c];
+    Player a = pointAt(game, line.a);
+    Player b = pointAt(game, line.b);
+    Player c = pointAt(game, line.c);
     owned += a == player ? 1 : 0;
     owned += b == player ? 1 : 0;
     owned += c == player ? 1 : 0;
@@ -51,7 +51,7 @@ uint8_t countOpenTwoMills(const MorrisGameState &game, Player player) {
 
 uint8_t pointDegree(const MorrisGameState &game, uint8_t point) {
   uint8_t count = 0;
-  for (uint8_t slot = 0; slot < game.board->adjacencySlots; slot++) {
+  for (uint8_t slot = 0; slot < adjacencyCount(*game.board, point); slot++) {
     if (adjacentPoint(*game.board, point, slot) != 255) {
       count++;
     }
@@ -66,22 +66,22 @@ uint8_t mobilityFor(const MorrisGameState &game, Player player) {
 
   uint8_t moves = 0;
   for (uint8_t from = 0; from < game.board->pointCount; from++) {
-    if (game.points[from] != player) {
+    if (pointAt(game, from) != player) {
       continue;
     }
 
     if (playerCanFly(game, player)) {
       for (uint8_t to = 0; to < game.board->pointCount; to++) {
-        if (game.points[to] == PLAYER_NONE) {
+        if (pointAt(game, to) == PLAYER_NONE) {
           moves++;
         }
       }
       continue;
     }
 
-    for (uint8_t slot = 0; slot < game.board->adjacencySlots; slot++) {
+    for (uint8_t slot = 0; slot < adjacencyCount(*game.board, from); slot++) {
       uint8_t to = adjacentPoint(*game.board, from, slot);
-      if (to != 255 && game.points[to] == PLAYER_NONE) {
+      if (to != 255 && pointAt(game, to) == PLAYER_NONE) {
         moves++;
       }
     }
@@ -111,9 +111,9 @@ int16_t evaluateState(const MorrisGameState &game, Player aiPlayer) {
   score += static_cast<int16_t>(mobilityFor(game, aiPlayer) - mobilityFor(game, opponent)) * 4;
 
   for (uint8_t point = 0; point < game.board->pointCount; point++) {
-    if (game.points[point] == aiPlayer) {
+    if (pointAt(game, point) == aiPlayer) {
       score += pointDegree(game, point) * 3;
-    } else if (game.points[point] == opponent) {
+    } else if (pointAt(game, point) == opponent) {
       score -= pointDegree(game, point) * 3;
     }
   }
@@ -122,7 +122,7 @@ int16_t evaluateState(const MorrisGameState &game, Player aiPlayer) {
     score += 500;
   }
   if (game.lastMoveMadeMill && game.currentPlayer == aiPlayer) {
-    score += game.rules->millAction == MILL_ACTION_WIN ? 1200 : 500;
+    score += millAction(*game.rules) == MILL_ACTION_WIN ? 1200 : 500;
   }
   return score;
 }
@@ -142,7 +142,7 @@ int16_t scoreAction(const MorrisGameState &game, const AiAction &action, Player 
   }
 
   int16_t score = evaluateState(after, aiPlayer);
-  if (game.phase == PHASE_CAPTURING && game.points[action.to] == opponentOf(aiPlayer)) {
+  if (game.phase == PHASE_CAPTURING && pointAt(game, action.to) == opponentOf(aiPlayer)) {
     score += isMillAt(game, action.to, opponentOf(aiPlayer)) ? 10 : 80;
     score += pointDegree(game, action.to) * 8;
   }
@@ -215,7 +215,7 @@ void rankPlaceActions(const MorrisGameState &game, Player aiPlayer, TurnActionMo
 void rankMoveActions(const MorrisGameState &game, Player aiPlayer, AiDifficulty difficulty,
                      RankedAction ranked[], uint8_t &count) {
   for (uint8_t from = 0; from < game.board->pointCount; from++) {
-    if (game.points[from] != aiPlayer) {
+    if (pointAt(game, from) != aiPlayer) {
       continue;
     }
     for (uint8_t to = 0; to < game.board->pointCount; to++) {
@@ -261,7 +261,7 @@ bool chooseRankedAction(const MorrisGameState &game, Player aiPlayer, AiDifficul
   } else if (game.phase == PHASE_PLACING) {
     rankPlaceActions(game, aiPlayer, TURN_ACTION_PLACE, difficulty, ranked, count);
   } else if (game.phase == PHASE_MOVING) {
-    if (game.rules->mixedPlacementMovement) {
+    if (ruleFlag(*game.rules, RULE_MIXED_PLACEMENT_MOVEMENT)) {
       rankPlaceActions(game, aiPlayer, TURN_ACTION_PLACE, difficulty, ranked, count);
     }
     rankMoveActions(game, aiPlayer, difficulty, ranked, count);
@@ -339,7 +339,7 @@ int16_t minimaxScore(const MorrisGameState &game, Player aiPlayer, uint8_t depth
       }
     }
   } else if (game.phase == PHASE_MOVING) {
-    if (game.rules->mixedPlacementMovement) {
+    if (ruleFlag(*game.rules, RULE_MIXED_PLACEMENT_MOVEMENT)) {
       for (uint8_t point = 0; point < game.board->pointCount; point++) {
         MorrisGameState candidate = game;
         candidate.actionMode = TURN_ACTION_PLACE;
@@ -351,7 +351,7 @@ int16_t minimaxScore(const MorrisGameState &game, Player aiPlayer, uint8_t depth
       }
     }
     for (uint8_t from = 0; from < game.board->pointCount; from++) {
-      if (game.points[from] != player) {
+      if (pointAt(game, from) != player) {
         continue;
       }
       for (uint8_t to = 0; to < game.board->pointCount; to++) {

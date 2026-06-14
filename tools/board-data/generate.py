@@ -132,14 +132,27 @@ def validate_profile(path: Path, data: dict) -> None:
     require_bool(path, rules, "skipBlockedWithReserve")
 
 
-def bool_literal(value: bool) -> str:
-    return "true" if value else "false"
-
-
-def mill_action_literal(value: str) -> str:
-    if value == "win":
-        return "MILL_ACTION_WIN"
-    return "MILL_ACTION_CAPTURE"
+def rule_flags_literal(rules: dict) -> str:
+    flags = []
+    if rules["millAction"] == "win":
+        flags.append("RULE_MILL_ACTION_WIN")
+    if rules["flyingEnabled"]:
+        flags.append("RULE_FLYING_ENABLED")
+    if rules["mixedPlacementMovement"]:
+        flags.append("RULE_MIXED_PLACEMENT_MOVEMENT")
+    if rules["protectPiecesInMills"]:
+        flags.append("RULE_PROTECT_PIECES_IN_MILLS")
+    if rules["blockWinEnabled"]:
+        flags.append("RULE_BLOCK_WIN_ENABLED")
+    if rules["materialWinEnabled"]:
+        flags.append("RULE_MATERIAL_WIN_ENABLED")
+    if rules["blockWinRequiresReserveEmpty"]:
+        flags.append("RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY")
+    if rules["materialWinRequiresReserveEmpty"]:
+        flags.append("RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY")
+    if rules["skipBlockedWithReserve"]:
+        flags.append("RULE_SKIP_BLOCKED_WITH_RESERVE")
+    return " | ".join(flags) if flags else "0"
 
 
 def format_points(profile: dict) -> str:
@@ -152,20 +165,28 @@ def format_points(profile: dict) -> str:
 def format_mills(profile: dict) -> str:
     rows = []
     for mill in profile["mills"]:
-        rows.append(f"  {{{mill[0]}, {mill[1]}, {mill[2]}}},")
-    for _ in range(MAX_MILL_COUNT - len(profile["mills"])):
-        rows.append("  {0, 0, 0},")
+        packed = mill[0] | (mill[1] << 5) | (mill[2] << 10)
+        rows.append(f"  {packed},")
     return "\n".join(rows)
+
+
+def adjacency_offsets(profile: dict) -> list[int]:
+    offsets = [0]
+    for neighbors in profile["adjacency"]:
+        offsets.append(offsets[-1] + len(neighbors))
+    return offsets
+
+
+def format_adjacency_offsets(profile: dict) -> str:
+    return "  " + ", ".join(str(value) for value in adjacency_offsets(profile)) + ","
 
 
 def format_adjacency(profile: dict) -> str:
     rows = []
     for neighbors in profile["adjacency"]:
-        padded = neighbors + [EMPTY_ADJACENCY] * (MAX_ADJACENCY_SLOTS - len(neighbors))
-        rows.append("  {" + ", ".join(str(value) for value in padded) + "},")
-    for _ in range(MAX_POINT_COUNT - len(profile["adjacency"])):
-        rows.append("  {" + ", ".join(["255"] * MAX_ADJACENCY_SLOTS) + "},")
-    return "\n".join(rows)
+        if neighbors:
+            rows.append("  " + ", ".join(str(value) for value in neighbors) + ",")
+    return "\n".join(rows) or "  "
 
 
 def generated_header(profiles: list[dict]) -> str:
@@ -173,11 +194,10 @@ def generated_header(profiles: list[dict]) -> str:
     rules_externs = []
     for profile in profiles:
         prefix = symbol_prefix(profile["id"])
-        board_externs.append(f"extern const BoardPoint {prefix}BoardPoints[MORRIS_MAX_POINT_COUNT] PROGMEM;")
-        board_externs.append(f"extern const MillLine {prefix}Mills[MORRIS_MAX_MILL_COUNT] PROGMEM;")
-        board_externs.append(
-            f"extern const uint8_t {prefix}Adjacency[MORRIS_MAX_POINT_COUNT][MORRIS_MAX_ADJACENCY_SLOTS] PROGMEM;"
-        )
+        board_externs.append(f"extern const BoardPoint {prefix}BoardPoints[] PROGMEM;")
+        board_externs.append(f"extern const uint16_t {prefix}Mills[] PROGMEM;")
+        board_externs.append(f"extern const uint8_t {prefix}AdjacencyOffsets[] PROGMEM;")
+        board_externs.append(f"extern const uint8_t {prefix}Adjacency[] PROGMEM;")
         board_externs.append(f"extern const BoardDefinition {prefix}BoardDefinition;")
         rules_externs.append(f"extern const RuleSet {prefix}RuleSet;")
 
@@ -213,21 +233,23 @@ def generated_source(profiles: list[dict]) -> str:
         rules = profile["rules"]
         lines.extend(
             [
-                f"const BoardPoint {prefix}BoardPoints[MORRIS_MAX_POINT_COUNT] PROGMEM = {{",
+                f"const BoardPoint {prefix}BoardPoints[] PROGMEM = {{",
                 format_points(profile),
             ]
         )
-        for _ in range(MAX_POINT_COUNT - len(profile["points"])):
-            lines.append("  {0, 0},")
         lines.extend(
             [
                 "};",
                 "",
-                f"const MillLine {prefix}Mills[MORRIS_MAX_MILL_COUNT] PROGMEM = {{",
+                f"const uint16_t {prefix}Mills[] PROGMEM = {{",
                 format_mills(profile),
                 "};",
                 "",
-                f"const uint8_t {prefix}Adjacency[MORRIS_MAX_POINT_COUNT][MORRIS_MAX_ADJACENCY_SLOTS] PROGMEM = {{",
+                f"const uint8_t {prefix}AdjacencyOffsets[] PROGMEM = {{",
+                format_adjacency_offsets(profile),
+                "};",
+                "",
+                f"const uint8_t {prefix}Adjacency[] PROGMEM = {{",
                 format_adjacency(profile),
                 "};",
                 "",
@@ -236,9 +258,9 @@ def generated_source(profiles: list[dict]) -> str:
                 f"  \"{profile['label']}\",",
                 f"  {len(profile['points'])},",
                 f"  {len(profile['mills'])},",
-                f"  {MAX_ADJACENCY_SLOTS},",
                 f"  {prefix}BoardPoints,",
                 f"  {prefix}Mills,",
+                f"  {prefix}AdjacencyOffsets,",
                 f"  {prefix}Adjacency,",
                 "};",
                 "",
@@ -249,15 +271,7 @@ def generated_source(profiles: list[dict]) -> str:
                 f"  {rules['flyPieceCount']},",
                 f"  {rules['noCaptureDrawTurnLimit']},",
                 f"  {rules['placementStopEmptyPoints']},",
-                f"  {mill_action_literal(rules['millAction'])},",
-                f"  {bool_literal(rules['flyingEnabled'])},",
-                f"  {bool_literal(rules['mixedPlacementMovement'])},",
-                f"  {bool_literal(rules['protectPiecesInMills'])},",
-                f"  {bool_literal(rules['blockWinEnabled'])},",
-                f"  {bool_literal(rules['materialWinEnabled'])},",
-                f"  {bool_literal(rules['blockWinRequiresReserveEmpty'])},",
-                f"  {bool_literal(rules['materialWinRequiresReserveEmpty'])},",
-                f"  {bool_literal(rules['skipBlockedWithReserve'])},",
+                f"  {rule_flags_literal(rules)},",
                 "};",
                 "",
             ]
