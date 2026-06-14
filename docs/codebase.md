@@ -29,10 +29,8 @@ The implementation is split into:
   `boards/*.json`, currently Classic Nine Men's Morris, Flower, Long Morris,
   Six Men's Morris, and Three Men's Morris.
 - `src/MenuMusic.*`: generated compact menu music arrays from TableTop Studio
-  audio data, initially derived from Mutopia's public-domain MIDI source for
-  Scott Joplin's "The Entertainer". The MIDI converter emits alternating menu
-  themes as one firmware voice, prioritizing the right-hand melody and using
-  left-hand bass notes when the melody rests.
+  audio data. Current menu themes are short original bossa-style loops emitted
+  as one firmware voice.
 - `src/Assets.*`: shared PROGMEM sprites, currently including title and boot
   logo assets.
 - `boards/*.json`: editable board/rule profiles consumed by TableTop Studio and
@@ -41,8 +39,8 @@ The implementation is split into:
   validating profiles, and editing JSON board/rule data.
 - `tools/board-data/`: JSON validator/generator for compact
   `src/GeneratedBoards.*` board/rule data.
-- `tools/music/`: MIDI-to-Arduboy menu music generator, editable audio JSON
-  sources, and checked-in public-domain source files.
+- `tools/music/`: Arduboy menu music generator, editable audio JSON sources,
+  and optional checked-in public-domain MIDI source files.
 
 Startup uses `arduboy.beginDoFirst()` and `arduboy.waitNoButtons()` instead of
 `arduboy.begin()` so the stock Arduboy boot logo and LED animation are skipped.

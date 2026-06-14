@@ -34,12 +34,12 @@
 - Added visible CPU cursor/action animation with turn-paced movement sounds.
 - Added CPU Easy and CPU Hard opponent settings, with Hard using depth-2
   minimax over the shared heuristic and weighted top-action choice.
-- Added reproducible menu music generation from Mutopia's public-domain MIDI
-  source for Scott Joplin's "The Entertainer".
+- Added reproducible menu music generation from editable TableTop Studio audio
+  data.
 - Added a TableTop Studio piano-roll audio editor for menu music and sound
   effect drafts.
-- Added a second generated menu music section that alternates after attract
-  mode demos.
+- Replaced the longer menu melody with three compact original bossa-style loops
+  that rotate after attract mode demos.
 - Compact board/rule data pass: flat adjacency lists, packed mill triples,
   bitwise rule flags, and two-bit board occupancy. This recovered about 790
   bytes of stable flash and 66 bytes of RAM while keeping gameplay features.

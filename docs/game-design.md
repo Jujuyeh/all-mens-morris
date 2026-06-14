@@ -77,12 +77,10 @@ Implemented:
 - Custom inverted boot animation, with the stock Arduboy boot logo and LED
   animation skipped.
 - Sound effects for menu/action feedback and RGB LED flashing on mills.
-- Menu music loop generated from TableTop Studio audio data, initially derived
-  from Mutopia's public-domain MIDI source for Scott Joplin's "The
-  Entertainer"; the firmware voice keeps the main melody in range and fills
-  melody rests with lower-octave bass notes. The menu alternates between two
-  generated sections after attract-mode demos, starts playback after a one
-  second pause, and gameplay remains effects-only.
+- Menu music uses three short original bossa-style loops generated from
+  TableTop Studio audio data. Startup picks one theme at random; subsequent
+  returns from attract mode rotate through the next theme. Playback starts
+  after a one second pause, and gameplay remains effects-only.
 - Attract/demo mode after 20 seconds of main-menu inactivity. The game fades
   out, opens with alternating horizontal curtain bars, then runs a silent CPU
   Easy vs CPU Hard demo on a random playable board from a legally generated

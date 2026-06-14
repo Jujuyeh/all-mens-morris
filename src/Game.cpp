@@ -1686,6 +1686,7 @@ void gameSetup() {
   tinyfont.setTextColor(BLACK);
   resetMorrisGame(game, ClassicBoardDefinition, ClassicRuleSet);
   playBootAnimation();
+  menuMusicTheme = random(MENU_MUSIC_THEME_COUNT);
   restartMenuMusic();
 }
 

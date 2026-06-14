@@ -70,7 +70,7 @@ const uint8_t MenuMusicTheme{index}Durations[] PROGMEM = {{
     return f"""#include "MenuMusic.h"
 
 // Generated from TableTop Studio menu music data.
-// Original source: Mutopia's public-domain MIDI for Scott Joplin's The Entertainer.
+// Menu themes are compact monophonic Arduboy tone event streams.
 
 {"".join(chunks)}
 const uint8_t MenuMusicThemeEventCounts[] PROGMEM = {{ {counts} }};

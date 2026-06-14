@@ -23,7 +23,7 @@ yet. Current controls:
   unavailable boards.
 - Main menu idle: after 20 seconds without input, enter a silent CPU demo.
 - Demo mode: any button returns to the main menu and restarts menu music,
-  alternating between two menu themes.
+  rotating through short menu themes.
 - In game d-pad: move the cursor in that board direction, preferring connected
   neighboring points; press two non-opposite directions together for diagonals.
 - B: place/select/confirm/capture.
@@ -67,7 +67,7 @@ Regenerate firmware board/rule data from `boards/*.json`:
 make board-data
 ```
 
-Regenerate menu music from the public-domain Mutopia MIDI source:
+Regenerate menu music from the editable TableTop Studio audio source:
 
 ```sh
 make music-data
