@@ -11,6 +11,7 @@ const state = {
   spriteDrawing: false,
   sounds: [],
   selectedSound: null,
+  selectedThemeIndex: 0,
   audioEvents: [],
   audioKind: "music",
   rollDrag: null,
@@ -47,6 +48,8 @@ const el = {
   saveSprite: document.querySelector("#saveSprite"),
   audioTab: document.querySelector("#audioTab"),
   audioSelect: document.querySelector("#audioSelect"),
+  audioThemeLabel: document.querySelector("#audioThemeLabel"),
+  audioThemeSelect: document.querySelector("#audioThemeSelect"),
   audioName: document.querySelector("#audioName"),
   audioTickMs: document.querySelector("#audioTickMs"),
   newEffect: document.querySelector("#newEffect"),
@@ -145,6 +148,31 @@ function drawLine(board, pair, color, width, dash = []) {
 function drawBoardConnection(board, pair) {
   drawLine(board, pair, "#050505", 3, [8, 5]);
   drawLine(board, pair, "#f7f7f7", 1.5, [8, 5]);
+}
+
+function drawPixelGrid(board) {
+  if (!el.showGrid.checked) return;
+  const canvas = board.canvas || { width: 64, height: 64 };
+  const scale = boardScale(board);
+  ctx.save();
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= canvas.width; x++) {
+    const px = Math.round(x * scale.x) + 0.5;
+    ctx.strokeStyle = x % 4 === 0 ? "rgba(170, 170, 170, 0.44)" : "rgba(170, 170, 170, 0.20)";
+    ctx.beginPath();
+    ctx.moveTo(px, 0);
+    ctx.lineTo(px, el.canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= canvas.height; y++) {
+    const py = Math.round(y * scale.y) + 0.5;
+    ctx.strokeStyle = y % 4 === 0 ? "rgba(170, 170, 170, 0.44)" : "rgba(170, 170, 170, 0.20)";
+    ctx.beginPath();
+    ctx.moveTo(0, py);
+    ctx.lineTo(el.canvas.width, py);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function millColor(index) {
@@ -256,6 +284,7 @@ function drawBoard() {
   ctx.fillStyle = "#080808";
   ctx.fillRect(0, 0, el.canvas.width, el.canvas.height);
   if (!board) return;
+  drawPixelGrid(board);
 
   if (el.showMills.checked) {
     ctx.globalAlpha = 0.72;
@@ -595,16 +624,48 @@ function midiFrequency(note) {
   return note === 0 ? 0 : 440 * Math.pow(2, (note - 69) / 12);
 }
 
+function audioEventsDraft() {
+  return state.audioEvents.map((event) => ({
+    note: Number(event.note || 0),
+    duration: Number(event.duration || 1),
+  }));
+}
+
+function commitSelectedAudioTheme() {
+  if (state.selectedSound?.id !== "menu-music") return;
+  const themes = state.selectedSound.themes || [];
+  if (!themes[state.selectedThemeIndex]) return;
+  themes[state.selectedThemeIndex] = {
+    ...themes[state.selectedThemeIndex],
+    events: audioEventsDraft(),
+  };
+}
+
 function audioDraft() {
+  if (state.selectedSound?.id === "menu-music") {
+    commitSelectedAudioTheme();
+    const themes = (state.selectedSound.themes || []).map((theme, index) => ({
+      ...theme,
+      events: (theme.events || []).map((event) => ({
+        note: Number(event.note || 0),
+        duration: Number(event.duration || 1),
+      })),
+    }));
+    return {
+      id: "menu-music",
+      name: el.audioName.value.trim() || "Menu Music",
+      kind: "music",
+      tickMs: Number(el.audioTickMs.value || 69),
+      themes,
+    };
+  }
+
   return {
     id: state.selectedSound?.id || "menu-music",
     name: el.audioName.value.trim() || "Menu Music",
     kind: state.audioKind,
     tickMs: Number(el.audioTickMs.value || 69),
-    events: state.audioEvents.map((event) => ({
-      note: Number(event.note || 0),
-      duration: Number(event.duration || 1),
-    })),
+    events: audioEventsDraft(),
   };
 }
 
@@ -804,16 +865,39 @@ function populateAudioSelect() {
   });
 }
 
+function populateAudioThemeSelect(sound) {
+  el.audioThemeSelect.replaceChildren();
+  const themes = sound?.themes || [];
+  el.audioThemeLabel.classList.toggle("hidden", sound?.id !== "menu-music" || themes.length <= 1);
+  themes.forEach((theme, index) => {
+    el.audioThemeSelect.add(new Option(theme.name || theme.id || `Theme ${index + 1}`, String(index)));
+  });
+  el.audioThemeSelect.value = String(state.selectedThemeIndex);
+}
+
+function selectAudioTheme(index) {
+  const themes = state.selectedSound?.themes || [];
+  commitSelectedAudioTheme();
+  state.selectedThemeIndex = Math.max(0, Math.min(themes.length - 1, index));
+  const theme = themes[state.selectedThemeIndex];
+  if (!theme) return;
+  state.audioEvents = (theme.events || []).map((event) => ({ ...event }));
+  el.audioThemeSelect.value = String(state.selectedThemeIndex);
+  renderAudio();
+}
+
 function selectAudio(id) {
   const sound = state.sounds.find((item) => item.id === id) || state.sounds[0];
   if (!sound) return;
   state.selectedSound = sound;
   state.audioKind = sound.kind || "effect";
-  state.audioEvents = (sound.events || []).map((event) => ({ ...event }));
+  state.selectedThemeIndex = 0;
+  state.audioEvents = (sound.themes?.[0]?.events || sound.events || []).map((event) => ({ ...event }));
   el.audioSelect.value = sound.id;
   el.audioName.value = sound.name || sound.id;
   el.audioName.disabled = sound.id === "menu-music";
   el.audioTickMs.value = sound.tickMs || 69;
+  populateAudioThemeSelect(sound);
   renderAudio();
 }
 
@@ -847,8 +931,12 @@ async function saveAudio() {
   });
   const payload = await response.json();
   if (!payload.ok) throw new Error(payload.error || "Save failed");
+  const selectedThemeIndex = state.selectedThemeIndex;
   await loadAudio();
   selectAudio(payload.sound.id);
+  if (payload.sound.id === "menu-music") {
+    selectAudioTheme(selectedThemeIndex);
+  }
   setStatus(`Saved ${payload.sound.path}`);
 }
 
@@ -1022,6 +1110,7 @@ el.invertSprite.addEventListener("click", invertSprite);
 el.reloadSprite.addEventListener("click", loadGlobalSprite);
 el.saveSprite.addEventListener("click", () => saveGlobalSprite().catch((error) => setStatus(error.message)));
 el.audioSelect.addEventListener("change", () => selectAudio(el.audioSelect.value));
+el.audioThemeSelect.addEventListener("change", () => selectAudioTheme(Number(el.audioThemeSelect.value)));
 el.audioTickMs.addEventListener("input", updateAudioStats);
 el.newEffect.addEventListener("click", createEffectDraft);
 el.addRest.addEventListener("click", () => {
