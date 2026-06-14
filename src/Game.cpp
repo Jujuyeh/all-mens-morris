@@ -43,6 +43,7 @@ constexpr uint8_t CPU_ANIMATION_TARGET_FRAMES = 30;
 constexpr uint8_t CPU_ACTION_PAUSE_FRAMES = 3;
 constexpr uint8_t CPU_MIN_STEP_FRAMES = 2;
 constexpr uint8_t CPU_MAX_STEP_FRAMES = 7;
+constexpr uint8_t CURSOR_CHORD_FRAMES = 2;
 constexpr uint8_t BOOT_LOGO_X = 52;
 constexpr uint8_t BOOT_LOGO_Y = 26;
 constexpr uint8_t BOOT_DUST_START_FRAMES = framesAtGameFps(20);
@@ -113,6 +114,9 @@ uint8_t cpuAnimationTarget = NO_POINT;
 uint8_t cpuAnimationStepFrames = CPU_MIN_STEP_FRAMES;
 uint8_t cpuAnimationStepTimer = 0;
 uint8_t cpuAnimationPauseFrames = 0;
+int8_t pendingCursorDx = 0;
+int8_t pendingCursorDy = 0;
+uint8_t pendingCursorFrames = 0;
 uint8_t messageFrames = 0;
 uint8_t millFlashFrames = 0;
 uint8_t animationFrame = 0;
@@ -133,6 +137,7 @@ const char *message = "";
 
 void ledsOff();
 void startMillEffects();
+void clearPendingCursorDirection();
 
 const BoardDefinition *boardProfile(uint8_t index) {
   if (index >= MORRIS_BOARD_PROFILE_COUNT) {
@@ -350,6 +355,7 @@ void startMatch() {
   game.currentPlayer = firstPlayer;
   cpuPlayer = opponentOf(firstPlayer);
   hasUndo = false;
+  clearPendingCursorDirection();
   millFlashFrames = 0;
   idleFrames = 0;
   demoFrames = 0;
@@ -402,6 +408,7 @@ void startDemoMatch() {
   }
 
   hasUndo = false;
+  clearPendingCursorDirection();
   millFlashFrames = 0;
   confirmAction = CONFIRM_NONE;
   scene = SCENE_DEMO;
@@ -417,6 +424,7 @@ void returnToMainMenu() {
   confirmAction = CONFIRM_NONE;
   hasUndo = false;
   cpuAnimationPhase = CPU_ANIM_IDLE;
+  clearPendingCursorDirection();
   idleFrames = 0;
   demoFrames = 0;
   demoGameOverFrames = 0;
@@ -592,8 +600,10 @@ uint16_t absoluteDelta(int16_t value) {
 
 uint8_t cursorToward(int8_t dx, int8_t dy) {
   BoardPoint current = boardPoint(*game.board, game.cursor);
-  uint8_t best = NO_POINT;
-  uint16_t bestDistance = 65535;
+  uint8_t bestNeighbor = NO_POINT;
+  uint8_t bestAny = NO_POINT;
+  uint16_t bestNeighborScore = 65535;
+  uint16_t bestAnyScore = 65535;
 
   for (uint8_t point = 0; point < game.board->pointCount; point++) {
     if (point == game.cursor) {
@@ -603,20 +613,26 @@ uint8_t cursorToward(int8_t dx, int8_t dy) {
     BoardPoint candidate = boardPoint(*game.board, point);
     int16_t deltaX = static_cast<int16_t>(candidate.x) - current.x;
     int16_t deltaY = static_cast<int16_t>(candidate.y) - current.y;
-    if ((dx < 0 && deltaX >= 0) || (dx > 0 && deltaX <= 0)
-        || (dy < 0 && deltaY >= 0) || (dy > 0 && deltaY <= 0)) {
+    int16_t dot = deltaX * dx + deltaY * dy;
+    if (dot <= 0) {
       continue;
     }
 
-    uint16_t primary = dx == 0 ? absoluteDelta(deltaY) : absoluteDelta(deltaX);
-    uint16_t secondary = dx == 0 ? absoluteDelta(deltaX) : absoluteDelta(deltaY);
-    uint16_t distance = primary * 4 + secondary * 64;
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      best = point;
+    uint16_t score = absoluteDelta(deltaX * dy - deltaY * dx) * 32
+        + absoluteDelta(deltaX) + absoluteDelta(deltaY);
+    if (score < bestAnyScore) {
+      bestAnyScore = score;
+      bestAny = point;
+    }
+
+    for (uint8_t slot = 0; slot < game.board->adjacencySlots; slot++) {
+      if (adjacentPoint(*game.board, game.cursor, slot) == point && score < bestNeighborScore) {
+        bestNeighborScore = score;
+        bestNeighbor = point;
+      }
     }
   }
-  return best;
+  return bestNeighbor != NO_POINT ? bestNeighbor : bestAny;
 }
 
 void moveCursorToward(int8_t dx, int8_t dy) {
@@ -624,6 +640,70 @@ void moveCursorToward(int8_t dx, int8_t dy) {
   if (next != NO_POINT) {
     game.cursor = next;
   }
+}
+
+void clearPendingCursorDirection() {
+  pendingCursorDx = 0;
+  pendingCursorDy = 0;
+  pendingCursorFrames = 0;
+}
+
+bool currentDpadDirection(int8_t &dx, int8_t &dy) {
+  dx = 0;
+  dy = 0;
+  if (arduboy.pressed(LEFT_BUTTON) && !arduboy.pressed(RIGHT_BUTTON)) {
+    dx = -1;
+  } else if (arduboy.pressed(RIGHT_BUTTON) && !arduboy.pressed(LEFT_BUTTON)) {
+    dx = 1;
+  }
+  if (arduboy.pressed(UP_BUTTON) && !arduboy.pressed(DOWN_BUTTON)) {
+    dy = -1;
+  } else if (arduboy.pressed(DOWN_BUTTON) && !arduboy.pressed(UP_BUTTON)) {
+    dy = 1;
+  }
+  return dx != 0 || dy != 0;
+}
+
+bool dpadJustPressed() {
+  return arduboy.justPressed(LEFT_BUTTON)
+      || arduboy.justPressed(RIGHT_BUTTON)
+      || arduboy.justPressed(UP_BUTTON)
+      || arduboy.justPressed(DOWN_BUTTON);
+}
+
+void handleCursorDirectionInput() {
+  int8_t dx = 0;
+  int8_t dy = 0;
+  bool hasDirection = currentDpadDirection(dx, dy);
+
+  if (pendingCursorFrames == 0 && !dpadJustPressed()) {
+    return;
+  }
+
+  if (hasDirection) {
+    pendingCursorDx = dx;
+    pendingCursorDy = dy;
+    if (dx != 0 && dy != 0) {
+      moveCursorToward(dx, dy);
+      clearPendingCursorDirection();
+      return;
+    }
+  }
+
+  if (pendingCursorFrames == 0) {
+    pendingCursorFrames = CURSOR_CHORD_FRAMES;
+    return;
+  }
+
+  pendingCursorFrames--;
+  if (pendingCursorFrames > 0) {
+    return;
+  }
+
+  if (pendingCursorDx != 0 || pendingCursorDy != 0) {
+    moveCursorToward(pendingCursorDx, pendingCursorDy);
+  }
+  clearPendingCursorDirection();
 }
 
 uint8_t nextGraphPointToward(uint8_t start, uint8_t target) {
@@ -1416,23 +1496,15 @@ void handleInput() {
   }
 
   if (arduboy.pressed(A_BUTTON)) {
+    clearPendingCursorDirection();
     handleQuickMenuInput();
     return;
   }
 
-  if (arduboy.justPressed(LEFT_BUTTON)) {
-    moveCursorToward(-1, 0);
-  }
-  if (arduboy.justPressed(RIGHT_BUTTON)) {
-    moveCursorToward(1, 0);
-  }
-  if (arduboy.justPressed(UP_BUTTON)) {
-    moveCursorToward(0, -1);
-  }
-  if (arduboy.justPressed(DOWN_BUTTON)) {
-    moveCursorToward(0, 1);
-  }
+  handleCursorDirectionInput();
+
   if (arduboy.justPressed(B_BUTTON)) {
+    clearPendingCursorDirection();
     GamePhase phaseBeforeAction = game.phase;
     MorrisGameState beforeAction = game;
     bool moved = applyPrimaryAction(game);

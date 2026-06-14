@@ -62,7 +62,9 @@ Implemented:
 - Playable Flower profile with a custom 20-point graph, eight mill lines, and
   classic capture/flying rules.
 - Main menu setting for whether white or black moves first.
-- Directional cursor navigation that follows the board geometry.
+- Directional cursor navigation that follows the board geometry, preferring
+  connected neighboring points before falling back to a wider geometric search.
+  D-pad chords support eight-direction cursor movement on freer board layouts.
 - Hold-A quick menu for debug scenarios in debug builds, one-state rewind, and
   returning to the main menu.
 - Hold-A/right action toggle for mixed placement/movement variants.
