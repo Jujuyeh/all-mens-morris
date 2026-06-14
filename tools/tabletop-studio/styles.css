@@ -157,9 +157,12 @@ textarea {
   display: grid;
   place-items: center;
   background:
-    linear-gradient(#202020 1px, transparent 1px),
-    linear-gradient(90deg, #202020 1px, transparent 1px);
-  background-size: 32px 32px;
+    linear-gradient(rgba(150, 150, 150, 0.42) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(150, 150, 150, 0.42) 1px, transparent 1px),
+    linear-gradient(rgba(150, 150, 150, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(150, 150, 150, 0.18) 1px, transparent 1px),
+    #080808;
+  background-size: 32px 32px, 32px 32px, 8px 8px, 8px 8px;
   border: 1px solid #343434;
 }
 

@@ -4,8 +4,8 @@
 
 constexpr uint8_t MENU_MUSIC_THEME_COUNT = 3;
 constexpr uint8_t MENU_MUSIC_MIN_NOTE = 43;
-constexpr uint8_t MENU_MUSIC_MAX_NOTE = 59;
-constexpr uint8_t MENU_MUSIC_TICK_MS = 92;
+constexpr uint8_t MENU_MUSIC_MAX_NOTE = 57;
+constexpr uint8_t MENU_MUSIC_TICK_MS = 110;
 
 extern const uint8_t MenuMusicThemeEventCounts[] PROGMEM;
 extern const uint8_t MenuMusicTheme0Notes[] PROGMEM;

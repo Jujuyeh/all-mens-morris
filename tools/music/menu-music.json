@@ -2,7 +2,7 @@
   "id": "menu-music",
   "name": "Menu Music",
   "kind": "music",
-  "tickMs": 92,
+  "tickMs": 110,
   "themes": [
     {
       "id": "bossa-one",
@@ -10,27 +10,19 @@
       "events": [
         {
           "note": 48,
-          "duration": 3
+          "duration": 2
         },
         {
           "note": 0,
-          "duration": 1
-        },
-        {
-          "note": 55,
-          "duration": 1
+          "duration": 2
         },
         {
           "note": 52,
-          "duration": 2
+          "duration": 1
         },
         {
           "note": 0,
-          "duration": 2
-        },
-        {
-          "note": 48,
-          "duration": 2
+          "duration": 1
         },
         {
           "note": 55,
@@ -38,23 +30,11 @@
         },
         {
           "note": 0,
-          "duration": 2
-        },
-        {
-          "note": 50,
           "duration": 3
         },
         {
-          "note": 0,
+          "note": 48,
           "duration": 1
-        },
-        {
-          "note": 57,
-          "duration": 1
-        },
-        {
-          "note": 53,
-          "duration": 2
         },
         {
           "note": 0,
@@ -65,7 +45,27 @@
           "duration": 2
         },
         {
+          "note": 0,
+          "duration": 2
+        },
+        {
+          "note": 53,
+          "duration": 1
+        },
+        {
+          "note": 0,
+          "duration": 1
+        },
+        {
           "note": 57,
+          "duration": 1
+        },
+        {
+          "note": 0,
+          "duration": 3
+        },
+        {
+          "note": 50,
           "duration": 1
         },
         {
@@ -80,27 +80,27 @@
       "events": [
         {
           "note": 45,
+          "duration": 2
+        },
+        {
+          "note": 0,
+          "duration": 2
+        },
+        {
+          "note": 49,
+          "duration": 1
+        },
+        {
+          "note": 0,
+          "duration": 1
+        },
+        {
+          "note": 52,
+          "duration": 1
+        },
+        {
+          "note": 0,
           "duration": 3
-        },
-        {
-          "note": 0,
-          "duration": 1
-        },
-        {
-          "note": 52,
-          "duration": 1
-        },
-        {
-          "note": 57,
-          "duration": 2
-        },
-        {
-          "note": 0,
-          "duration": 2
-        },
-        {
-          "note": 52,
-          "duration": 2
         },
         {
           "note": 45,
@@ -112,27 +112,27 @@
         },
         {
           "note": 47,
+          "duration": 2
+        },
+        {
+          "note": 0,
+          "duration": 2
+        },
+        {
+          "note": 50,
+          "duration": 1
+        },
+        {
+          "note": 0,
+          "duration": 1
+        },
+        {
+          "note": 54,
+          "duration": 1
+        },
+        {
+          "note": 0,
           "duration": 3
-        },
-        {
-          "note": 0,
-          "duration": 1
-        },
-        {
-          "note": 54,
-          "duration": 1
-        },
-        {
-          "note": 59,
-          "duration": 2
-        },
-        {
-          "note": 0,
-          "duration": 2
-        },
-        {
-          "note": 54,
-          "duration": 2
         },
         {
           "note": 47,
@@ -150,30 +150,30 @@
       "events": [
         {
           "note": 43,
+          "duration": 2
+        },
+        {
+          "note": 0,
+          "duration": 2
+        },
+        {
+          "note": 47,
+          "duration": 1
+        },
+        {
+          "note": 0,
+          "duration": 1
+        },
+        {
+          "note": 50,
+          "duration": 1
+        },
+        {
+          "note": 0,
           "duration": 3
         },
         {
-          "note": 0,
-          "duration": 1
-        },
-        {
-          "note": 50,
-          "duration": 1
-        },
-        {
-          "note": 55,
-          "duration": 2
-        },
-        {
-          "note": 0,
-          "duration": 2
-        },
-        {
-          "note": 50,
-          "duration": 2
-        },
-        {
-          "note": 55,
+          "note": 43,
           "duration": 1
         },
         {
@@ -182,30 +182,30 @@
         },
         {
           "note": 45,
+          "duration": 2
+        },
+        {
+          "note": 0,
+          "duration": 2
+        },
+        {
+          "note": 48,
+          "duration": 1
+        },
+        {
+          "note": 0,
+          "duration": 1
+        },
+        {
+          "note": 52,
+          "duration": 1
+        },
+        {
+          "note": 0,
           "duration": 3
         },
         {
-          "note": 0,
-          "duration": 1
-        },
-        {
-          "note": 52,
-          "duration": 1
-        },
-        {
-          "note": 57,
-          "duration": 2
-        },
-        {
-          "note": 0,
-          "duration": 2
-        },
-        {
-          "note": 52,
-          "duration": 2
-        },
-        {
-          "note": 57,
+          "note": 45,
           "duration": 1
         },
         {
