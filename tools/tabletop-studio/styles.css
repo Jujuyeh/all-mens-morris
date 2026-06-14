@@ -163,6 +163,10 @@ textarea {
   border: 1px solid #343434;
 }
 
+.canvasFrame.gridHidden {
+  background: #080808;
+}
+
 .graphTools {
   display: flex;
   align-items: center;

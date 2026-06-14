@@ -27,6 +27,7 @@ const el = {
   tools: Array.from(document.querySelectorAll("[data-tool]")),
   showAdjacency: document.querySelector("#showAdjacency"),
   showMills: document.querySelector("#showMills"),
+  showGrid: document.querySelector("#showGrid"),
   cursorInfo: document.querySelector("#cursorInfo"),
   selectionInfo: document.querySelector("#selectionInfo"),
   summary: document.querySelector("#summary"),
@@ -465,6 +466,7 @@ function renderTabs() {
 function render() {
   const board = selectedBoard();
   renderTabs();
+  el.canvas.parentElement.classList.toggle("gridHidden", !el.showGrid.checked);
   renderSummary(board);
   renderValidation(board);
   renderRules(board);
@@ -1038,7 +1040,7 @@ el.tools.forEach((tool) => {
   });
 });
 ["change", "input"].forEach((eventName) => {
-  [el.showAdjacency, el.showMills].forEach((input) => {
+  [el.showAdjacency, el.showMills, el.showGrid].forEach((input) => {
     input.addEventListener(eventName, render);
   });
 });

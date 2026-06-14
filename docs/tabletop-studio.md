@@ -111,8 +111,8 @@ Implemented first:
 - graph overlay preview from points, adjacency, and mills;
 - direct graph editing modes for points, board connections, mill triples, and
   point deletion;
-- layer toggles so board connections and mill bands can be inspected
-  separately;
+- layer toggles so board connections, mill bands, and the pixel grid can be
+  inspected separately;
 - board connections render as a thin black/white dashed line and always draw
   above mill bands, while every mill gets a distinct deterministic color. Mill
   bands only get wider when multiple mills share the same edge, not merely when
