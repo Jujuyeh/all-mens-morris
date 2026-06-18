@@ -17,7 +17,9 @@ constexpr uint8_t LINK_PEER_TIMEOUT_FRAMES = 45;
 constexpr uint8_t LINK_SEND_INTERVAL_FRAMES = 8;
 constexpr uint8_t LINK_SEND_JITTER_FRAMES = 7;
 constexpr uint8_t LINK_TX_STUCK_FRAMES = 3;
+#ifdef ALL_MENS_MORRIS_DEBUG
 constexpr uint8_t LINK_LINE_SAMPLE_FRAMES = 6;
+#endif
 
 struct LinkPacket {
   uint8_t magic;
@@ -46,9 +48,12 @@ bool peerAvailable = false;
 bool pendingSendStart = false;
 bool pendingSendAction = false;
 bool linkStarted = false;
+bool localStartedMatch = true;
 uint8_t txActiveFrames = 0;
+#ifdef ALL_MENS_MORRIS_DEBUG
 uint8_t lineSampleFrame = 0;
 LinkStatus diagnosticStatus = LINK_STATUS_NONE;
+#endif
 LinkPacket pendingAction = {};
 LinkEvent pendingEvent = {};
 
@@ -98,6 +103,7 @@ void linkResetBus() {
   txActiveFrames = 0;
 }
 
+#ifdef ALL_MENS_MORRIS_DEBUG
 LinkStatus sampleLineStatus() {
 #if I2C_LIB_VER >= 30000
   uint8_t sdaHigh = 0;
@@ -125,6 +131,7 @@ LinkStatus sampleLineStatus() {
   return LINK_STATUS_NONE;
 #endif
 }
+#endif
 
 bool linkBusReady() {
   if (!linkStarted) {
@@ -191,6 +198,7 @@ void queueEvent(const LinkPacket &packet) {
   pendingEvent.from = packet.from;
   pendingEvent.to = packet.to;
   if (packet.kind == LINK_KIND_START) {
+    localStartedMatch = false;
     pendingEvent.kind = LINK_EVENT_START;
   } else if (packet.kind == LINK_KIND_ACTION) {
     pendingEvent.kind = LINK_EVENT_ACTION;
@@ -255,13 +263,17 @@ void linkUpdate(bool inMainMenu, uint8_t board, Player firstPlayer) {
   processReceived();
   if (peerTimeout > 0) {
     peerTimeout--;
+#ifdef ALL_MENS_MORRIS_DEBUG
     diagnosticStatus = LINK_STATUS_PROTOCOL;
+#endif
   } else {
     peerAvailable = false;
+#ifdef ALL_MENS_MORRIS_DEBUG
     if (inMainMenu && !i2c_detail::data.active && lineSampleFrame++ >= LINK_LINE_SAMPLE_FRAMES) {
       lineSampleFrame = 0;
       diagnosticStatus = sampleLineStatus();
     }
+#endif
   }
 
   if (pendingSendStart) {
@@ -293,11 +305,15 @@ bool linkPeerAvailable() {
 }
 
 LinkStatus linkStatus() {
+#ifdef ALL_MENS_MORRIS_DEBUG
   return peerAvailable ? LINK_STATUS_PROTOCOL : diagnosticStatus;
+#else
+  return peerAvailable ? LINK_STATUS_PROTOCOL : LINK_STATUS_NONE;
+#endif
 }
 
 bool linkLocalIsPlayerOne() {
-  return localNonce < peerNonce;
+  return localStartedMatch;
 }
 
 Player linkLocalPlayer(Player firstPlayer) {
@@ -314,6 +330,7 @@ bool linkConsumeEvent(LinkEvent &event) {
 }
 
 void linkSendStart(uint8_t, Player) {
+  localStartedMatch = true;
   pendingSendStart = true;
 }
 

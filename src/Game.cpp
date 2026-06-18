@@ -144,6 +144,9 @@ void startMillEffects();
 void clearPendingCursorDirection();
 void showActionFeedback(GamePhase phaseBeforeAction, bool moved);
 void playEffect(uint16_t freq, uint16_t dur);
+void setCpuAnimationStepRate(const AiAction &action);
+void enterCpuPickPause();
+void enterCpuDropPause();
 
 const BoardDefinition *boardProfile(uint8_t index) {
   if (index >= MORRIS_BOARD_PROFILE_COUNT) {
@@ -174,6 +177,14 @@ bool isCpuTurn() {
 
 bool isCpuAnimating() {
   return cpuAnimationPhase != CPU_ANIM_IDLE;
+}
+
+bool isRemoteLinkAnimating() {
+  return scene == SCENE_PLAYING
+      && opponentMode == OPPONENT_LINK
+      && game.phase != PHASE_GAME_OVER
+      && game.currentPlayer != linkLocalPlayer(firstPlayer)
+      && isCpuAnimating();
 }
 
 bool linkModeAvailable() {
@@ -415,15 +426,28 @@ void applyLinkedAction(const LinkEvent &event) {
   if (!isLinkMatch() || event.kind != LINK_EVENT_ACTION || isLocalLinkTurn()) {
     return;
   }
-  GamePhase phaseBeforeAction = game.phase;
+  if (isRemoteLinkAnimating()) {
+    return;
+  }
+  cpuAnimationPhaseBeforeAction = game.phase;
+  cpuAnimationAction.from = event.from;
+  cpuAnimationAction.to = event.to;
+  cpuAnimationAction.mode = event.mode;
   game.actionMode = event.mode;
-  game.selected = event.from;
-  game.cursor = event.to;
-  bool moved = applyPrimaryAction(game);
-  if (moved) {
-    showActionFeedback(phaseBeforeAction, true);
+  game.selected = NO_POINT;
+  setCpuAnimationStepRate(cpuAnimationAction);
+  if (cpuAnimationAction.from != NO_POINT) {
+    cpuAnimationTarget = cpuAnimationAction.from;
+    cpuAnimationPhase = CPU_ANIM_TO_FROM;
+    if (game.cursor == cpuAnimationTarget) {
+      enterCpuPickPause();
+    }
   } else {
-    setMessage("LINK ERR");
+    cpuAnimationTarget = cpuAnimationAction.to;
+    cpuAnimationPhase = CPU_ANIM_TO_TO;
+    if (game.cursor == cpuAnimationTarget) {
+      enterCpuDropPause();
+    }
   }
 }
 
@@ -768,6 +792,15 @@ bool dpadJustPressed() {
       || arduboy.justPressed(RIGHT_BUTTON)
       || arduboy.justPressed(UP_BUTTON)
       || arduboy.justPressed(DOWN_BUTTON);
+}
+
+bool anyButtonJustPressed() {
+  return arduboy.justPressed(LEFT_BUTTON)
+      || arduboy.justPressed(RIGHT_BUTTON)
+      || arduboy.justPressed(UP_BUTTON)
+      || arduboy.justPressed(DOWN_BUTTON)
+      || arduboy.justPressed(A_BUTTON)
+      || arduboy.justPressed(B_BUTTON);
 }
 
 void handleCursorDirectionInput() {
@@ -1275,7 +1308,7 @@ void drawMainMenu() {
   if (selectedMenuItem == 2) {
     drawDashedRect(35, 54, 62, 10, animationFrame / 5, WHITE);
   }
-#ifdef ALL_MENS_MORRIS_FXC_LINK
+#if defined(ALL_MENS_MORRIS_FXC_LINK) && defined(ALL_MENS_MORRIS_DEBUG)
   tinyfont.setCursor(102, 24);
   switch (linkStatus()) {
     case LINK_STATUS_PROTOCOL:
@@ -1631,7 +1664,7 @@ void handleInput() {
   }
 
   if (linkInputLocked()) {
-    if (arduboy.buttonsState() != 0) {
+    if (anyButtonJustPressed()) {
       rejectInput();
     }
     clearPendingCursorDirection();
@@ -1731,7 +1764,7 @@ void finishCpuAnimation() {
   if (moved) {
     showActionFeedback(cpuAnimationPhaseBeforeAction, true);
   } else {
-    setMessage("CPU WAIT");
+    setMessage(isLinkMatch() ? "LINK ERR" : "CPU WAIT");
   }
   cpuThinkFrames = isCpuTurn() ? cpuThinkDelayFrames() : 0;
 }
