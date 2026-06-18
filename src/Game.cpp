@@ -1427,12 +1427,12 @@ void drawGame() {
   }
   drawCursor();
   drawHud();
+  drawResultPanel();
   if (confirmAction != CONFIRM_NONE) {
     drawConfirm();
   } else if (arduboy.pressed(A_BUTTON)) {
     drawQuickMenu();
   }
-  drawResultPanel();
 }
 
 void drawScene() {
