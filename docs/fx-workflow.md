@@ -16,3 +16,13 @@ Safe flow:
 This repo's `make upload` target intentionally refuses `TARGET=fx`. Use
 `make fx-entry` to prepare files that can be merged into a backed-up catalog.
 By default the entry is prepared in the `TableTop` category.
+
+FX-C link-cable builds are prepared separately:
+
+```sh
+make compile-fxc
+make fx-entry-fxc
+```
+
+`make fx-entry-fxc` writes under `dist/fx-cart/FX-C/TableTop/` so the result is
+not accidentally merged into the classic FX catalog path.

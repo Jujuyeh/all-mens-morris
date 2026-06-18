@@ -61,6 +61,12 @@ Compile debug:
 make compile-debug
 ```
 
+Compile the Arduboy FX-C link-cable build:
+
+```sh
+make compile-fxc
+```
+
 Regenerate firmware board/rule data from `boards/*.json`:
 
 ```sh
@@ -86,6 +92,12 @@ make fx-entry
 ```
 
 The entry is prepared under the `TableTop` category by default.
+
+Prepare an Arduboy FX-C catalog entry with link-cable support:
+
+```sh
+make fx-entry-fxc
+```
 
 Open TableTop Studio:
 

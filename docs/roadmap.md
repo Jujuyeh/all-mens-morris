@@ -49,16 +49,18 @@
   enabled before adding game protocol/UI.
 - Fixed result panels so `PLAYER 1`/`PLAYER 2` refer to the local match slot
   instead of the internal black/white player enum.
+- Added a first Arduboy FX-C link-cable build target and linked multiplayer
+  slice: menu peer beacons, unlocked `VS LINK` option, linked match start,
+  compact action packet sync, remote-turn input lockout, green local-turn LED,
+  and shared mill LED feedback.
 
 ## Next Cycle
 
-1. Add an explicit Arduboy FX-C build/flashcart workflow target before linked
-   multiplayer work, because FX-C should not be treated as a classic FX upload
-   path.
-2. Prototype minimal FX-C linked multiplayer: main-menu peer detection, local
-   slot assignment, local-input lockout on remote turns, move/capture packet
-   sync, turn LEDs, mill police LED feedback, and one-frame rejection flash for
-   invalid remote-turn input.
+1. Test the first FX-C link-cable multiplayer slice on two physical units,
+   especially cable orientation, peer detection stability, start sync, and
+   action sync on Classic and Long Morris.
+2. Add remote cursor/action animation over the linked protocol if physical
+   testing confirms the packet sync is stable.
 3. Test CPU Easy/Hard behavior across Classic, Six Men's Morris, Three Men's
    Morris, Long Morris, and Flower on device/libretro.
 4. Keep future CPU tuning under a strict flash/RAM budget so linked multiplayer
@@ -72,8 +74,8 @@
 
 ## Later
 
-- Linked multiplayer between two Arduboy FX-C units, with protocol and UI kept
-  small enough to coexist with board variants and CPU difficulty levels.
+- Hardened linked multiplayer between two Arduboy FX-C units, with cable-flip
+  guidance, reconnect behavior, and optional remote cursor animation.
 - More board/rule variant definitions.
 - More advanced draw rules, such as repeated-position detection.
 - TableTop Studio for designing board sprites and playable graph data together.

@@ -18,34 +18,40 @@ FX_BANNER ?= assets/fx/banner.png
 
 ELF := $(BUILD_DIR)/all-mens-morris.ino.elf
 HEX := $(BUILD_DIR)/all-mens-morris.ino.hex
+FXC_HEX := $(SKETCH_DIR)/build/fxc/all-mens-morris.ino.hex
 AVR_SIZE ?= avr-size
 AVR_NM ?= avr-nm
 
 ifeq ($(BUILD),debug)
 ARDUINO_BUILD_FLAGS := --build-property compiler.cpp.extra_flags="-DALL_MENS_MORRIS_DEBUG=1"
+else ifeq ($(BUILD),fxc)
+ARDUINO_BUILD_FLAGS := --build-property compiler.cpp.extra_flags="-DALL_MENS_MORRIS_FXC_LINK=1"
 else ifeq ($(BUILD),stable)
 ARDUINO_BUILD_FLAGS :=
 else
-$(error BUILD must be stable or debug)
+$(error BUILD must be stable, debug, or fxc)
 endif
 
 export ARDUINO_DIRECTORIES_DATA := $(ARDUINO_DATA_DIR)
 export ARDUINO_DIRECTORIES_USER := $(SKETCH_DIR)/.arduino-sketchbook
 
-.PHONY: all setup compile compile-debug upload upload-sketch clean hex size size-debug symbols symbols-debug check sim cloud libretro libretro-debug fx-entry tabletop-studio board-data music-data
+.PHONY: all setup compile compile-debug compile-fxc upload upload-sketch clean hex size size-debug symbols symbols-debug check sim cloud libretro libretro-debug fx-entry fx-entry-fxc tabletop-studio board-data music-data
 
 all: compile
 
 setup:
 	$(ARDUINO_CLI) core update-index
 	$(ARDUINO_CLI) core install arduino:avr
-	$(ARDUINO_CLI) lib install Arduboy2 Arduboy-TinyFont ArduboyTones
+	$(ARDUINO_CLI) lib install Arduboy2 Arduboy-TinyFont ArduboyTones ArduboyI2C
 
 compile:
 	$(ARDUINO_CLI) compile --fqbn $(FQBN) $(ARDUINO_BUILD_FLAGS) --build-path $(BUILD_DIR) $(SKETCH_DIR)
 
 compile-debug:
 	$(MAKE) compile BUILD=debug
+
+compile-fxc:
+	$(MAKE) compile BUILD=fxc
 
 upload:
 ifeq ($(TARGET),fx)
@@ -103,6 +109,14 @@ fx-entry: compile
 	@printf '%s\n' "$(FX_CART_DIR)/$(FX_CATEGORY)/$(FX_GAME).hex"
 	@printf '%s\n' "$(FX_CART_DIR)/$(FX_CATEGORY)/$(FX_GAME).png"
 	@printf '%s\n' "Merge this into a backup of your existing FX cart before writing."
+
+fx-entry-fxc: compile-fxc
+	install -D "$(FXC_HEX)" "$(FX_CART_DIR)/FX-C/$(FX_CATEGORY)/$(FX_GAME).hex"
+	install -D "$(SKETCH_DIR)/$(FX_BANNER)" "$(FX_CART_DIR)/FX-C/$(FX_CATEGORY)/$(FX_GAME).png"
+	@printf '%s\n' "FX-C catalog entry prepared:"
+	@printf '%s\n' "$(FX_CART_DIR)/FX-C/$(FX_CATEGORY)/$(FX_GAME).hex"
+	@printf '%s\n' "$(FX_CART_DIR)/FX-C/$(FX_CATEGORY)/$(FX_GAME).png"
+	@printf '%s\n' "Merge this into an FX-C flashcart backup, not a classic FX cart."
 
 tabletop-studio:
 	python tools/tabletop-studio/server.py --open

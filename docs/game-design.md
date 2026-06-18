@@ -100,6 +100,14 @@ Implemented:
 - CPU turns animate the cursor over valid board connections, with short cursor
   step tones and lower select/confirm tones before the simulated action is
   applied.
+- Arduboy FX-C build support behind `BUILD=fxc`, with a first linked
+  multiplayer slice. Two consoles in the main menu exchange compact I2C
+  beacons; when a peer is detected the opponent selector unlocks `VS LINK`.
+  Starting a linked match sends the selected board/first-player setting, each
+  local action is sent as a compact mode/from/to packet, only the active local
+  player can act, remote-turn input flashes a one-frame rejection effect, local
+  turns light the RGB LED green, and mills keep the red/blue police LED flash on
+  both consoles.
 
 Not implemented yet:
 

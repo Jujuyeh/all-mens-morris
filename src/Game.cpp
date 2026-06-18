@@ -4,6 +4,7 @@
 #include "Assets.h"
 #include "Board.h"
 #include "GeneratedBoards.h"
+#include "Link.h"
 #include "MenuMusic.h"
 #include "Rules.h"
 
@@ -75,6 +76,7 @@ enum OpponentMode : uint8_t {
   OPPONENT_PLAYER_TWO,
   OPPONENT_CPU_EASY,
   OPPONENT_CPU_HARD,
+  OPPONENT_LINK,
   OPPONENT_MODE_COUNT,
 };
 
@@ -130,6 +132,7 @@ uint8_t menuMusicFramesRemaining = 0;
 uint8_t menuMusicIndex = 0;
 uint8_t menuMusicTheme = 0;
 bool menuMusicActive = false;
+uint8_t rejectFlashFrames = 0;
 #ifdef ALL_MENS_MORRIS_DEBUG
 uint8_t debugScenario = DEBUG_SCENARIO_MILL;
 #endif
@@ -138,6 +141,8 @@ const char *message = "";
 void ledsOff();
 void startMillEffects();
 void clearPendingCursorDirection();
+void showActionFeedback(GamePhase phaseBeforeAction, bool moved);
+void playEffect(uint16_t freq, uint16_t dur);
 
 const BoardDefinition *boardProfile(uint8_t index) {
   if (index >= MORRIS_BOARD_PROFILE_COUNT) {
@@ -158,7 +163,8 @@ bool selectedBoardIsPlayable() {
 }
 
 bool isCpuTurn() {
-  return ((scene == SCENE_PLAYING && opponentMode != OPPONENT_PLAYER_TWO)
+  return ((scene == SCENE_PLAYING
+           && (opponentMode == OPPONENT_CPU_EASY || opponentMode == OPPONENT_CPU_HARD))
           || scene == SCENE_DEMO)
       && confirmAction == CONFIRM_NONE
       && game.phase != PHASE_GAME_OVER
@@ -169,9 +175,33 @@ bool isCpuAnimating() {
   return cpuAnimationPhase != CPU_ANIM_IDLE;
 }
 
+bool linkModeAvailable() {
+  return linkPeerAvailable();
+}
+
+bool isLinkMatch() {
+  return scene == SCENE_PLAYING && opponentMode == OPPONENT_LINK;
+}
+
+bool isLocalLinkTurn() {
+  return !isLinkMatch()
+      || game.phase == PHASE_GAME_OVER
+      || game.currentPlayer == linkLocalPlayer(firstPlayer);
+}
+
+bool linkInputLocked() {
+  return isLinkMatch() && !isLocalLinkTurn();
+}
+
 void setMessage(const char *text) {
   message = text;
   messageFrames = 45;
+}
+
+void rejectInput() {
+  rejectFlashFrames = 6;
+  setMessage("WAIT");
+  playEffect(110, 35);
 }
 
 void markSoundEffect() {
@@ -274,6 +304,9 @@ void updateMenuMusic() {
 }
 
 const char *opponentModeLabel() {
+  if (opponentMode == OPPONENT_LINK) {
+    return "LINK";
+  }
   if (opponentMode == OPPONENT_CPU_EASY) {
     return "CPU EASY";
   }
@@ -298,13 +331,17 @@ uint8_t cpuThinkDelayFrames() {
 }
 
 void nextOpponentMode() {
-  opponentMode = static_cast<OpponentMode>((opponentMode + 1) % OPPONENT_MODE_COUNT);
+  do {
+    opponentMode = static_cast<OpponentMode>((opponentMode + 1) % OPPONENT_MODE_COUNT);
+  } while (opponentMode == OPPONENT_LINK && !linkModeAvailable());
 }
 
 void previousOpponentMode() {
-  opponentMode = opponentMode == OPPONENT_PLAYER_TWO
-      ? OPPONENT_CPU_HARD
-      : static_cast<OpponentMode>(opponentMode - 1);
+  do {
+    opponentMode = opponentMode == OPPONENT_PLAYER_TWO
+        ? static_cast<OpponentMode>(OPPONENT_MODE_COUNT - 1)
+        : static_cast<OpponentMode>(opponentMode - 1);
+  } while (opponentMode == OPPONENT_LINK && !linkModeAvailable());
 }
 
 BoardPoint screenPoint(uint8_t index) {
@@ -364,6 +401,43 @@ void startMatch() {
   scene = SCENE_PLAYING;
   cpuThinkFrames = isCpuTurn() ? cpuThinkDelayFrames() : 0;
   setMessage("");
+}
+
+void startLinkMatch(uint8_t boardIndex, Player startingPlayer) {
+  selectedBoardMenuItem = boardIndex < BOARD_MENU_COUNT ? boardIndex : 0;
+  firstPlayer = startingPlayer == PLAYER_ONE ? PLAYER_ONE : PLAYER_TWO;
+  opponentMode = OPPONENT_LINK;
+  startMatch();
+}
+
+void applyLinkedAction(const LinkEvent &event) {
+  if (!isLinkMatch() || event.kind != LINK_EVENT_ACTION || isLocalLinkTurn()) {
+    return;
+  }
+  GamePhase phaseBeforeAction = game.phase;
+  game.actionMode = event.mode;
+  game.selected = event.from;
+  game.cursor = event.to;
+  bool moved = applyPrimaryAction(game);
+  if (moved) {
+    showActionFeedback(phaseBeforeAction, true);
+  } else {
+    setMessage("LINK ERR");
+  }
+}
+
+void handleLinkEvents() {
+  LinkEvent event;
+  while (linkConsumeEvent(event)) {
+    if (event.kind == LINK_EVENT_START && scene == SCENE_MAIN_MENU) {
+      startLinkMatch(event.board, event.firstPlayer);
+    } else if (event.kind == LINK_EVENT_ACTION) {
+      applyLinkedAction(event);
+    }
+  }
+  if (!linkModeAvailable() && opponentMode == OPPONENT_LINK && scene == SCENE_MAIN_MENU) {
+    opponentMode = OPPONENT_PLAYER_TWO;
+  }
 }
 
 uint8_t randomPlayableBoardIndex() {
@@ -444,7 +518,9 @@ void startTransition(TransitionMode mode) {
 }
 
 bool winnerIsCpu() {
-  return scene != SCENE_DEMO && opponentMode != OPPONENT_PLAYER_TWO && game.winner == cpuPlayer;
+  return scene != SCENE_DEMO
+      && (opponentMode == OPPONENT_CPU_EASY || opponentMode == OPPONENT_CPU_HARD)
+      && game.winner == cpuPlayer;
 }
 
 bool winnerIsPlayerOneSlot() {
@@ -454,7 +530,7 @@ bool winnerIsPlayerOneSlot() {
   if (scene == SCENE_DEMO) {
     return game.winner == PLAYER_ONE;
   }
-  if (opponentMode != OPPONENT_PLAYER_TWO) {
+  if (opponentMode == OPPONENT_CPU_EASY || opponentMode == OPPONENT_CPU_HARD) {
     return !winnerIsCpu();
   }
   return game.winner == firstPlayer;
@@ -912,7 +988,11 @@ void startMillEffects() {
 
 void updateMillLed() {
   if (millFlashFrames == 0) {
-    ledsOff();
+    if (isLinkMatch() && isLocalLinkTurn()) {
+      arduboy.digitalWriteRGB(RGB_OFF, RGB_ON, RGB_OFF);
+    } else {
+      ledsOff();
+    }
     return;
   }
 
@@ -1328,6 +1408,18 @@ void drawTransitionOverlay() {
   }
 }
 
+void drawRejectFlash() {
+  if (rejectFlashFrames == 0) {
+    return;
+  }
+  if ((rejectFlashFrames % 2) == 0) {
+    for (uint16_t i = 0; i < WIDTH * HEIGHT / 8; i++) {
+      arduboy.sBuffer[i] ^= 0xFF;
+    }
+  }
+  rejectFlashFrames--;
+}
+
 void updateTransition() {
   if (transitionMode == TRANSITION_NONE) {
     return;
@@ -1417,6 +1509,9 @@ void handleMainMenuInput() {
   }
   if (arduboy.justPressed(B_BUTTON)) {
     if (selectedMenuItem == 0 && selectedBoardIsPlayable()) {
+      if (opponentMode == OPPONENT_LINK) {
+        linkSendStart(selectedBoardMenuItem, firstPlayer);
+      }
       startMatch();
       playEffect(660, 45, 880, 70);
     } else if (selectedMenuItem == 1) {
@@ -1508,6 +1603,14 @@ void handleInput() {
     return;
   }
 
+  if (linkInputLocked()) {
+    if (arduboy.buttonsState() != 0) {
+      rejectInput();
+    }
+    clearPendingCursorDirection();
+    return;
+  }
+
   if (arduboy.pressed(A_BUTTON)) {
     clearPendingCursorDirection();
     handleQuickMenuInput();
@@ -1520,6 +1623,9 @@ void handleInput() {
     clearPendingCursorDirection();
     GamePhase phaseBeforeAction = game.phase;
     MorrisGameState beforeAction = game;
+    TurnActionMode actionMode = game.actionMode;
+    uint8_t actionFrom = game.phase == PHASE_MOVING && game.selected != NO_POINT ? game.selected : NO_POINT;
+    uint8_t actionTo = game.cursor;
     bool moved = applyPrimaryAction(game);
     if (!moved) {
       setMessage("NOPE");
@@ -1532,6 +1638,9 @@ void handleInput() {
     if (!moved) {
       return;
     } else {
+      if (isLinkMatch()) {
+        linkSendAction(actionMode, actionFrom, actionTo);
+      }
       showActionFeedback(phaseBeforeAction, true);
       cpuThinkFrames = isCpuTurn() ? cpuThinkDelayFrames() : 0;
     }
@@ -1695,7 +1804,9 @@ void gameSetup() {
   arduboy.setFrameRate(GAME_FPS);
   arduboy.setTextColor(BLACK);
   arduboy.audio.begin();
-  randomSeed(static_cast<unsigned long>(micros()) ^ analogRead(A0));
+  uint32_t seed = static_cast<unsigned long>(micros()) ^ analogRead(A0);
+  randomSeed(seed);
+  linkBegin(seed);
   tinyfont.setTextColor(BLACK);
   resetMorrisGame(game, ClassicBoardDefinition, ClassicRuleSet);
   playBootAnimation();
@@ -1710,6 +1821,8 @@ void gameLoop() {
 
   animationFrame++;
   arduboy.pollButtons();
+  linkUpdate(scene == SCENE_MAIN_MENU, selectedBoardMenuItem, firstPlayer);
+  handleLinkEvents();
   bool hasInput = arduboy.buttonsState() != 0;
   if (transitionMode == TRANSITION_NONE) {
     updateIdleDemoTimer(hasInput);
@@ -1735,5 +1848,6 @@ void gameLoop() {
   arduboy.fillScreen(WHITE);
   drawScene();
   drawTransitionOverlay();
+  drawRejectFlash();
   arduboy.display();
 }

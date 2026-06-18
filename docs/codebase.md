@@ -31,6 +31,11 @@ The implementation is split into:
 - `src/MenuMusic.*`: generated compact menu music arrays from TableTop Studio
   audio data. Current menu themes are short original bossa-style loops emitted
   as one firmware voice.
+- `src/Link.*`: optional Arduboy FX-C I2C link layer compiled with
+  `ALL_MENS_MORRIS_FXC_LINK`. The normal stable/debug builds use no-op stubs;
+  the FX-C build exchanges menu beacons, match-start packets, and compact
+  action packets while keeping `Rules` responsible for applying game state
+  changes.
 - `src/Assets.*`: shared PROGMEM sprites, currently including title and boot
   logo assets.
 - `boards/*.json`: editable board/rule profiles consumed by TableTop Studio and
