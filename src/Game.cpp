@@ -108,6 +108,7 @@ Player firstPlayer = PLAYER_TWO;
 Player cpuPlayer = PLAYER_ONE;
 bool hasUndo = false;
 OpponentMode opponentMode = OPPONENT_PLAYER_TWO;
+bool linkWasAvailable = false;
 uint8_t cpuThinkFrames = 0;
 CpuAnimationPhase cpuAnimationPhase = CPU_ANIM_IDLE;
 AiAction cpuAnimationAction = {NO_POINT, NO_POINT, TURN_ACTION_MOVE};
@@ -427,6 +428,15 @@ void applyLinkedAction(const LinkEvent &event) {
 }
 
 void handleLinkEvents() {
+  bool linkAvailable = linkModeAvailable();
+  if (scene == SCENE_MAIN_MENU && linkAvailable && !linkWasAvailable) {
+    selectedMenuItem = 2;
+    opponentMode = OPPONENT_LINK;
+    setMessage("LINK");
+    playEffect(880, 35, 1175, 45);
+  }
+  linkWasAvailable = linkAvailable;
+
   LinkEvent event;
   while (linkConsumeEvent(event)) {
     if (event.kind == LINK_EVENT_START && scene == SCENE_MAIN_MENU) {
@@ -435,7 +445,7 @@ void handleLinkEvents() {
       applyLinkedAction(event);
     }
   }
-  if (!linkModeAvailable() && opponentMode == OPPONENT_LINK && scene == SCENE_MAIN_MENU) {
+  if (!linkAvailable && opponentMode == OPPONENT_LINK && scene == SCENE_MAIN_MENU) {
     opponentMode = OPPONENT_PLAYER_TWO;
   }
 }
@@ -1265,6 +1275,10 @@ void drawMainMenu() {
   if (selectedMenuItem == 2) {
     drawDashedRect(35, 54, 62, 10, animationFrame / 5, WHITE);
   }
+#ifdef ALL_MENS_MORRIS_FXC_LINK
+  tinyfont.setCursor(108, 24);
+  tinyfont.print(linkModeAvailable() ? "LK OK" : "LK --");
+#endif
 }
 
 void drawQuickMenu() {
