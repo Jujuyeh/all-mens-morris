@@ -43,19 +43,32 @@
 - Compact board/rule data pass: flat adjacency lists, packed mill triples,
   bitwise rule flags, and two-bit board occupancy. This recovered about 790
   bytes of stable flash and 66 bytes of RAM while keeping gameplay features.
+- Measured a first Arduboy FX-C link-cable budget with ArduboyI2C in a
+  temporary build: about +542 bytes flash/+39 bytes RAM for minimal I2C setup,
+  or about +970 bytes flash/+41 bytes RAM with handshake and cable-flip checks
+  enabled before adding game protocol/UI.
+- Fixed result panels so `PLAYER 1`/`PLAYER 2` refer to the local match slot
+  instead of the internal black/white player enum.
 
 ## Next Cycle
 
-1. Test CPU Easy/Hard behavior across Classic, Six Men's Morris, Three Men's Morris, Long
-   Morris, and Flower on device/libretro.
-2. Keep future CPU tuning under a strict flash/RAM budget so linked multiplayer
+1. Add an explicit Arduboy FX-C build/flashcart workflow target before linked
+   multiplayer work, because FX-C should not be treated as a classic FX upload
+   path.
+2. Prototype minimal FX-C linked multiplayer: main-menu peer detection, local
+   slot assignment, local-input lockout on remote turns, move/capture packet
+   sync, turn LEDs, mill police LED feedback, and one-frame rejection flash for
+   invalid remote-turn input.
+3. Test CPU Easy/Hard behavior across Classic, Six Men's Morris, Three Men's
+   Morris, Long Morris, and Flower on device/libretro.
+4. Keep future CPU tuning under a strict flash/RAM budget so linked multiplayer
    support for two Arduboy FX-C units over USB-C still has room.
-3. Continue small data/code compaction passes before adding linked multiplayer
+5. Continue small data/code compaction passes before adding linked multiplayer
    protocol and UI.
-4. Tune board graph/art direction after CPU and human playtests.
-5. Add generated profile metadata for menu labels, availability, and future
+6. Tune board graph/art direction after CPU and human playtests.
+7. Add generated profile metadata for menu labels, availability, and future
    variant descriptions.
-6. Continue the pixel-art pass for pieces and final board/menu assets.
+8. Continue the pixel-art pass for pieces and final board/menu assets.
 
 ## Later
 

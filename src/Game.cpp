@@ -447,6 +447,19 @@ bool winnerIsCpu() {
   return scene != SCENE_DEMO && opponentMode != OPPONENT_PLAYER_TWO && game.winner == cpuPlayer;
 }
 
+bool winnerIsPlayerOneSlot() {
+  if (game.winner == PLAYER_NONE) {
+    return false;
+  }
+  if (scene == SCENE_DEMO) {
+    return game.winner == PLAYER_ONE;
+  }
+  if (opponentMode != OPPONENT_PLAYER_TWO) {
+    return !winnerIsCpu();
+  }
+  return game.winner == firstPlayer;
+}
+
 void playGameOverFanfare() {
   if (game.winner == PLAYER_NONE) {
     playEffect(392, 90, 330, 90, 262, 180);
@@ -1239,7 +1252,7 @@ void drawResultPanel() {
     drawPanelTextCentered(25, "IT'S A TIE...", fg);
   } else if (winnerIsCpu()) {
     drawPanelTextCentered(25, "CPU WINS!", fg);
-  } else if (game.winner == PLAYER_ONE) {
+  } else if (winnerIsPlayerOneSlot()) {
     drawPanelTextCentered(25, "PLAYER 1", fg);
     drawPanelTextCentered(34, "WINS!", fg);
   } else {

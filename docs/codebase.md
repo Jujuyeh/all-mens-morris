@@ -73,3 +73,6 @@ counters.
 - Add save/settings support only after gameplay rules settle.
 - Use the TableTop Studio plan in `docs/tabletop-studio.md` when board variant
   data and editor tooling become the next focus.
+- Keep planned Arduboy FX-C link-cable multiplayer behind an explicit module
+  and build target. The link layer should exchange compact action packets and
+  leave `Rules` as the single authority for applying moves/captures.

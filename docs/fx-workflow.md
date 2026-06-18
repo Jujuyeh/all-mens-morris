@@ -1,6 +1,9 @@
 # Arduboy FX Workflow
 
 Do not use classic Arduino upload for an Arduboy FX catalog update.
+Treat Arduboy FX-C as its own target/workflow: it uses the USB-C hardware and
+link-cable capable platform, and its flashcart/update path should be explicit
+instead of reusing the classic FX guard by accident.
 
 Safe flow:
 
