@@ -13,6 +13,7 @@ constexpr uint8_t LINK_KIND_START = 2;
 constexpr uint8_t LINK_KIND_ACTION = 3;
 constexpr uint8_t LINK_PEER_TIMEOUT_FRAMES = 45;
 constexpr uint8_t LINK_SEND_INTERVAL_FRAMES = 8;
+constexpr bool LINK_DISCOVERY_ENABLED = false;
 
 struct LinkPacket {
   uint8_t magic;
@@ -120,6 +121,9 @@ void sendBeacon(uint8_t board, Player firstPlayer) {
 }
 
 void linkBegin(uint32_t seed) {
+  if (!LINK_DISCOVERY_ENABLED) {
+    return;
+  }
   localNonce = static_cast<uint8_t>((seed ^ (seed >> 8) ^ (seed >> 16)) & 0x7F);
   if (localNonce == 0) {
     localNonce = 1;
@@ -130,6 +134,9 @@ void linkBegin(uint32_t seed) {
 }
 
 void linkUpdate(bool inMainMenu, uint8_t board, Player firstPlayer) {
+  if (!LINK_DISCOVERY_ENABLED) {
+    return;
+  }
   processReceived();
   if (peerTimeout > 0) {
     peerTimeout--;
