@@ -22,9 +22,9 @@ struct LinkEvent {
 void linkBegin(uint32_t seed);
 void linkUpdate(bool inMainMenu, uint8_t board, Player firstPlayer);
 bool linkPeerAvailable();
+bool linkCableFlipped();
 bool linkLocalIsPlayerOne();
 Player linkLocalPlayer(Player firstPlayer);
 bool linkConsumeEvent(LinkEvent &event);
 void linkSendStart(uint8_t board, Player firstPlayer);
 void linkSendAction(TurnActionMode mode, uint8_t from, uint8_t to);
-

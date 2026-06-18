@@ -49,6 +49,10 @@ Install Arduino dependencies locally:
 make setup
 ```
 
+`make setup` pins ArduboyI2C from GitHub because the FX-C link build needs the
+newer bus-busy and cable-orientation support that is not present in the older
+registry header.
+
 Compile:
 
 ```sh

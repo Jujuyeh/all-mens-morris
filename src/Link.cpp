@@ -48,13 +48,49 @@ uint8_t txActiveFrames = 0;
 LinkPacket pendingAction = {};
 LinkEvent pendingEvent = {};
 
+#if I2C_LIB_VER >= 30000
+void onReceive(const uint8_t *buffer, uint8_t size);
+#else
 void onReceive();
+#endif
+
+void linkBeginBus() {
+#if I2C_LIB_VER >= 30000
+  I2C::begin();
+#else
+  I2C::init();
+#endif
+}
+
+uint8_t linkError() {
+#if I2C_LIB_VER >= 30000
+  return I2C::error();
+#else
+  return I2C::getTWError();
+#endif
+}
+
+void linkWritePacket(const LinkPacket &packet) {
+#if I2C_LIB_VER >= 30000
+  I2C::write(LINK_ADDRESS, packet, false);
+#else
+  I2C::write(LINK_ADDRESS, &packet, false);
+#endif
+}
+
+void linkSetReceiveCallback() {
+#if I2C_LIB_VER >= 30000
+  I2C::onReceive(onReceive);
+#else
+  I2C::onReceive(onReceive);
+#endif
+}
 
 void linkResetBus() {
   i2c_detail::data.active = false;
-  I2C::init();
+  linkBeginBus();
   I2C::setAddress(LINK_ADDRESS, false);
-  I2C::onReceive(onReceive);
+  linkSetReceiveCallback();
   txActiveFrames = 0;
 }
 
@@ -72,8 +108,10 @@ bool linkBusReady() {
   return false;
 }
 
-void onReceive() {
-  const uint8_t *buffer = I2C::getBuffer();
+void receivePacket(const uint8_t *buffer, uint8_t size) {
+  if (size < sizeof(LinkPacket)) {
+    return;
+  }
   const LinkPacket *packet = reinterpret_cast<const LinkPacket *>(buffer);
   if (packet->magic != LINK_MAGIC || packet->version != LINK_VERSION) {
     return;
@@ -81,6 +119,16 @@ void onReceive() {
   receivedPacket = *packet;
   hasReceivedPacket = true;
 }
+
+#if I2C_LIB_VER >= 30000
+void onReceive(const uint8_t *buffer, uint8_t size) {
+  receivePacket(buffer, size);
+}
+#else
+void onReceive() {
+  receivePacket(I2C::getBuffer(), sizeof(LinkPacket));
+}
+#endif
 
 void sendPacket(LinkPacket packet) {
   if (!linkBusReady()) {
@@ -90,8 +138,8 @@ void sendPacket(LinkPacket packet) {
   packet.version = LINK_VERSION;
   packet.seq = sequence++;
   packet.nonce = localNonce;
-  I2C::write(LINK_ADDRESS, &packet, false);
-  if (I2C::getTWError() != TW_SUCCESS) {
+  linkWritePacket(packet);
+  if (linkError() != TW_SUCCESS) {
     i2c_detail::data.active = false;
   }
 }
@@ -207,6 +255,10 @@ bool linkPeerAvailable() {
   return peerAvailable;
 }
 
+bool linkCableFlipped() {
+  return false;
+}
+
 bool linkLocalIsPlayerOne() {
   return localNonce < peerNonce;
 }
@@ -242,6 +294,7 @@ void linkSendAction(TurnActionMode mode, uint8_t from, uint8_t to) {
 void linkBegin(uint32_t) {}
 void linkUpdate(bool, uint8_t, Player) {}
 bool linkPeerAvailable() { return false; }
+bool linkCableFlipped() { return false; }
 bool linkLocalIsPlayerOne() { return true; }
 Player linkLocalPlayer(Player firstPlayer) { return firstPlayer; }
 bool linkConsumeEvent(LinkEvent &) { return false; }
