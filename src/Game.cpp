@@ -1276,8 +1276,21 @@ void drawMainMenu() {
     drawDashedRect(35, 54, 62, 10, animationFrame / 5, WHITE);
   }
 #ifdef ALL_MENS_MORRIS_FXC_LINK
-  tinyfont.setCursor(108, 24);
-  tinyfont.print(linkModeAvailable() ? "LK OK" : "LK --");
+  tinyfont.setCursor(102, 24);
+  switch (linkStatus()) {
+    case LINK_STATUS_PROTOCOL:
+      tinyfont.print("LINK");
+      break;
+    case LINK_STATUS_FLIPPED:
+      tinyfont.print("FLIP");
+      break;
+    case LINK_STATUS_I2C:
+      tinyfont.print("I2C");
+      break;
+    default:
+      tinyfont.print("CBL --");
+      break;
+  }
 #endif
 }
 

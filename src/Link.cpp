@@ -12,10 +12,12 @@ constexpr uint8_t LINK_KIND_BEACON = 1;
 constexpr uint8_t LINK_KIND_START = 2;
 constexpr uint8_t LINK_KIND_ACTION = 3;
 constexpr uint8_t LINK_ADDRESS = 0x08;
+constexpr uint8_t LINK_SEND_ADDRESS = 0x00;
 constexpr uint8_t LINK_PEER_TIMEOUT_FRAMES = 45;
 constexpr uint8_t LINK_SEND_INTERVAL_FRAMES = 8;
 constexpr uint8_t LINK_SEND_JITTER_FRAMES = 7;
 constexpr uint8_t LINK_TX_STUCK_FRAMES = 3;
+constexpr uint8_t LINK_LINE_SAMPLE_FRAMES = 6;
 
 struct LinkPacket {
   uint8_t magic;
@@ -45,6 +47,8 @@ bool pendingSendStart = false;
 bool pendingSendAction = false;
 bool linkStarted = false;
 uint8_t txActiveFrames = 0;
+uint8_t lineSampleFrame = 0;
+LinkStatus diagnosticStatus = LINK_STATUS_NONE;
 LinkPacket pendingAction = {};
 LinkEvent pendingEvent = {};
 
@@ -72,9 +76,9 @@ uint8_t linkError() {
 
 void linkWritePacket(const LinkPacket &packet) {
 #if I2C_LIB_VER >= 30000
-  I2C::write(LINK_ADDRESS, packet, false);
+  I2C::write(LINK_SEND_ADDRESS, packet, false);
 #else
-  I2C::write(LINK_ADDRESS, &packet, false);
+  I2C::write(LINK_SEND_ADDRESS, &packet, false);
 #endif
 }
 
@@ -89,9 +93,37 @@ void linkSetReceiveCallback() {
 void linkResetBus() {
   i2c_detail::data.active = false;
   linkBeginBus();
-  I2C::setAddress(LINK_ADDRESS, false);
+  I2C::setAddress(LINK_ADDRESS, true);
   linkSetReceiveCallback();
   txActiveFrames = 0;
+}
+
+LinkStatus sampleLineStatus() {
+#if I2C_LIB_VER >= 30000
+  uint8_t sdaHigh = 0;
+  uint8_t sclHigh = 0;
+  for (uint8_t i = 0; i < I2C_CHECK_CABLE_FLIPPED_CHECKS; i++) {
+    if (I2C_PIN & _BV(I2C_SDA_BIT)) {
+      sdaHigh++;
+    }
+    if (I2C_PIN & _BV(I2C_SCL_BIT)) {
+      sclHigh++;
+    }
+    _delay_us(1000000.0 / I2C_FREQUENCY / 2.0);
+  }
+
+  if (sdaHigh == I2C_CHECK_CABLE_FLIPPED_CHECKS
+      && sclHigh == I2C_CHECK_CABLE_FLIPPED_CHECKS) {
+    return LINK_STATUS_NONE;
+  }
+
+  constexpr uint8_t halfChecks = I2C_CHECK_CABLE_FLIPPED_CHECKS / 2;
+  uint8_t sdaScore = static_cast<uint8_t>(abs(static_cast<int8_t>(sdaHigh - halfChecks)));
+  uint8_t sclScore = static_cast<uint8_t>(abs(static_cast<int8_t>(sclHigh - halfChecks)));
+  return sdaScore < sclScore ? LINK_STATUS_FLIPPED : LINK_STATUS_I2C;
+#else
+  return LINK_STATUS_NONE;
+#endif
 }
 
 bool linkBusReady() {
@@ -223,8 +255,13 @@ void linkUpdate(bool inMainMenu, uint8_t board, Player firstPlayer) {
   processReceived();
   if (peerTimeout > 0) {
     peerTimeout--;
+    diagnosticStatus = LINK_STATUS_PROTOCOL;
   } else {
     peerAvailable = false;
+    if (inMainMenu && !i2c_detail::data.active && lineSampleFrame++ >= LINK_LINE_SAMPLE_FRAMES) {
+      lineSampleFrame = 0;
+      diagnosticStatus = sampleLineStatus();
+    }
   }
 
   if (pendingSendStart) {
@@ -255,8 +292,8 @@ bool linkPeerAvailable() {
   return peerAvailable;
 }
 
-bool linkCableFlipped() {
-  return false;
+LinkStatus linkStatus() {
+  return peerAvailable ? LINK_STATUS_PROTOCOL : diagnosticStatus;
 }
 
 bool linkLocalIsPlayerOne() {
@@ -294,7 +331,7 @@ void linkSendAction(TurnActionMode mode, uint8_t from, uint8_t to) {
 void linkBegin(uint32_t) {}
 void linkUpdate(bool, uint8_t, Player) {}
 bool linkPeerAvailable() { return false; }
-bool linkCableFlipped() { return false; }
+LinkStatus linkStatus() { return LINK_STATUS_NONE; }
 bool linkLocalIsPlayerOne() { return true; }
 Player linkLocalPlayer(Player firstPlayer) { return firstPlayer; }
 bool linkConsumeEvent(LinkEvent &) { return false; }
