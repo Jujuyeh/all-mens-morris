@@ -466,7 +466,6 @@ void handleLinkEvents() {
   bool linkAvailable = linkModeAvailable();
   bool discoveryActive = linkDiscoveryMenuActive();
   if (discoveryActive && linkAvailable && opponentMode != OPPONENT_LINK) {
-    selectedMenuItem = 2;
     opponentMode = OPPONENT_LINK;
     if (!linkWasAvailable) {
       setMessage("LINK");
