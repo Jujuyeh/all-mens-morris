@@ -104,12 +104,12 @@ Implemented:
   multiplayer slice. Two consoles in the main menu exchange compact I2C
   beacons; when a peer is detected the opponent selector unlocks and selects
   `VS LINK`. The console that starts a linked match controls the first-player
-  side for that match. Each local action is sent as a compact mode/from/to
-  packet; the receiving console animates the cursor over board connections with
-  the same step/select tones used by CPU turns before applying the action. Only
-  the active local player can act, fresh remote-turn input flashes a one-frame
-  rejection effect, local turns light the RGB LED green, and mills keep the
-  red/blue police LED flash on both consoles.
+  side for that match. Local cursor steps are mirrored as compact cursor
+  packets with the same short step tone used by CPU turns, while local actions
+  are sent as compact mode/from/to packets and applied immediately on the
+  receiving console. Only the active local player can act, fresh remote-turn
+  input flashes a one-frame rejection effect, local turns light the RGB LED
+  green, and mills keep the red/blue police LED flash on both consoles.
 
 Not implemented yet:
 

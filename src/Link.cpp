@@ -11,6 +11,7 @@ constexpr uint8_t LINK_VERSION = 1;
 constexpr uint8_t LINK_KIND_BEACON = 1;
 constexpr uint8_t LINK_KIND_START = 2;
 constexpr uint8_t LINK_KIND_ACTION = 3;
+constexpr uint8_t LINK_KIND_CURSOR = 4;
 constexpr uint8_t LINK_ADDRESS = 0x08;
 constexpr uint8_t LINK_SEND_ADDRESS = 0x00;
 constexpr uint8_t LINK_PEER_TIMEOUT_FRAMES = 45;
@@ -47,6 +48,7 @@ uint8_t lastEventSeq = 255;
 bool peerAvailable = false;
 bool pendingSendStart = false;
 bool pendingSendAction = false;
+bool pendingSendCursor = false;
 bool linkStarted = false;
 bool localStartedMatch = true;
 uint8_t txActiveFrames = 0;
@@ -55,6 +57,7 @@ uint8_t lineSampleFrame = 0;
 LinkStatus diagnosticStatus = LINK_STATUS_NONE;
 #endif
 LinkPacket pendingAction = {};
+LinkPacket pendingCursor = {};
 LinkEvent pendingEvent = {};
 
 #if I2C_LIB_VER >= 30000
@@ -202,6 +205,8 @@ void queueEvent(const LinkPacket &packet) {
     pendingEvent.kind = LINK_EVENT_START;
   } else if (packet.kind == LINK_KIND_ACTION) {
     pendingEvent.kind = LINK_EVENT_ACTION;
+  } else if (packet.kind == LINK_KIND_CURSOR) {
+    pendingEvent.kind = LINK_EVENT_CURSOR;
   }
 }
 
@@ -230,7 +235,9 @@ void processReceived() {
   peerAvailable = true;
   peerTimeout = LINK_PEER_TIMEOUT_FRAMES;
   peerNonce = packet.nonce;
-  if (packet.kind == LINK_KIND_START || packet.kind == LINK_KIND_ACTION) {
+  if (packet.kind == LINK_KIND_START
+      || packet.kind == LINK_KIND_ACTION
+      || packet.kind == LINK_KIND_CURSOR) {
     queueEvent(packet);
   }
 }
@@ -288,6 +295,11 @@ void linkUpdate(bool inMainMenu, uint8_t board, Player firstPlayer) {
     sendPacket(packet);
     return;
   }
+  if (pendingSendCursor) {
+    pendingSendCursor = false;
+    sendPacket(pendingCursor);
+    return;
+  }
   if (pendingSendAction) {
     pendingSendAction = false;
     sendPacket(pendingAction);
@@ -343,6 +355,15 @@ void linkSendAction(TurnActionMode mode, uint8_t from, uint8_t to) {
   pendingSendAction = true;
 }
 
+void linkSendCursor(uint8_t point) {
+  pendingCursor = {};
+  pendingCursor.kind = LINK_KIND_CURSOR;
+  pendingCursor.to = point;
+  pendingCursor.from = 255;
+  pendingCursor.mode = TURN_ACTION_MOVE;
+  pendingSendCursor = true;
+}
+
 #else
 
 void linkBegin(uint32_t) {}
@@ -354,5 +375,6 @@ Player linkLocalPlayer(Player firstPlayer) { return firstPlayer; }
 bool linkConsumeEvent(LinkEvent &) { return false; }
 void linkSendStart(uint8_t, Player) {}
 void linkSendAction(TurnActionMode, uint8_t, uint8_t) {}
+void linkSendCursor(uint8_t) {}
 
 #endif

@@ -147,6 +147,8 @@ void playEffect(uint16_t freq, uint16_t dur);
 void setCpuAnimationStepRate(const AiAction &action);
 void enterCpuPickPause();
 void enterCpuDropPause();
+void playCpuCursorStepSound();
+void playCpuActionSound();
 
 const BoardDefinition *boardProfile(uint8_t index) {
   if (index >= MORRIS_BOARD_PROFILE_COUNT) {
@@ -189,6 +191,10 @@ bool isRemoteLinkAnimating() {
 
 bool linkModeAvailable() {
   return linkPeerAvailable();
+}
+
+bool linkDiscoveryMenuActive() {
+  return scene == SCENE_MAIN_MENU && transitionMode == TRANSITION_NONE;
 }
 
 bool isLinkMatch() {
@@ -422,54 +428,64 @@ void startLinkMatch(uint8_t boardIndex, Player startingPlayer) {
   startMatch();
 }
 
+void applyLinkedCursor(const LinkEvent &event) {
+  if (!isLinkMatch() || event.kind != LINK_EVENT_CURSOR || isLocalLinkTurn()) {
+    return;
+  }
+  if (event.to >= game.board->pointCount) {
+    return;
+  }
+  if (game.cursor != event.to) {
+    game.cursor = event.to;
+    playCpuCursorStepSound();
+  }
+}
+
 void applyLinkedAction(const LinkEvent &event) {
   if (!isLinkMatch() || event.kind != LINK_EVENT_ACTION || isLocalLinkTurn()) {
     return;
   }
-  if (isRemoteLinkAnimating()) {
-    return;
-  }
   cpuAnimationPhaseBeforeAction = game.phase;
-  cpuAnimationAction.from = event.from;
-  cpuAnimationAction.to = event.to;
-  cpuAnimationAction.mode = event.mode;
   game.actionMode = event.mode;
-  game.selected = NO_POINT;
-  setCpuAnimationStepRate(cpuAnimationAction);
-  if (cpuAnimationAction.from != NO_POINT) {
-    cpuAnimationTarget = cpuAnimationAction.from;
-    cpuAnimationPhase = CPU_ANIM_TO_FROM;
-    if (game.cursor == cpuAnimationTarget) {
-      enterCpuPickPause();
-    }
+  if (event.to < game.board->pointCount) {
+    game.cursor = event.to;
+  }
+  if (event.from < game.board->pointCount) {
+    game.selected = event.from;
+  }
+  playCpuActionSound();
+  bool moved = applyPrimaryAction(game);
+  if (moved) {
+    showActionFeedback(cpuAnimationPhaseBeforeAction, true);
   } else {
-    cpuAnimationTarget = cpuAnimationAction.to;
-    cpuAnimationPhase = CPU_ANIM_TO_TO;
-    if (game.cursor == cpuAnimationTarget) {
-      enterCpuDropPause();
-    }
+    setMessage("LINK ERR");
   }
 }
 
 void handleLinkEvents() {
   bool linkAvailable = linkModeAvailable();
-  if (scene == SCENE_MAIN_MENU && linkAvailable && !linkWasAvailable) {
+  bool discoveryActive = linkDiscoveryMenuActive();
+  if (discoveryActive && linkAvailable && opponentMode != OPPONENT_LINK) {
     selectedMenuItem = 2;
     opponentMode = OPPONENT_LINK;
-    setMessage("LINK");
-    playEffect(880, 35, 1175, 45);
+    if (!linkWasAvailable) {
+      setMessage("LINK");
+      playEffect(880, 35, 1175, 45);
+    }
   }
   linkWasAvailable = linkAvailable;
 
   LinkEvent event;
   while (linkConsumeEvent(event)) {
-    if (event.kind == LINK_EVENT_START && scene == SCENE_MAIN_MENU) {
+    if (event.kind == LINK_EVENT_START && linkDiscoveryMenuActive()) {
       startLinkMatch(event.board, event.firstPlayer);
     } else if (event.kind == LINK_EVENT_ACTION) {
       applyLinkedAction(event);
+    } else if (event.kind == LINK_EVENT_CURSOR) {
+      applyLinkedCursor(event);
     }
   }
-  if (!linkAvailable && opponentMode == OPPONENT_LINK && scene == SCENE_MAIN_MENU) {
+  if (discoveryActive && !linkAvailable && opponentMode == OPPONENT_LINK) {
     opponentMode = OPPONENT_PLAYER_TWO;
   }
 }
@@ -762,6 +778,9 @@ void moveCursorToward(int8_t dx, int8_t dy) {
   uint8_t next = cursorToward(dx, dy);
   if (next != NO_POINT) {
     game.cursor = next;
+    if (isLinkMatch() && isLocalLinkTurn()) {
+      linkSendCursor(game.cursor);
+    }
   }
 }
 
@@ -1881,7 +1900,7 @@ void gameLoop() {
 
   animationFrame++;
   arduboy.pollButtons();
-  linkUpdate(scene == SCENE_MAIN_MENU, selectedBoardMenuItem, firstPlayer);
+  linkUpdate(linkDiscoveryMenuActive(), selectedBoardMenuItem, firstPlayer);
   handleLinkEvents();
   bool hasInput = arduboy.buttonsState() != 0;
   if (transitionMode == TRANSITION_NONE) {

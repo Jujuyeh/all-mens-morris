@@ -33,10 +33,11 @@ The implementation is split into:
   as one firmware voice.
 - `src/Link.*`: optional Arduboy FX-C I2C link layer compiled with
   `ALL_MENS_MORRIS_FXC_LINK`. The normal stable/debug builds use no-op stubs;
-  the FX-C build exchanges menu beacons, match-start packets, and compact
-  action packets while keeping `Rules` responsible for applying game state
-  changes. `make setup` pins ArduboyI2C from GitHub so the FX-C build gets the
-  newer bus-busy and cable-orientation support required by the USB-C link.
+  the FX-C build exchanges menu beacons, match-start packets, compact cursor
+  packets, and compact action packets while keeping `Rules` responsible for
+  applying game state changes. `make setup` pins ArduboyI2C from GitHub so the
+  FX-C build gets the newer bus-busy and cable-orientation support required by
+  the USB-C link.
 - `src/Assets.*`: shared PROGMEM sprites, currently including title and boot
   logo assets.
 - `boards/*.json`: editable board/rule profiles consumed by TableTop Studio and
