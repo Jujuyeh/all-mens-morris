@@ -71,6 +71,11 @@
 7. Add generated profile metadata for menu labels, availability, and future
    variant descriptions.
 8. Continue the pixel-art pass for pieces and final board/menu assets.
+9. Make the Nix workflow more reproducible: move Arduino core/library setup out
+   of the ad-hoc `make setup` path where practical, add Darwin targets, expose a
+   useful `nix run github:Jujuyeh/all-mens-morris` entry that launches the
+   libretro build when public, and generate a release-ready `.arduboy` package
+   as part of the release cycle.
 
 ## Later
 
