@@ -50,13 +50,14 @@
 - Fixed result panels so `PLAYER 1`/`PLAYER 2` refer to the local match slot
   instead of the internal black/white player enum.
 - Added a first Arduboy FX-C link-cable build target and linked multiplayer
-  slice, then kept discovery passive after single-console hardware testing
-  showed the automatic I2C menu beacon can freeze a unit without a peer.
+  slice, then guarded discovery so a failed I2C beacon can recover instead of
+  freezing a single console without a peer.
 
 ## Next Cycle
 
-1. Replace the passive FX-C link guard with a non-blocking peer discovery path
-   that cannot freeze a single console, then retest on two physical units.
+1. Retest the guarded FX-C peer discovery path on one and two physical units,
+   especially cable orientation, peer detection stability, start sync, and
+   action sync on Classic and Long Morris.
 2. Add remote cursor/action animation over the linked protocol if physical
    testing confirms the packet sync is stable.
 3. Test CPU Easy/Hard behavior across Classic, Six Men's Morris, Three Men's

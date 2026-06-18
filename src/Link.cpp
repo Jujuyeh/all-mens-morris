@@ -13,7 +13,7 @@ constexpr uint8_t LINK_KIND_START = 2;
 constexpr uint8_t LINK_KIND_ACTION = 3;
 constexpr uint8_t LINK_PEER_TIMEOUT_FRAMES = 45;
 constexpr uint8_t LINK_SEND_INTERVAL_FRAMES = 8;
-constexpr bool LINK_DISCOVERY_ENABLED = false;
+constexpr uint8_t LINK_TX_STUCK_FRAMES = 3;
 
 struct LinkPacket {
   uint8_t magic;
@@ -40,8 +40,34 @@ uint8_t lastEventSeq = 255;
 bool peerAvailable = false;
 bool pendingSendStart = false;
 bool pendingSendAction = false;
+bool linkStarted = false;
+uint8_t txActiveFrames = 0;
 LinkPacket pendingAction = {};
 LinkEvent pendingEvent = {};
+
+void onReceive();
+
+void linkResetBus() {
+  i2c_detail::data.active = false;
+  I2C::init();
+  I2C::setAddress(0x20 + (localNonce % 80), true);
+  I2C::onReceive(onReceive);
+  txActiveFrames = 0;
+}
+
+bool linkBusReady() {
+  if (!linkStarted) {
+    return false;
+  }
+  if (!i2c_detail::data.active) {
+    txActiveFrames = 0;
+    return true;
+  }
+  if (++txActiveFrames >= LINK_TX_STUCK_FRAMES) {
+    linkResetBus();
+  }
+  return false;
+}
 
 void onReceive() {
   const uint8_t *buffer = I2C::getBuffer();
@@ -54,11 +80,17 @@ void onReceive() {
 }
 
 void sendPacket(LinkPacket packet) {
+  if (!linkBusReady()) {
+    return;
+  }
   packet.magic = LINK_MAGIC;
   packet.version = LINK_VERSION;
   packet.seq = sequence++;
   packet.nonce = localNonce;
   I2C::write(0, &packet, false);
+  if (I2C::getTWError() != TW_SUCCESS) {
+    i2c_detail::data.active = false;
+  }
 }
 
 void queueEvent(const LinkPacket &packet) {
@@ -121,22 +153,16 @@ void sendBeacon(uint8_t board, Player firstPlayer) {
 }
 
 void linkBegin(uint32_t seed) {
-  if (!LINK_DISCOVERY_ENABLED) {
-    return;
-  }
   localNonce = static_cast<uint8_t>((seed ^ (seed >> 8) ^ (seed >> 16)) & 0x7F);
   if (localNonce == 0) {
     localNonce = 1;
   }
-  I2C::init();
-  I2C::setAddress(0x20 + (localNonce % 80), true);
-  I2C::onReceive(onReceive);
+  linkStarted = true;
+  linkResetBus();
 }
 
 void linkUpdate(bool inMainMenu, uint8_t board, Player firstPlayer) {
-  if (!LINK_DISCOVERY_ENABLED) {
-    return;
-  }
+  linkBusReady();
   processReceived();
   if (peerTimeout > 0) {
     peerTimeout--;
