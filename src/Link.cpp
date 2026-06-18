@@ -11,8 +11,10 @@ constexpr uint8_t LINK_VERSION = 1;
 constexpr uint8_t LINK_KIND_BEACON = 1;
 constexpr uint8_t LINK_KIND_START = 2;
 constexpr uint8_t LINK_KIND_ACTION = 3;
+constexpr uint8_t LINK_ADDRESS = 0x08;
 constexpr uint8_t LINK_PEER_TIMEOUT_FRAMES = 45;
 constexpr uint8_t LINK_SEND_INTERVAL_FRAMES = 8;
+constexpr uint8_t LINK_SEND_JITTER_FRAMES = 7;
 constexpr uint8_t LINK_TX_STUCK_FRAMES = 3;
 
 struct LinkPacket {
@@ -33,6 +35,7 @@ volatile bool hasReceivedPacket = false;
 
 uint8_t localNonce = 1;
 uint8_t sendFrame = 0;
+uint8_t sendInterval = LINK_SEND_INTERVAL_FRAMES;
 uint8_t sequence = 0;
 uint8_t peerTimeout = 0;
 uint8_t peerNonce = 0;
@@ -50,7 +53,7 @@ void onReceive();
 void linkResetBus() {
   i2c_detail::data.active = false;
   I2C::init();
-  I2C::setAddress(0x20 + (localNonce % 80), true);
+  I2C::setAddress(LINK_ADDRESS, false);
   I2C::onReceive(onReceive);
   txActiveFrames = 0;
 }
@@ -87,10 +90,14 @@ void sendPacket(LinkPacket packet) {
   packet.version = LINK_VERSION;
   packet.seq = sequence++;
   packet.nonce = localNonce;
-  I2C::write(0, &packet, false);
+  I2C::write(LINK_ADDRESS, &packet, false);
   if (I2C::getTWError() != TW_SUCCESS) {
     i2c_detail::data.active = false;
   }
+}
+
+uint8_t nextSendInterval() {
+  return LINK_SEND_INTERVAL_FRAMES + random(LINK_SEND_JITTER_FRAMES + 1);
 }
 
 void queueEvent(const LinkPacket &packet) {
@@ -157,6 +164,8 @@ void linkBegin(uint32_t seed) {
   if (localNonce == 0) {
     localNonce = 1;
   }
+  sendFrame = localNonce % LINK_SEND_INTERVAL_FRAMES;
+  sendInterval = nextSendInterval();
   linkStarted = true;
   linkResetBus();
 }
@@ -187,8 +196,9 @@ void linkUpdate(bool inMainMenu, uint8_t board, Player firstPlayer) {
     sendPacket(pendingAction);
     return;
   }
-  if (inMainMenu && sendFrame++ >= LINK_SEND_INTERVAL_FRAMES) {
+  if (inMainMenu && sendFrame++ >= sendInterval) {
     sendFrame = 0;
+    sendInterval = nextSendInterval();
     sendBeacon(board, firstPlayer);
   }
 }
