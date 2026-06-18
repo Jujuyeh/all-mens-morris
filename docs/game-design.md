@@ -103,13 +103,15 @@ Implemented:
 - Arduboy FX-C build support behind `BUILD=fxc`, with a first linked
   multiplayer slice. Two consoles in the main menu exchange compact I2C
   beacons; when a peer is detected the opponent selector unlocks and selects
-  `VS LINK`. The console that starts a linked match controls the first-player
-  side for that match. Local cursor steps are mirrored as compact cursor
-  packets with the same short step tone used by CPU turns, while local actions
-  are sent as compact mode/from/to packets and applied immediately on the
-  receiving console. Only the active local player can act, fresh remote-turn
-  input flashes a one-frame rejection effect, local turns light the RGB LED
-  green, and mills keep the red/blue police LED flash on both consoles.
+  `VS LINK`. Discovery beacons are rate-limited, jittered, and only sent after
+  the I2C lines have sampled idle to reduce multi-master bus collisions. The
+  console that starts a linked match controls the first-player side for that
+  match. Local cursor steps are mirrored as compact cursor packets with the
+  same short step tone used by CPU turns, while local actions are sent as
+  compact mode/from/to packets and applied immediately on the receiving
+  console. Only the active local player can act, fresh remote-turn input
+  flashes a one-frame rejection effect, local turns light the RGB LED green,
+  and mills keep the red/blue police LED flash on both consoles.
 
 Not implemented yet:
 

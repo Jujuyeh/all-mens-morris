@@ -3,6 +3,7 @@
 #ifdef ALL_MENS_MORRIS_FXC_LINK
 #define I2C_IMPLEMENTATION
 #define I2C_BUFFER_SIZE 12
+#define I2C_CHECK_BUS_BUSY_CHECKS 64
 #include <ArduboyI2C.h>
 
 namespace {
@@ -15,9 +16,10 @@ constexpr uint8_t LINK_KIND_CURSOR = 4;
 constexpr uint8_t LINK_ADDRESS = 0x08;
 constexpr uint8_t LINK_SEND_ADDRESS = 0x00;
 constexpr uint8_t LINK_PEER_TIMEOUT_FRAMES = 45;
-constexpr uint8_t LINK_SEND_INTERVAL_FRAMES = 8;
-constexpr uint8_t LINK_SEND_JITTER_FRAMES = 7;
+constexpr uint8_t LINK_SEND_INTERVAL_FRAMES = 24;
+constexpr uint8_t LINK_SEND_JITTER_FRAMES = 31;
 constexpr uint8_t LINK_TX_STUCK_FRAMES = 3;
+constexpr uint8_t LINK_IDLE_LINE_CHECKS = 8;
 #ifdef ALL_MENS_MORRIS_DEBUG
 constexpr uint8_t LINK_LINE_SAMPLE_FRAMES = 6;
 #endif
@@ -88,6 +90,16 @@ void linkWritePacket(const LinkPacket &packet) {
 #else
   I2C::write(LINK_SEND_ADDRESS, &packet, false);
 #endif
+}
+
+bool linkLinesIdle() {
+  for (uint8_t i = 0; i < LINK_IDLE_LINE_CHECKS; i++) {
+    if (!(I2C_PIN & _BV(I2C_SDA_BIT)) || !(I2C_PIN & _BV(I2C_SCL_BIT))) {
+      return false;
+    }
+    _delay_us(1000000.0 / I2C_FREQUENCY / 2.0);
+  }
+  return true;
 }
 
 void linkSetReceiveCallback() {
@@ -172,9 +184,12 @@ void onReceive() {
 }
 #endif
 
-void sendPacket(LinkPacket packet) {
+bool sendPacket(LinkPacket packet) {
   if (!linkBusReady()) {
-    return;
+    return false;
+  }
+  if (!linkLinesIdle()) {
+    return false;
   }
   packet.magic = LINK_MAGIC;
   packet.version = LINK_VERSION;
@@ -183,7 +198,9 @@ void sendPacket(LinkPacket packet) {
   linkWritePacket(packet);
   if (linkError() != TW_SUCCESS) {
     i2c_detail::data.active = false;
+    return false;
   }
+  return true;
 }
 
 uint8_t nextSendInterval() {
@@ -292,17 +309,23 @@ void linkUpdate(bool inMainMenu, uint8_t board, Player firstPlayer) {
     packet.mode = TURN_ACTION_MOVE;
     packet.from = 255;
     packet.to = 255;
-    sendPacket(packet);
+    if (!sendPacket(packet)) {
+      pendingSendStart = true;
+    }
     return;
   }
   if (pendingSendCursor) {
     pendingSendCursor = false;
-    sendPacket(pendingCursor);
+    if (!sendPacket(pendingCursor)) {
+      pendingSendCursor = true;
+    }
     return;
   }
   if (pendingSendAction) {
     pendingSendAction = false;
-    sendPacket(pendingAction);
+    if (!sendPacket(pendingAction)) {
+      pendingSendAction = true;
+    }
     return;
   }
   if (inMainMenu && sendFrame++ >= sendInterval) {
