@@ -165,6 +165,12 @@ uint8_t boardWheelFrames = 0;
 int8_t boardWheelDirection = 0;
 MenuSideAnimation menuSideAnimation = MENU_ANIM_STACK;
 bool menuAnimationRight = false;
+uint8_t menuStackCount = 0;
+uint8_t menuStackPieces = 0;
+uint8_t menuStackBlinkFrames = 0;
+uint8_t menuFallingPiece = 0;
+int8_t menuFallBottomY = 0;
+uint8_t menuFallVelocity = 1;
 #ifdef ALL_MENS_MORRIS_DEBUG
 uint8_t debugScenario = DEBUG_SCENARIO_MILL;
 #endif
@@ -1322,17 +1328,11 @@ void drawUiPieceSprite(const uint16_t *sprite, uint8_t x, uint8_t bottomY) {
   uint8_t topY = bottomY - HUD_PIECE_HEIGHT + 1;
   for (uint8_t y = 0; y < HUD_PIECE_HEIGHT; y++) {
     uint16_t mask = pgm_read_word(uiPieceMask16x10 + y);
-    for (uint8_t px = 0; px < HUD_PIECE_WIDTH; px++) {
-      if ((mask >> (HUD_PIECE_WIDTH - 1 - px)) & 1) {
-        arduboy.drawPixel(x + px, topY + y, BLACK);
-      }
-    }
-  }
-  for (uint8_t y = 0; y < HUD_PIECE_HEIGHT; y++) {
     uint16_t row = pgm_read_word(sprite + y);
     for (uint8_t px = 0; px < HUD_PIECE_WIDTH; px++) {
-      if ((row >> (HUD_PIECE_WIDTH - 1 - px)) & 1) {
-        arduboy.drawPixel(x + px, topY + y, WHITE);
+      uint16_t bit = 1 << (HUD_PIECE_WIDTH - 1 - px);
+      if (mask & bit) {
+        arduboy.drawPixel(x + px, topY + y, row & bit ? WHITE : BLACK);
       }
     }
   }
@@ -1401,28 +1401,84 @@ const char *boardMenuTitle(uint8_t boardIndex) {
   return "SOON";
 }
 
+void startMenuFallingPiece() {
+  uint8_t next = random(2);
+  if (menuStackCount >= 2) {
+    if (random(2) == 0) {
+      next = (menuStackPieces >> (menuStackCount - 1)) & 1;
+    }
+  }
+  menuFallingPiece = next;
+  menuFallBottomY = -1;
+  menuFallVelocity = 1;
+}
+
 void resetMenuAnimation(bool advanceStyle) {
   if (advanceStyle) {
     menuSideAnimation = menuSideAnimation == MENU_ANIM_STACK ? MENU_ANIM_BALLS : MENU_ANIM_STACK;
   }
   menuAnimationRight = random(2) == 0;
+  menuStackCount = 0;
+  menuStackPieces = 0;
+  menuStackBlinkFrames = 0;
+  startMenuFallingPiece();
 }
 
 void updateMenuAnimation() {
   if (boardWheelFrames > 0) {
     boardWheelFrames--;
   }
+  if (menuSideAnimation != MENU_ANIM_STACK) {
+    return;
+  }
+
+  if (menuStackBlinkFrames > 0) {
+    menuStackBlinkFrames--;
+    if (menuStackBlinkFrames == 0 && menuStackCount >= 3) {
+      menuStackCount -= 3;
+      menuStackPieces &= (1 << menuStackCount) - 1;
+      startMenuFallingPiece();
+    }
+    return;
+  }
+
+  int8_t targetY = 62 - menuStackCount * HUD_STACK_STEP_Y;
+  menuFallBottomY += menuFallVelocity;
+  if (menuFallVelocity < 5) {
+    menuFallVelocity++;
+  }
+  if (menuFallBottomY < targetY) {
+    return;
+  }
+
+  menuFallBottomY = targetY;
+  if (menuStackCount >= MENU_STACK_CAPACITY) {
+    menuStackCount = 0;
+    menuStackPieces = 0;
+  }
+  if (menuFallingPiece != 0) {
+    menuStackPieces |= 1 << menuStackCount;
+  }
+  menuStackCount++;
+  if (menuStackCount >= 3) {
+    uint8_t top = (menuStackPieces >> (menuStackCount - 1)) & 1;
+    uint8_t second = (menuStackPieces >> (menuStackCount - 2)) & 1;
+    uint8_t third = (menuStackPieces >> (menuStackCount - 3)) & 1;
+    if (top == second && second == third) {
+      menuStackBlinkFrames = 24;
+      return;
+    }
+  }
+  startMenuFallingPiece();
 }
 
 void drawMenuTitleShine() {
-  uint8_t phase = animationFrame & 127;
+  uint8_t phase = (animationFrame >> 1) & 127;
   if (phase < 96) {
     return;
   }
   int8_t x = static_cast<int8_t>(30 + (phase - 96) * 4);
-  for (uint8_t i = 0; i < 2; i++) {
-    arduboy.drawLine(x + i, 4, x + i + 8, 18, BLACK);
-  }
+  arduboy.drawLine(x + 8, 4, x, 18, BLACK);
 }
 
 void drawBoardWheelText(const char *text, int8_t centerX) {
@@ -1433,22 +1489,12 @@ void drawBoardWheelText(const char *text, int8_t centerX) {
 
 void drawBoardWheel() {
   uint8_t midY = BOARD_WHEEL_Y + BOARD_WHEEL_H / 2;
-  arduboy.fillRect(BOARD_WHEEL_X, BOARD_WHEEL_Y, BOARD_WHEEL_W, BOARD_WHEEL_H, WHITE);
-  arduboy.drawLine(BOARD_WHEEL_X - 4, midY, BOARD_WHEEL_X, BOARD_WHEEL_Y, WHITE);
-  arduboy.drawLine(BOARD_WHEEL_X - 4, midY, BOARD_WHEEL_X, BOARD_WHEEL_Y + BOARD_WHEEL_H - 1, WHITE);
-  arduboy.drawLine(BOARD_WHEEL_X + BOARD_WHEEL_W + 3, midY,
-      BOARD_WHEEL_X + BOARD_WHEEL_W - 1, BOARD_WHEEL_Y, WHITE);
-  arduboy.drawLine(BOARD_WHEEL_X + BOARD_WHEEL_W + 3, midY,
-      BOARD_WHEEL_X + BOARD_WHEEL_W - 1, BOARD_WHEEL_Y + BOARD_WHEEL_H - 1, WHITE);
-
-  for (uint8_t x = BOARD_WHEEL_X + 4; x < BOARD_WHEEL_X + BOARD_WHEEL_W - 4; x += 8) {
-    arduboy.drawPixel(x, BOARD_WHEEL_Y + 1, BLACK);
-    arduboy.drawPixel(x + 3, BOARD_WHEEL_Y + BOARD_WHEEL_H - 2, BLACK);
-  }
-  arduboy.drawLine(BOARD_WHEEL_X + 3, BOARD_WHEEL_Y + 2,
-      BOARD_WHEEL_X + 3, BOARD_WHEEL_Y + BOARD_WHEEL_H - 3, BLACK);
-  arduboy.drawLine(BOARD_WHEEL_X + BOARD_WHEEL_W - 4, BOARD_WHEEL_Y + 2,
-      BOARD_WHEEL_X + BOARD_WHEEL_W - 4, BOARD_WHEEL_Y + BOARD_WHEEL_H - 3, BLACK);
+  arduboy.fillRect(BOARD_WHEEL_X + 1, BOARD_WHEEL_Y, BOARD_WHEEL_W - 2, BOARD_WHEEL_H, WHITE);
+  arduboy.fillRect(BOARD_WHEEL_X, BOARD_WHEEL_Y + 1, BOARD_WHEEL_W, BOARD_WHEEL_H - 2, WHITE);
+  arduboy.fillRect(BOARD_WHEEL_X - 3, midY - 1, 3, 3, WHITE);
+  arduboy.drawPixel(BOARD_WHEEL_X - 4, midY, WHITE);
+  arduboy.fillRect(BOARD_WHEEL_X + BOARD_WHEEL_W, midY - 1, 3, 3, WHITE);
+  arduboy.drawPixel(BOARD_WHEEL_X + BOARD_WHEEL_W + 3, midY, WHITE);
 
   int8_t centerX = BOARD_WHEEL_X + BOARD_WHEEL_W / 2;
   if (boardWheelFrames > 0 && boardWheelDirection != 0) {
@@ -1470,49 +1516,33 @@ void drawBoardWheel() {
 
 void drawMenuStackAnimation() {
   uint8_t x = menuAnimationRight ? 106 : 6;
-  uint8_t frame = animationFrame & 127;
-  uint8_t landed = frame >> 4;
-  bool clearTriple = frame >= 56 && frame < 76;
-  if (landed > MENU_STACK_CAPACITY) {
-    landed = MENU_STACK_CAPACITY;
-  }
-  if (frame >= 76) {
-    landed -= landed > 3 ? 3 : landed;
-  }
-
-  for (uint8_t i = 0; i < landed; i++) {
-    if (clearTriple && i >= landed - 3 && ((frame >> 2) & 1)) {
+  for (uint8_t i = 0; i < menuStackCount; i++) {
+    if (menuStackBlinkFrames > 0 && i >= menuStackCount - 3 && ((menuStackBlinkFrames >> 2) & 1)) {
       continue;
     }
-    bool white = ((i + (frame >> 6)) & 3) < 2;
-    const uint16_t *sprite = white ? whiteUiPiece16x10 : blackUiPiece16x10;
+    const uint16_t *sprite = ((menuStackPieces >> i) & 1) ? whiteUiPiece16x10 : blackUiPiece16x10;
     drawUiPieceSprite(sprite, x, 62 - i * HUD_STACK_STEP_Y);
   }
-
-  if (!clearTriple) {
-    uint8_t fallT = frame & 15;
-    uint8_t targetY = 62 - landed * HUD_STACK_STEP_Y;
-    uint8_t fallY = 12 + ((fallT * fallT) >> 2);
-    if (fallY > targetY) {
-      fallY = targetY;
+  if (menuStackBlinkFrames == 0) {
+    const uint16_t *sprite = menuFallingPiece ? whiteUiPiece16x10 : blackUiPiece16x10;
+    if (menuFallBottomY >= HUD_PIECE_HEIGHT - 1) {
+      drawUiPieceSprite(sprite, x, menuFallBottomY);
     }
-    bool white = ((landed + (frame >> 6)) & 3) < 2;
-    const uint16_t *sprite = white ? whiteUiPiece16x10 : blackUiPiece16x10;
-    drawUiPieceSprite(sprite, x, fallY);
   }
 }
 
 void drawMenuBallAnimation() {
-  for (uint8_t i = 0; i < MENU_BALL_COUNT; i++) {
-    uint8_t t = (animationFrame + i * 17) & 63;
-    uint8_t x = (menuAnimationRight ? 106 : 5) + ((i * 5 + (animationFrame >> 3)) & 15);
-    uint8_t y = 10 + ((t * t) >> 6);
-    uint8_t floorY = 61 - (i & 3) * 4;
-    if (y > floorY) {
-      y = floorY;
+  for (uint8_t side = 0; side < 2; side++) {
+    for (uint8_t i = 0; i < MENU_BALL_COUNT; i++) {
+      uint8_t t = (animationFrame + i * 17 + side * 29) & 63;
+      uint8_t x = (side == 0 ? 5 : 106) + ((i * 5 + (animationFrame >> 3)) & 15);
+      uint8_t y = 4 + t;
+      uint8_t floorY = 61 - (i & 3) * 4;
+      if (y > floorY) {
+        y = floorY;
+      }
+      arduboy.drawCircle(x, y, 2, WHITE);
     }
-    arduboy.drawCircle(x, y, 2, WHITE);
-    arduboy.drawPixel(x, y, WHITE);
   }
 }
 
