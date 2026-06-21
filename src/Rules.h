@@ -39,6 +39,11 @@ enum TurnActionMode : uint8_t {
 
 constexpr uint8_t MORRIS_PACKED_POINT_BYTES = (MORRIS_MAX_POINT_COUNT + 3) / 4;
 
+enum MorrisStateFlag : uint8_t {
+  MORRIS_STATE_MILL_PENDING = 1 << 0,
+  MORRIS_STATE_LAST_MOVE_MADE_MILL = 1 << 1,
+};
+
 enum RuleFlag : uint16_t {
   RULE_MILL_ACTION_WIN = 1 << 0,
   RULE_FLYING_ENABLED = 1 << 1,
@@ -53,7 +58,6 @@ enum RuleFlag : uint16_t {
 };
 
 struct RuleSet {
-  const char *id;
   uint8_t piecesPerPlayer;
   uint8_t minPiecesToContinue;
   uint8_t flyPieceCount;
@@ -87,9 +91,20 @@ struct MorrisGameState {
   uint8_t turnsSinceCapture = 0;
   GamePhase phaseAfterCapture = PHASE_PLACING;
   TurnActionMode actionMode = TURN_ACTION_PLACE;
-  bool millPending = false;
-  bool lastMoveMadeMill = false;
+  uint8_t stateFlags = 0;
 };
+
+inline bool gameStateFlag(const MorrisGameState &game, MorrisStateFlag flag) {
+  return (game.stateFlags & flag) != 0;
+}
+
+inline void setGameStateFlag(MorrisGameState &game, MorrisStateFlag flag, bool enabled) {
+  if (enabled) {
+    game.stateFlags |= flag;
+  } else {
+    game.stateFlags &= ~flag;
+  }
+}
 
 void resetMorrisGame(MorrisGameState &game);
 void resetMorrisGame(MorrisGameState &game, const BoardDefinition &board, const RuleSet &rules);

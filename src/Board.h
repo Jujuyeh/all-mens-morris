@@ -18,7 +18,6 @@ struct MillLine {
 };
 
 struct BoardDefinition {
-  const char *id;
   const char *label;
   uint8_t pointCount;
   uint8_t millCount;

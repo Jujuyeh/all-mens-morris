@@ -485,8 +485,7 @@ bool gameStateChanged(const MorrisGameState &before, const MorrisGameState &afte
       || before.winReason != after.winReason
       || before.phaseAfterCapture != after.phaseAfterCapture
       || before.actionMode != after.actionMode
-      || before.millPending != after.millPending
-      || before.lastMoveMadeMill != after.lastMoveMadeMill
+      || before.stateFlags != after.stateFlags
       || before.turnsSinceCapture != after.turnsSinceCapture) {
     return true;
   }
@@ -763,7 +762,7 @@ void showActionFeedback(GamePhase phaseBeforeAction, bool moved) {
       setMessage(game.winner == PLAYER_ONE ? "B WIN" : "W WIN");
     }
     playGameOverFanfare();
-  } else if (game.lastMoveMadeMill) {
+  } else if (gameStateFlag(game, MORRIS_STATE_LAST_MOVE_MADE_MILL)) {
     setMessage("MILL!");
     startMillEffects();
   } else if (phaseBeforeAction == PHASE_CAPTURING) {
@@ -785,8 +784,7 @@ void clearDebugBoard() {
   game.winner = PLAYER_NONE;
   game.winReason = WIN_NONE;
   game.phaseAfterCapture = PHASE_PLACING;
-  game.millPending = false;
-  game.lastMoveMadeMill = false;
+  game.stateFlags = 0;
   game.turnsSinceCapture = 0;
   game.piecesToPlace[0] = 0;
   game.piecesToPlace[1] = 0;

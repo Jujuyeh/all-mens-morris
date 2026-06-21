@@ -19,8 +19,7 @@ void resetMorrisGame(MorrisGameState &game, const BoardDefinition &board, const 
   game.turnsSinceCapture = 0;
   game.phaseAfterCapture = PHASE_PLACING;
   game.actionMode = TURN_ACTION_PLACE;
-  game.millPending = false;
-  game.lastMoveMadeMill = false;
+  game.stateFlags = 0;
   if (ruleFlag(rules, RULE_START_IN_MOVING)) {
     game.phase = PHASE_MOVING;
   }
@@ -132,7 +131,7 @@ static bool playerHasPieceOutsideMill(const MorrisGameState &game, Player player
 }
 
 bool canCaptureAt(const MorrisGameState &game, uint8_t point) {
-  if (game.phase != PHASE_CAPTURING || !game.millPending) {
+  if (game.phase != PHASE_CAPTURING || !gameStateFlag(game, MORRIS_STATE_MILL_PENDING)) {
     return false;
   }
 
@@ -204,7 +203,7 @@ static void setGameOver(MorrisGameState &game, Player winner, WinReason reason) 
   game.winner = winner;
   game.winReason = reason;
   game.selected = 255;
-  game.millPending = false;
+  setGameStateFlag(game, MORRIS_STATE_MILL_PENDING, false);
 }
 
 static void setDraw(MorrisGameState &game, WinReason reason) {
@@ -314,11 +313,11 @@ static bool checkNoCaptureDraw(MorrisGameState &game) {
 static void enterCapture(MorrisGameState &game, GamePhase phaseAfterCapture) {
   game.phase = PHASE_CAPTURING;
   game.phaseAfterCapture = phaseAfterCapture;
-  game.millPending = true;
+  setGameStateFlag(game, MORRIS_STATE_MILL_PENDING, true);
 }
 
 static void finishAction(MorrisGameState &game, GamePhase currentPhase) {
-  if (game.lastMoveMadeMill) {
+  if (gameStateFlag(game, MORRIS_STATE_LAST_MOVE_MADE_MILL)) {
     if (millAction(*game.rules) == MILL_ACTION_WIN) {
       setGameOver(game, game.currentPlayer, WIN_BY_MILL);
     } else {
@@ -349,7 +348,7 @@ static bool placeAtCursor(MorrisGameState &game, GamePhase currentPhase) {
   setPointAt(game, game.cursor, game.currentPlayer);
   game.piecesToPlace[index]--;
   game.piecesOnBoard[index]++;
-  game.lastMoveMadeMill = isMillAt(game, game.cursor, game.currentPlayer);
+  setGameStateFlag(game, MORRIS_STATE_LAST_MOVE_MADE_MILL, isMillAt(game, game.cursor, game.currentPlayer));
   finishAction(game, currentPhase);
   return true;
 }
@@ -374,7 +373,7 @@ static bool moveFromSelection(MorrisGameState &game) {
 
   setPointAt(game, game.cursor, game.currentPlayer);
   setPointAt(game, game.selected, PLAYER_NONE);
-  game.lastMoveMadeMill = isMillAt(game, game.cursor, game.currentPlayer);
+  setGameStateFlag(game, MORRIS_STATE_LAST_MOVE_MADE_MILL, isMillAt(game, game.cursor, game.currentPlayer));
   game.selected = 255;
   finishAction(game, PHASE_MOVING);
   return true;
@@ -393,8 +392,8 @@ static bool captureAtCursor(MorrisGameState &game) {
 
   game.phase = game.phaseAfterCapture;
   game.phaseAfterCapture = PHASE_PLACING;
-  game.millPending = false;
-  game.lastMoveMadeMill = false;
+  setGameStateFlag(game, MORRIS_STATE_MILL_PENDING, false);
+  setGameStateFlag(game, MORRIS_STATE_LAST_MOVE_MADE_MILL, false);
   game.selected = 255;
   game.turnsSinceCapture = 0;
   finishPlacementIfReady(game);
@@ -408,7 +407,7 @@ static bool captureAtCursor(MorrisGameState &game) {
 }
 
 bool applyPrimaryAction(MorrisGameState &game) {
-  game.lastMoveMadeMill = false;
+  setGameStateFlag(game, MORRIS_STATE_LAST_MOVE_MADE_MILL, false);
   if (game.phase == PHASE_PLACING) {
     return placeAtCursor(game, PHASE_PLACING);
   }

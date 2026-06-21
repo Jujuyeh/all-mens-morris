@@ -121,7 +121,7 @@ int16_t evaluateState(const MorrisGameState &game, Player aiPlayer) {
   if (game.phase == PHASE_CAPTURING && game.currentPlayer == aiPlayer) {
     score += 500;
   }
-  if (game.lastMoveMadeMill && game.currentPlayer == aiPlayer) {
+  if (gameStateFlag(game, MORRIS_STATE_LAST_MOVE_MADE_MILL) && game.currentPlayer == aiPlayer) {
     score += millAction(*game.rules) == MILL_ACTION_WIN ? 1200 : 500;
   }
   return score;

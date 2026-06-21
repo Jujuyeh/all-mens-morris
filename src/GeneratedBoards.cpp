@@ -80,7 +80,6 @@ const uint8_t ClassicAdjacency[] PROGMEM = {
 };
 
 const BoardDefinition ClassicBoardDefinition = {
-  "classic-nine",
   "CLASSIC 9",
   24,
   16,
@@ -91,7 +90,6 @@ const BoardDefinition ClassicBoardDefinition = {
 };
 
 const RuleSet ClassicRuleSet = {
-  "classic-nine",
   9,
   3,
   3,
@@ -162,7 +160,6 @@ const uint8_t FlowerAdjacency[] PROGMEM = {
 };
 
 const BoardDefinition FlowerBoardDefinition = {
-  "flower",
   "FLOWER",
   20,
   8,
@@ -173,7 +170,6 @@ const BoardDefinition FlowerBoardDefinition = {
 };
 
 const RuleSet FlowerRuleSet = {
-  "flower",
   7,
   3,
   3,
@@ -236,7 +232,6 @@ const uint8_t SixMenAdjacency[] PROGMEM = {
 };
 
 const BoardDefinition SixMenBoardDefinition = {
-  "six-men",
   "SIX MEN",
   16,
   8,
@@ -247,7 +242,6 @@ const BoardDefinition SixMenBoardDefinition = {
 };
 
 const RuleSet SixMenRuleSet = {
-  "six-men",
   6,
   3,
   3,
@@ -296,7 +290,6 @@ const uint8_t ThreeMenAdjacency[] PROGMEM = {
 };
 
 const BoardDefinition ThreeMenBoardDefinition = {
-  "three-men",
   "THREE MEN",
   9,
   8,
@@ -307,7 +300,6 @@ const BoardDefinition ThreeMenBoardDefinition = {
 };
 
 const RuleSet ThreeMenRuleSet = {
-  "three-men",
   3,
   3,
   0,

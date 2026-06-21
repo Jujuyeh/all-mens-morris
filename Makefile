@@ -21,13 +21,14 @@ HEX := $(BUILD_DIR)/all-mens-morris.ino.hex
 FXC_HEX := $(SKETCH_DIR)/build/fxc/all-mens-morris.ino.hex
 AVR_SIZE ?= avr-size
 AVR_NM ?= avr-nm
+ARDUINO_SIZE_FLAGS := --build-property compiler.c.extra_flags="-mcall-prologues" --build-property compiler.cpp.extra_flags="-mcall-prologues"
 
 ifeq ($(BUILD),debug)
-ARDUINO_BUILD_FLAGS := --build-property compiler.cpp.extra_flags="-DALL_MENS_MORRIS_DEBUG=1"
+ARDUINO_BUILD_FLAGS := --build-property compiler.cpp.extra_flags="-DALL_MENS_MORRIS_DEBUG=1 -mcall-prologues" --build-property compiler.c.extra_flags="-mcall-prologues"
 else ifeq ($(BUILD),fxc)
-ARDUINO_BUILD_FLAGS := --build-property compiler.cpp.extra_flags="-DALL_MENS_MORRIS_FXC_LINK=1"
+ARDUINO_BUILD_FLAGS := --build-property compiler.cpp.extra_flags="-DALL_MENS_MORRIS_FXC_LINK=1 -mcall-prologues" --build-property compiler.c.extra_flags="-mcall-prologues"
 else ifeq ($(BUILD),stable)
-ARDUINO_BUILD_FLAGS :=
+ARDUINO_BUILD_FLAGS := $(ARDUINO_SIZE_FLAGS)
 else
 $(error BUILD must be stable, debug, or fxc)
 endif
