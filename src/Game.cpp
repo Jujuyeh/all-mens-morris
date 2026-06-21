@@ -1489,7 +1489,7 @@ void drawMenuTitleShine() {
 
 void drawBoardWheelText(const char *text, int8_t centerX) {
   tinyfont.setTextColor(BLACK);
-  tinyfont.setCursor(centerX - textPixelWidth(text) / 2, BOARD_WHEEL_Y + 3);
+  tinyfont.setCursor(centerX - textPixelWidth(text) / 2 - 6, BOARD_WHEEL_Y + 3);
   tinyfont.print(text);
 }
 
@@ -1602,7 +1602,7 @@ void drawMainMenu() {
   tinyfont.print("VS ");
   tinyfont.print(opponentModeLabel());
   if (selectedMenuItem == 3) {
-    drawDashedRect(35, 55, 62, 9, animationFrame / 5, WHITE);
+    drawDashedRect(35, 55, 61, 9, animationFrame / 5, WHITE);
   }
 #if defined(ALL_MENS_MORRIS_FXC_LINK) && defined(ALL_MENS_MORRIS_DEBUG)
   tinyfont.setCursor(102, 24);
