@@ -39,7 +39,6 @@ constexpr uint8_t BOARD_MENU_COUNT = MORRIS_BOARD_PROFILE_COUNT;
 constexpr uint16_t MENU_IDLE_DEMO_FRAMES = GAME_FPS * 20;
 constexpr uint16_t DEMO_TOTAL_FRAMES = GAME_FPS * 30;
 constexpr uint8_t DEMO_WIN_EXTRA_FRAMES = GAME_FPS * 3;
-constexpr uint8_t FADE_FRAMES = 18;
 constexpr uint8_t CURTAIN_FRAMES = 20;
 constexpr uint8_t DEMO_MIN_PREFLIGHT_ACTIONS = 10;
 constexpr uint8_t DEMO_PREFLIGHT_ACTION_RANGE = 10;
@@ -68,7 +67,6 @@ enum AppScene : uint8_t {
 
 enum TransitionMode : uint8_t {
   TRANSITION_NONE,
-  TRANSITION_FADE_TO_DEMO,
   TRANSITION_CURTAIN_TO_DEMO,
   TRANSITION_CURTAIN_TO_MENU,
 };
@@ -675,7 +673,7 @@ void returnToMainMenu() {
 void startTransition(TransitionMode mode) {
   transitionMode = mode;
   transitionFrame = 0;
-  if (mode == TRANSITION_FADE_TO_DEMO) {
+  if (mode == TRANSITION_CURTAIN_TO_DEMO) {
     stopMenuMusic();
   }
 }
@@ -1374,34 +1372,11 @@ void drawMenuChevron(uint8_t x, uint8_t y, bool left) {
   }
 }
 
-void drawMenuPatterns() {
-  for (uint8_t x = 4; x < 24; x += 5) {
-    for (uint8_t y = 4; y < 22; y += 5) {
-      arduboy.drawPixel(x, y, WHITE);
-    }
-  }
-
-  for (uint8_t x = 104; x < 126; x += 4) {
-    arduboy.drawLine(x, 4, x, 18, WHITE);
-  }
-  for (uint8_t y = 4; y < 20; y += 4) {
-    arduboy.drawLine(104, y, 124, y, WHITE);
-  }
-
-  for (uint8_t x = 5; x < 28; x += 6) {
-    arduboy.drawLine(x, 48, x + 3, 51, WHITE);
-  }
-  for (uint8_t x = 96; x < 122; x += 6) {
-    arduboy.drawLine(x, 33, x + 3, 30, WHITE);
-  }
-}
-
 void drawMainMenu() {
   arduboy.fillScreen(BLACK);
   tinyfont.setTextColor(WHITE);
-  drawMenuPatterns();
 
-  tinyfont.setCursor(44, 5);
+  tinyfont.setCursor(43, 5);
   tinyfont.print("ALL MEN'S");
   tinyfont.setCursor(50, 12);
   tinyfont.print("MORRIS");
@@ -1513,6 +1488,12 @@ void drawPanelTextCentered(uint8_t y, const char *text, uint8_t color) {
   tinyfont.print(text);
 }
 
+void drawPanelTextCenteredOffset(uint8_t y, const char *text, int8_t offsetX, uint8_t color) {
+  tinyfont.setTextColor(color);
+  tinyfont.setCursor(64 - textPixelWidth(text) / 2 + offsetX, y);
+  tinyfont.print(text);
+}
+
 void drawResultPanel() {
   if (game.phase != PHASE_GAME_OVER) {
     return;
@@ -1525,14 +1506,14 @@ void drawResultPanel() {
   arduboy.drawRect(24, 18, 80, 29, fg);
 
   if (game.winner == PLAYER_NONE) {
-    drawPanelTextCentered(25, "IT'S A TIE...", fg);
+    drawPanelTextCenteredOffset(25, "IT'S A TIE...", -4, fg);
   } else if (winnerIsCpu()) {
-    drawPanelTextCentered(25, "CPU WINS!", fg);
+    drawPanelTextCenteredOffset(25, "CPU WINS!", -4, fg);
   } else if (winnerIsPlayerOneSlot()) {
-    drawPanelTextCentered(25, "PLAYER 1", fg);
+    drawPanelTextCenteredOffset(25, "PLAYER 1", -4, fg);
     drawPanelTextCentered(34, "WINS!", fg);
   } else {
-    drawPanelTextCentered(25, "PLAYER 2", fg);
+    drawPanelTextCenteredOffset(25, "PLAYER 2", -4, fg);
     drawPanelTextCentered(34, "WINS!", fg);
   }
 }
@@ -1562,24 +1543,8 @@ void drawScene() {
   drawGame();
 }
 
-void drawFadeOverlay(uint8_t frame) {
-  uint8_t phase = frame / 3;
-  if (phase >= 6) {
-    arduboy.fillScreen(BLACK);
-    return;
-  }
-
-  for (uint8_t y = 0; y < 64; y++) {
-    for (uint8_t x = 0; x < 128; x++) {
-      if (((x + y * 3 + phase) & 7) <= phase) {
-        arduboy.drawPixel(x, y, BLACK);
-      }
-    }
-  }
-}
-
-void drawCurtainOverlay(bool opening) {
-  uint8_t progress = (static_cast<uint16_t>(transitionFrame) * 128) / CURTAIN_FRAMES;
+void drawCurtainOverlay(uint8_t frame, bool opening) {
+  uint8_t progress = (static_cast<uint16_t>(frame) * 128) / CURTAIN_FRAMES;
   if (progress > 128) {
     progress = 128;
   }
@@ -1595,12 +1560,14 @@ void drawCurtainOverlay(bool opening) {
 }
 
 void drawTransitionOverlay() {
-  if (transitionMode == TRANSITION_FADE_TO_DEMO) {
-    drawFadeOverlay(transitionFrame);
-  } else if (transitionMode == TRANSITION_CURTAIN_TO_DEMO) {
-    drawCurtainOverlay(true);
+  if (transitionMode == TRANSITION_CURTAIN_TO_DEMO) {
+    if (transitionFrame < CURTAIN_FRAMES) {
+      drawCurtainOverlay(transitionFrame, false);
+    } else {
+      drawCurtainOverlay(transitionFrame - CURTAIN_FRAMES, true);
+    }
   } else if (transitionMode == TRANSITION_CURTAIN_TO_MENU) {
-    drawCurtainOverlay(false);
+    drawCurtainOverlay(transitionFrame, false);
   }
 }
 
@@ -1622,11 +1589,9 @@ void updateTransition() {
   }
 
   transitionFrame++;
-  if (transitionMode == TRANSITION_FADE_TO_DEMO && transitionFrame >= FADE_FRAMES) {
+  if (transitionMode == TRANSITION_CURTAIN_TO_DEMO && transitionFrame == CURTAIN_FRAMES) {
     startDemoMatch();
-    transitionMode = TRANSITION_CURTAIN_TO_DEMO;
-    transitionFrame = 0;
-  } else if (transitionMode == TRANSITION_CURTAIN_TO_DEMO && transitionFrame >= CURTAIN_FRAMES) {
+  } else if (transitionMode == TRANSITION_CURTAIN_TO_DEMO && transitionFrame >= CURTAIN_FRAMES * 2) {
     transitionMode = TRANSITION_NONE;
   } else if (transitionMode == TRANSITION_CURTAIN_TO_MENU && transitionFrame >= CURTAIN_FRAMES) {
     returnToMainMenu();
@@ -1645,7 +1610,7 @@ void updateIdleDemoTimer(bool hasInput) {
     } else if (idleFrames < MENU_IDLE_DEMO_FRAMES) {
       idleFrames++;
     } else {
-      startTransition(TRANSITION_FADE_TO_DEMO);
+      startTransition(TRANSITION_CURTAIN_TO_DEMO);
     }
   } else if (scene != SCENE_DEMO) {
     idleFrames = 0;
