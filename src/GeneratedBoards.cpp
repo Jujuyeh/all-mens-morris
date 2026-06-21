@@ -98,6 +98,84 @@ const RuleSet ClassicRuleSet = {
   RULE_FLYING_ENABLED | RULE_PROTECT_PIECES_IN_MILLS | RULE_BLOCK_WIN_ENABLED | RULE_MATERIAL_WIN_ENABLED | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
 };
 
+const BoardPoint CrossroadsBoardPoints[] PROGMEM = {
+  {32, 4},
+  {32, 14},
+  {20, 20},
+  {32, 20},
+  {44, 20},
+  {4, 32},
+  {14, 32},
+  {20, 32},
+  {32, 32},
+  {44, 32},
+  {50, 32},
+  {60, 32},
+  {20, 44},
+  {32, 44},
+  {44, 44},
+  {32, 50},
+  {32, 60},
+};
+
+const uint8_t CrossroadsMills[] PROGMEM = {
+  0, 1, 3,
+  2, 3, 4,
+  5, 6, 7,
+  7, 8, 9,
+  9, 10, 11,
+  12, 13, 14,
+  13, 15, 16,
+  2, 7, 12,
+  3, 8, 13,
+  4, 9, 14,
+  2, 8, 14,
+  4, 8, 12,
+};
+
+const uint8_t CrossroadsAdjacencyOffsets[] PROGMEM = {
+  0, 1, 3, 5, 9, 11, 12, 14, 18, 22, 26, 28, 29, 31, 35, 37, 39, 40,
+};
+
+const uint8_t CrossroadsAdjacency[] PROGMEM = {
+  1,
+  0, 3,
+  3, 7,
+  1, 2, 4, 8,
+  3, 9,
+  6,
+  5, 7,
+  2, 6, 8, 12,
+  3, 7, 9, 13,
+  4, 8, 10, 14,
+  9, 11,
+  10,
+  7, 13,
+  8, 12, 14, 15,
+  9, 13,
+  13, 16,
+  15,
+};
+
+const BoardDefinition CrossroadsBoardDefinition = {
+  "CROSSROADS",
+  17,
+  12,
+  CrossroadsBoardPoints,
+  CrossroadsMills,
+  CrossroadsAdjacencyOffsets,
+  CrossroadsAdjacency,
+};
+
+const RuleSet CrossroadsRuleSet = {
+  7,
+  3,
+  3,
+  50,
+  0,
+  RULE_FLYING_ENABLED | RULE_PROTECT_PIECES_IN_MILLS | RULE_BLOCK_WIN_ENABLED | RULE_MATERIAL_WIN_ENABLED | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
+};
+
 const BoardPoint FlowerBoardPoints[] PROGMEM = {
   {4, 23},
   {4, 35},
@@ -548,6 +626,102 @@ const RuleSet SixMenRuleSet = {
   RULE_FLYING_ENABLED | RULE_PROTECT_PIECES_IN_MILLS | RULE_BLOCK_WIN_ENABLED | RULE_MATERIAL_WIN_ENABLED | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
 };
 
+const BoardPoint SpiralBoardPoints[] PROGMEM = {
+  {8, 8},
+  {20, 8},
+  {32, 8},
+  {44, 8},
+  {56, 8},
+  {56, 20},
+  {56, 32},
+  {56, 44},
+  {56, 56},
+  {44, 56},
+  {32, 56},
+  {20, 56},
+  {8, 56},
+  {8, 44},
+  {8, 32},
+  {8, 20},
+  {20, 20},
+  {32, 20},
+  {44, 20},
+  {44, 32},
+  {44, 44},
+  {32, 44},
+  {20, 44},
+  {20, 32},
+  {32, 32},
+};
+
+const uint8_t SpiralMills[] PROGMEM = {
+  0, 1, 2,
+  2, 3, 4,
+  4, 5, 6,
+  6, 7, 8,
+  8, 9, 10,
+  10, 11, 12,
+  12, 13, 14,
+  14, 15, 0,
+  16, 17, 18,
+  18, 19, 20,
+  20, 21, 22,
+  22, 23, 16,
+  17, 24, 21,
+  23, 24, 19,
+};
+
+const uint8_t SpiralAdjacencyOffsets[] PROGMEM = {
+  0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 33, 36, 39, 41, 44, 46, 49, 51, 54, 58,
+};
+
+const uint8_t SpiralAdjacency[] PROGMEM = {
+  1, 15,
+  0, 2,
+  1, 3,
+  2, 4,
+  3, 5,
+  4, 6,
+  5, 7,
+  6, 8,
+  7, 9,
+  8, 10,
+  9, 11,
+  10, 12,
+  11, 13,
+  12, 14,
+  13, 15,
+  0, 14, 16,
+  15, 17, 23,
+  16, 18, 24,
+  17, 19,
+  18, 20, 24,
+  19, 21,
+  20, 22, 24,
+  21, 23,
+  16, 22, 24,
+  17, 19, 21, 23,
+};
+
+const BoardDefinition SpiralBoardDefinition = {
+  "SPIRAL",
+  25,
+  14,
+  SpiralBoardPoints,
+  SpiralMills,
+  SpiralAdjacencyOffsets,
+  SpiralAdjacency,
+};
+
+const RuleSet SpiralRuleSet = {
+  9,
+  3,
+  3,
+  50,
+  0,
+  RULE_FLYING_ENABLED | RULE_PROTECT_PIECES_IN_MILLS | RULE_BLOCK_WIN_ENABLED | RULE_MATERIAL_WIN_ENABLED | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
+};
+
 const BoardPoint ThreeMenBoardPoints[] PROGMEM = {
   {12, 12},
   {32, 12},
@@ -606,5 +780,5 @@ const RuleSet ThreeMenRuleSet = {
   RULE_MILL_ACTION_WIN | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
 };
 
-const BoardDefinition *const MorrisBoardProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicBoardDefinition, &FlowerBoardDefinition, &FortressBoardDefinition, &HexTwelveBoardDefinition, &HourglassBoardDefinition, &SixMenBoardDefinition, &ThreeMenBoardDefinition};
-const RuleSet *const MorrisRuleProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicRuleSet, &FlowerRuleSet, &FortressRuleSet, &HexTwelveRuleSet, &HourglassRuleSet, &SixMenRuleSet, &ThreeMenRuleSet};
+const BoardDefinition *const MorrisBoardProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicBoardDefinition, &CrossroadsBoardDefinition, &FlowerBoardDefinition, &FortressBoardDefinition, &HexTwelveBoardDefinition, &HourglassBoardDefinition, &SixMenBoardDefinition, &SpiralBoardDefinition, &ThreeMenBoardDefinition};
+const RuleSet *const MorrisRuleProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicRuleSet, &CrossroadsRuleSet, &FlowerRuleSet, &FortressRuleSet, &HexTwelveRuleSet, &HourglassRuleSet, &SixMenRuleSet, &SpiralRuleSet, &ThreeMenRuleSet};

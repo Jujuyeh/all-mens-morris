@@ -26,8 +26,9 @@ The implementation is split into:
   booleans are stored as bit flags, and board occupancy uses two bits per
   point.
 - `src/GeneratedBoards.*`: generated firmware board and standard rule data
-  from `boards/*.json`, currently Classic Nine Men's Morris, Hourglass,
-  Fortress, Hexagon, Flower, Six Men's Morris, and Three Men's Morris.
+  from `boards/*.json`, currently Classic Nine Men's Morris, Crossroads,
+  Spiral, Hourglass, Fortress, Hexagon, Flower, Six Men's Morris, and Three
+  Men's Morris.
   `Game.cpp` derives selectable global rulesets such as Long Morris and Lesker
   Morris from each board's standard rule data.
 - `src/MenuMusic.*`: generated compact menu music arrays from TableTop Studio
