@@ -98,178 +98,6 @@ const RuleSet ClassicRuleSet = {
   RULE_FLYING_ENABLED | RULE_PROTECT_PIECES_IN_MILLS | RULE_BLOCK_WIN_ENABLED | RULE_MATERIAL_WIN_ENABLED | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
 };
 
-const BoardPoint CloverBoardPoints[] PROGMEM = {
-  {32, 32},
-  {32, 4},
-  {44, 16},
-  {32, 24},
-  {20, 16},
-  {60, 32},
-  {48, 44},
-  {40, 32},
-  {48, 20},
-  {32, 60},
-  {20, 48},
-  {32, 40},
-  {44, 48},
-  {4, 32},
-  {16, 20},
-  {24, 32},
-  {16, 44},
-};
-
-const uint8_t CloverMills[] PROGMEM = {
-  4, 1, 2,
-  4, 3, 2,
-  8, 5, 6,
-  8, 7, 6,
-  12, 9, 10,
-  12, 11, 10,
-  14, 13, 16,
-  14, 15, 16,
-  3, 0, 11,
-  7, 0, 15,
-};
-
-const uint8_t CloverAdjacencyOffsets[] PROGMEM = {
-  0, 4, 6, 9, 14, 17, 19, 22, 27, 30, 32, 35, 40, 43, 45, 48, 53, 56,
-};
-
-const uint8_t CloverAdjacency[] PROGMEM = {
-  3, 7, 11, 15,
-  2, 4,
-  1, 3, 4,
-  0, 2, 4, 7, 15,
-  1, 2, 3,
-  6, 8,
-  5, 7, 8,
-  0, 3, 6, 8, 11,
-  5, 6, 7,
-  10, 12,
-  9, 11, 12,
-  0, 7, 10, 12, 15,
-  9, 10, 11,
-  14, 16,
-  13, 15, 16,
-  0, 3, 11, 14, 16,
-  13, 14, 15,
-};
-
-const BoardDefinition CloverBoardDefinition = {
-  "CLOVER",
-  17,
-  10,
-  CloverBoardPoints,
-  CloverMills,
-  CloverAdjacencyOffsets,
-  CloverAdjacency,
-};
-
-const RuleSet CloverRuleSet = {
-  7,
-  3,
-  3,
-  50,
-  0,
-  RULE_FLYING_ENABLED | RULE_PROTECT_PIECES_IN_MILLS | RULE_BLOCK_WIN_ENABLED | RULE_MATERIAL_WIN_ENABLED | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
-};
-
-const BoardPoint DiamondBoardPoints[] PROGMEM = {
-  {32, 2},
-  {47, 17},
-  {62, 32},
-  {47, 47},
-  {32, 62},
-  {17, 47},
-  {2, 32},
-  {17, 17},
-  {32, 12},
-  {42, 22},
-  {52, 32},
-  {42, 42},
-  {32, 52},
-  {22, 42},
-  {12, 32},
-  {22, 22},
-  {32, 22},
-  {37, 27},
-  {42, 32},
-  {37, 37},
-  {32, 42},
-  {27, 37},
-  {22, 32},
-  {27, 27},
-};
-
-const uint8_t DiamondMills[] PROGMEM = {
-  0, 1, 2,
-  2, 3, 4,
-  4, 5, 6,
-  6, 7, 0,
-  8, 9, 10,
-  10, 11, 12,
-  12, 13, 14,
-  14, 15, 8,
-  16, 17, 18,
-  18, 19, 20,
-  20, 21, 22,
-  22, 23, 16,
-  1, 9, 17,
-  3, 11, 19,
-  5, 13, 21,
-  7, 15, 23,
-};
-
-const uint8_t DiamondAdjacencyOffsets[] PROGMEM = {
-  0, 2, 5, 7, 10, 12, 15, 17, 20, 22, 26, 28, 32, 34, 38, 40, 44, 46, 49, 51, 54, 56, 59, 61, 64,
-};
-
-const uint8_t DiamondAdjacency[] PROGMEM = {
-  1, 7,
-  0, 2, 9,
-  1, 3,
-  2, 4, 11,
-  3, 5,
-  4, 6, 13,
-  5, 7,
-  0, 6, 15,
-  9, 15,
-  1, 8, 10, 17,
-  9, 11,
-  3, 10, 12, 19,
-  11, 13,
-  5, 12, 14, 21,
-  13, 15,
-  7, 8, 14, 23,
-  17, 23,
-  9, 16, 18,
-  17, 19,
-  11, 18, 20,
-  19, 21,
-  13, 20, 22,
-  21, 23,
-  15, 16, 22,
-};
-
-const BoardDefinition DiamondBoardDefinition = {
-  "DIAMOND",
-  24,
-  16,
-  DiamondBoardPoints,
-  DiamondMills,
-  DiamondAdjacencyOffsets,
-  DiamondAdjacency,
-};
-
-const RuleSet DiamondRuleSet = {
-  9,
-  3,
-  3,
-  50,
-  0,
-  RULE_FLYING_ENABLED | RULE_PROTECT_PIECES_IN_MILLS | RULE_BLOCK_WIN_ENABLED | RULE_MATERIAL_WIN_ENABLED | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
-};
-
 const BoardPoint FlowerBoardPoints[] PROGMEM = {
   {4, 23},
   {4, 35},
@@ -351,22 +179,22 @@ const RuleSet FlowerRuleSet = {
 };
 
 const BoardPoint FortressBoardPoints[] PROGMEM = {
-  {4, 4},
-  {32, 4},
-  {60, 4},
-  {60, 32},
-  {60, 60},
-  {32, 60},
-  {4, 60},
-  {4, 32},
-  {32, 12},
-  {46, 18},
-  {52, 32},
-  {46, 46},
-  {32, 52},
-  {18, 46},
-  {12, 32},
-  {18, 18},
+  {2, 2},
+  {32, 2},
+  {62, 2},
+  {62, 32},
+  {62, 62},
+  {32, 62},
+  {2, 62},
+  {2, 32},
+  {32, 8},
+  {44, 20},
+  {56, 32},
+  {44, 44},
+  {32, 56},
+  {20, 44},
+  {8, 32},
+  {20, 20},
   {24, 24},
   {32, 24},
   {40, 24},
@@ -438,7 +266,7 @@ const BoardDefinition FortressBoardDefinition = {
 };
 
 const RuleSet FortressRuleSet = {
-  10,
+  9,
   3,
   3,
   50,
@@ -578,36 +406,36 @@ const BoardPoint HourglassBoardPoints[] PROGMEM = {
   {12, 4},
   {32, 4},
   {52, 4},
-  {20, 16},
+  {17, 16},
   {32, 16},
-  {44, 16},
-  {28, 28},
-  {32, 32},
-  {36, 28},
-  {20, 48},
+  {47, 16},
+  {24, 32},
+  {32, 24},
+  {40, 32},
+  {17, 48},
   {32, 48},
-  {44, 48},
+  {47, 48},
   {12, 60},
   {32, 60},
   {52, 60},
+  {32, 40},
 };
 
 const uint8_t HourglassMills[] PROGMEM = {
   0, 1, 2,
   3, 4, 5,
-  6, 7, 8,
   9, 10, 11,
   12, 13, 14,
   0, 3, 6,
   6, 9, 12,
   1, 4, 7,
-  7, 10, 13,
   2, 5, 8,
   8, 11, 14,
+  15, 10, 13,
 };
 
 const uint8_t HourglassAdjacencyOffsets[] PROGMEM = {
-  0, 2, 5, 7, 10, 14, 17, 20, 24, 27, 30, 34, 37, 39, 42, 44,
+  0, 2, 5, 7, 10, 14, 17, 21, 24, 28, 31, 35, 38, 40, 43, 45, 48,
 };
 
 const uint8_t HourglassAdjacency[] PROGMEM = {
@@ -617,21 +445,22 @@ const uint8_t HourglassAdjacency[] PROGMEM = {
   0, 4, 6,
   1, 3, 5, 7,
   2, 4, 8,
-  3, 7, 9,
-  4, 6, 8, 10,
-  5, 7, 11,
+  3, 7, 9, 15,
+  4, 6, 8,
+  5, 7, 11, 15,
   6, 10, 12,
-  7, 9, 11, 13,
+  9, 11, 13, 15,
   8, 10, 14,
   9, 13,
   10, 12, 14,
   11, 13,
+  6, 8, 10,
 };
 
 const BoardDefinition HourglassBoardDefinition = {
   "HOURGLASS",
-  15,
-  11,
+  16,
+  10,
   HourglassBoardPoints,
   HourglassMills,
   HourglassAdjacencyOffsets,
@@ -777,5 +606,5 @@ const RuleSet ThreeMenRuleSet = {
   RULE_MILL_ACTION_WIN | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
 };
 
-const BoardDefinition *const MorrisBoardProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicBoardDefinition, &CloverBoardDefinition, &DiamondBoardDefinition, &FlowerBoardDefinition, &FortressBoardDefinition, &HexTwelveBoardDefinition, &HourglassBoardDefinition, &SixMenBoardDefinition, &ThreeMenBoardDefinition};
-const RuleSet *const MorrisRuleProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicRuleSet, &CloverRuleSet, &DiamondRuleSet, &FlowerRuleSet, &FortressRuleSet, &HexTwelveRuleSet, &HourglassRuleSet, &SixMenRuleSet, &ThreeMenRuleSet};
+const BoardDefinition *const MorrisBoardProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicBoardDefinition, &FlowerBoardDefinition, &FortressBoardDefinition, &HexTwelveBoardDefinition, &HourglassBoardDefinition, &SixMenBoardDefinition, &ThreeMenBoardDefinition};
+const RuleSet *const MorrisRuleProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicRuleSet, &FlowerRuleSet, &FortressRuleSet, &HexTwelveRuleSet, &HourglassRuleSet, &SixMenRuleSet, &ThreeMenRuleSet};
