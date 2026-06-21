@@ -58,6 +58,13 @@ constexpr uint8_t BOOT_CURTAIN_START_FRAMES = framesAtGameFps(47);
 constexpr uint8_t BOOT_TOTAL_FRAMES = framesAtGameFps(52);
 constexpr uint8_t MENU_MUSIC_RESTART_FRAMES = 12;
 constexpr uint8_t MENU_MUSIC_INITIAL_DELAY_FRAMES = GAME_FPS;
+constexpr uint8_t BOARD_WHEEL_X = 31;
+constexpr uint8_t BOARD_WHEEL_Y = 25;
+constexpr uint8_t BOARD_WHEEL_W = 66;
+constexpr uint8_t BOARD_WHEEL_H = 11;
+constexpr uint8_t BOARD_WHEEL_ANIM_FRAMES = 8;
+constexpr uint8_t MENU_STACK_CAPACITY = 7;
+constexpr uint8_t MENU_BALL_COUNT = 7;
 
 enum AppScene : uint8_t {
   SCENE_MAIN_MENU,
@@ -89,6 +96,11 @@ enum RulesetMode : uint8_t {
   RULESET_LONG,
   RULESET_LESKER,
   RULESET_MODE_COUNT,
+};
+
+enum MenuSideAnimation : uint8_t {
+  MENU_ANIM_STACK,
+  MENU_ANIM_BALLS,
 };
 
 enum CpuAnimationPhase : uint8_t {
@@ -148,6 +160,11 @@ uint8_t menuMusicIndex = 0;
 uint8_t menuMusicTheme = 0;
 bool menuMusicActive = false;
 uint8_t rejectFlashFrames = 0;
+uint8_t previousBoardMenuSelection = 0;
+uint8_t boardWheelFrames = 0;
+int8_t boardWheelDirection = 0;
+MenuSideAnimation menuSideAnimation = MENU_ANIM_STACK;
+bool menuAnimationRight = false;
 #ifdef ALL_MENS_MORRIS_DEBUG
 uint8_t debugScenario = DEBUG_SCENARIO_MILL;
 #endif
@@ -164,6 +181,8 @@ void enterCpuDropPause();
 void playCpuCursorStepSound();
 void playCpuActionSound();
 uint8_t textPixelWidth(const char *text);
+void resetMenuAnimation(bool advanceStyle);
+void updateMenuAnimation();
 
 const BoardDefinition *boardProfile(uint8_t index) {
   if (index >= MORRIS_BOARD_PROFILE_COUNT) {
@@ -414,6 +433,24 @@ void previousOpponentMode() {
         ? static_cast<OpponentMode>(OPPONENT_MODE_COUNT - 1)
         : static_cast<OpponentMode>(opponentMode - 1);
   } while (opponentMode == OPPONENT_LINK && !linkModeAvailable());
+}
+
+void startBoardWheelAnimation(uint8_t oldBoard, int8_t direction) {
+  previousBoardMenuSelection = oldBoard;
+  boardWheelDirection = direction;
+  boardWheelFrames = BOARD_WHEEL_ANIM_FRAMES;
+}
+
+void nextBoardMenuItem() {
+  uint8_t oldBoard = selectedBoardMenuItem;
+  selectedBoardMenuItem = (selectedBoardMenuItem + 1) % BOARD_MENU_COUNT;
+  startBoardWheelAnimation(oldBoard, 1);
+}
+
+void previousBoardMenuItem() {
+  uint8_t oldBoard = selectedBoardMenuItem;
+  selectedBoardMenuItem = selectedBoardMenuItem == 0 ? BOARD_MENU_COUNT - 1 : selectedBoardMenuItem - 1;
+  startBoardWheelAnimation(oldBoard, -1);
 }
 
 void nextRulesetMode() {
@@ -667,6 +704,7 @@ void returnToMainMenu() {
   setMessage("");
   ledsOff();
   nextMenuMusicTheme();
+  resetMenuAnimation(true);
   restartMenuMusic();
 }
 
@@ -674,6 +712,7 @@ void startTransition(TransitionMode mode) {
   transitionMode = mode;
   transitionFrame = 0;
   if (mode == TRANSITION_CURTAIN_TO_DEMO) {
+    resetMenuAnimation(false);
     stopMenuMusic();
   }
 }
@@ -1345,14 +1384,6 @@ void drawCenteredPanel(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
   tinyfont.setTextColor(BLACK);
 }
 
-const char *boardMenuTitle() {
-  const BoardDefinition *board = boardProfile(selectedBoardMenuItem);
-  if (board != nullptr) {
-    return board->label;
-  }
-  return "SOON";
-}
-
 uint8_t textPixelWidth(const char *text) {
   uint8_t width = 0;
   while (*text != '\0') {
@@ -1362,13 +1393,134 @@ uint8_t textPixelWidth(const char *text) {
   return width;
 }
 
-void drawMenuChevron(uint8_t x, uint8_t y, bool left) {
-  if (left) {
-    arduboy.drawLine(x + 4, y, x, y + 3, WHITE);
-    arduboy.drawLine(x, y + 3, x + 4, y + 6, WHITE);
+const char *boardMenuTitle(uint8_t boardIndex) {
+  const BoardDefinition *board = boardProfile(boardIndex);
+  if (board != nullptr) {
+    return board->label;
+  }
+  return "SOON";
+}
+
+void resetMenuAnimation(bool advanceStyle) {
+  if (advanceStyle) {
+    menuSideAnimation = menuSideAnimation == MENU_ANIM_STACK ? MENU_ANIM_BALLS : MENU_ANIM_STACK;
+  }
+  menuAnimationRight = random(2) == 0;
+}
+
+void updateMenuAnimation() {
+  if (boardWheelFrames > 0) {
+    boardWheelFrames--;
+  }
+}
+
+void drawMenuTitleShine() {
+  uint8_t phase = animationFrame & 127;
+  if (phase < 96) {
+    return;
+  }
+  int8_t x = static_cast<int8_t>(30 + (phase - 96) * 4);
+  for (uint8_t i = 0; i < 2; i++) {
+    arduboy.drawLine(x + i, 4, x + i + 8, 18, BLACK);
+  }
+}
+
+void drawBoardWheelText(const char *text, int8_t centerX) {
+  tinyfont.setTextColor(BLACK);
+  tinyfont.setCursor(centerX - textPixelWidth(text) / 2, BOARD_WHEEL_Y + 3);
+  tinyfont.print(text);
+}
+
+void drawBoardWheel() {
+  uint8_t midY = BOARD_WHEEL_Y + BOARD_WHEEL_H / 2;
+  arduboy.fillRect(BOARD_WHEEL_X, BOARD_WHEEL_Y, BOARD_WHEEL_W, BOARD_WHEEL_H, WHITE);
+  arduboy.drawLine(BOARD_WHEEL_X - 4, midY, BOARD_WHEEL_X, BOARD_WHEEL_Y, WHITE);
+  arduboy.drawLine(BOARD_WHEEL_X - 4, midY, BOARD_WHEEL_X, BOARD_WHEEL_Y + BOARD_WHEEL_H - 1, WHITE);
+  arduboy.drawLine(BOARD_WHEEL_X + BOARD_WHEEL_W + 3, midY,
+      BOARD_WHEEL_X + BOARD_WHEEL_W - 1, BOARD_WHEEL_Y, WHITE);
+  arduboy.drawLine(BOARD_WHEEL_X + BOARD_WHEEL_W + 3, midY,
+      BOARD_WHEEL_X + BOARD_WHEEL_W - 1, BOARD_WHEEL_Y + BOARD_WHEEL_H - 1, WHITE);
+
+  for (uint8_t x = BOARD_WHEEL_X + 4; x < BOARD_WHEEL_X + BOARD_WHEEL_W - 4; x += 8) {
+    arduboy.drawPixel(x, BOARD_WHEEL_Y + 1, BLACK);
+    arduboy.drawPixel(x + 3, BOARD_WHEEL_Y + BOARD_WHEEL_H - 2, BLACK);
+  }
+  arduboy.drawLine(BOARD_WHEEL_X + 3, BOARD_WHEEL_Y + 2,
+      BOARD_WHEEL_X + 3, BOARD_WHEEL_Y + BOARD_WHEEL_H - 3, BLACK);
+  arduboy.drawLine(BOARD_WHEEL_X + BOARD_WHEEL_W - 4, BOARD_WHEEL_Y + 2,
+      BOARD_WHEEL_X + BOARD_WHEEL_W - 4, BOARD_WHEEL_Y + BOARD_WHEEL_H - 3, BLACK);
+
+  int8_t centerX = BOARD_WHEEL_X + BOARD_WHEEL_W / 2;
+  if (boardWheelFrames > 0 && boardWheelDirection != 0) {
+    uint8_t progress = BOARD_WHEEL_ANIM_FRAMES - boardWheelFrames;
+    int8_t offset = (static_cast<uint16_t>(progress) * BOARD_WHEEL_W) >> 3;
+    int8_t oldCenter = centerX - boardWheelDirection * offset;
+    int8_t newCenter = centerX + boardWheelDirection * (BOARD_WHEEL_W - offset);
+    drawBoardWheelText(boardMenuTitle(previousBoardMenuSelection), oldCenter);
+    drawBoardWheelText(boardMenuTitle(selectedBoardMenuItem), newCenter);
   } else {
-    arduboy.drawLine(x, y, x + 4, y + 3, WHITE);
-    arduboy.drawLine(x + 4, y + 3, x, y + 6, WHITE);
+    drawBoardWheelText(boardMenuTitle(selectedBoardMenuItem), centerX);
+  }
+
+  if (selectedMenuItem == 0) {
+    drawDashedRect(BOARD_WHEEL_X - 5, BOARD_WHEEL_Y - 1, BOARD_WHEEL_W + 10, BOARD_WHEEL_H + 2,
+        animationFrame / 5, WHITE);
+  }
+}
+
+void drawMenuStackAnimation() {
+  uint8_t x = menuAnimationRight ? 106 : 6;
+  uint8_t frame = animationFrame & 127;
+  uint8_t landed = frame >> 4;
+  bool clearTriple = frame >= 56 && frame < 76;
+  if (landed > MENU_STACK_CAPACITY) {
+    landed = MENU_STACK_CAPACITY;
+  }
+  if (frame >= 76) {
+    landed -= landed > 3 ? 3 : landed;
+  }
+
+  for (uint8_t i = 0; i < landed; i++) {
+    if (clearTriple && i >= landed - 3 && ((frame >> 2) & 1)) {
+      continue;
+    }
+    bool white = ((i + (frame >> 6)) & 3) < 2;
+    const uint16_t *sprite = white ? whiteUiPiece16x10 : blackUiPiece16x10;
+    drawUiPieceSprite(sprite, x, 62 - i * HUD_STACK_STEP_Y);
+  }
+
+  if (!clearTriple) {
+    uint8_t fallT = frame & 15;
+    uint8_t targetY = 62 - landed * HUD_STACK_STEP_Y;
+    uint8_t fallY = 12 + ((fallT * fallT) >> 2);
+    if (fallY > targetY) {
+      fallY = targetY;
+    }
+    bool white = ((landed + (frame >> 6)) & 3) < 2;
+    const uint16_t *sprite = white ? whiteUiPiece16x10 : blackUiPiece16x10;
+    drawUiPieceSprite(sprite, x, fallY);
+  }
+}
+
+void drawMenuBallAnimation() {
+  for (uint8_t i = 0; i < MENU_BALL_COUNT; i++) {
+    uint8_t t = (animationFrame + i * 17) & 63;
+    uint8_t x = (menuAnimationRight ? 106 : 5) + ((i * 5 + (animationFrame >> 3)) & 15);
+    uint8_t y = 10 + ((t * t) >> 6);
+    uint8_t floorY = 61 - (i & 3) * 4;
+    if (y > floorY) {
+      y = floorY;
+    }
+    arduboy.drawCircle(x, y, 2, WHITE);
+    arduboy.drawPixel(x, y, WHITE);
+  }
+}
+
+void drawMenuSideAnimation() {
+  if (menuSideAnimation == MENU_ANIM_STACK) {
+    drawMenuStackAnimation();
+  } else {
+    drawMenuBallAnimation();
   }
 }
 
@@ -1376,30 +1528,23 @@ void drawMainMenu() {
   arduboy.fillScreen(BLACK);
   tinyfont.setTextColor(WHITE);
 
+  drawMenuSideAnimation();
+
   tinyfont.setCursor(43, 5);
   tinyfont.print("ALL MEN'S");
   tinyfont.setCursor(50, 12);
   tinyfont.print("MORRIS");
+  drawMenuTitleShine();
   arduboy.drawLine(30, 20, 98, 20, WHITE);
 
-  const char *title = boardMenuTitle();
-  uint8_t titleWidth = textPixelWidth(title);
-  uint8_t titleX = 62 - titleWidth / 2;
-  uint8_t leftX = titleX > 12 ? titleX - 12 : 2;
-  uint8_t rightX = titleX + titleWidth + 12;
-
-  drawMenuChevron(leftX, 27, true);
-  drawMenuChevron(rightX, 27, false);
-  tinyfont.setCursor(titleX - 1, 28);
-  tinyfont.print(title);
-  if (selectedMenuItem == 0) {
-    drawDashedRect(leftX - 3, 25, rightX - leftX + 11, 11, animationFrame / 5, WHITE);
-  }
+  drawBoardWheel();
   if (!selectedBoardIsPlayable()) {
+    tinyfont.setTextColor(WHITE);
     tinyfont.setCursor(108, 56);
     tinyfont.print("SOON");
   }
 
+  tinyfont.setTextColor(WHITE);
   tinyfont.setCursor(38, 39);
   tinyfont.print(rulesetModeLabel());
   if (selectedMenuItem == 1) {
@@ -1650,7 +1795,7 @@ void handleMainMenuInput() {
   }
   if (arduboy.justPressed(LEFT_BUTTON)) {
     if (selectedMenuItem == 0) {
-      selectedBoardMenuItem = selectedBoardMenuItem == 0 ? BOARD_MENU_COUNT - 1 : selectedBoardMenuItem - 1;
+      previousBoardMenuItem();
     } else if (selectedMenuItem == 1) {
       previousRulesetMode();
     } else if (selectedMenuItem == 2) {
@@ -1662,7 +1807,7 @@ void handleMainMenuInput() {
   }
   if (arduboy.justPressed(RIGHT_BUTTON)) {
     if (selectedMenuItem == 0) {
-      selectedBoardMenuItem = (selectedBoardMenuItem + 1) % BOARD_MENU_COUNT;
+      nextBoardMenuItem();
     } else if (selectedMenuItem == 1) {
       nextRulesetMode();
     } else if (selectedMenuItem == 2) {
@@ -1975,6 +2120,7 @@ void gameSetup() {
   arduboy.audio.begin();
   uint32_t seed = static_cast<unsigned long>(micros()) ^ analogRead(A0);
   randomSeed(seed);
+  resetMenuAnimation(false);
   linkBegin(seed);
   tinyfont.setTextColor(BLACK);
   resetMorrisGame(game, ClassicBoardDefinition, ClassicRuleSet);
@@ -1995,6 +2141,9 @@ void gameLoop() {
   bool hasInput = arduboy.buttonsState() != 0;
   if (transitionMode == TRANSITION_NONE) {
     updateIdleDemoTimer(hasInput);
+  }
+  if (scene == SCENE_MAIN_MENU) {
+    updateMenuAnimation();
   }
   if (transitionMode == TRANSITION_NONE) {
     if (scene == SCENE_DEMO) {
