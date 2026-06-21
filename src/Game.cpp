@@ -64,7 +64,7 @@ constexpr uint8_t BOARD_WHEEL_W = 66;
 constexpr uint8_t BOARD_WHEEL_H = 11;
 constexpr uint8_t BOARD_WHEEL_ANIM_FRAMES = 8;
 constexpr uint8_t MENU_STACK_CAPACITY = 7;
-constexpr uint8_t MENU_BALL_COUNT = 7;
+constexpr uint8_t MENU_BALL_COUNT = 6;
 
 enum AppScene : uint8_t {
   SCENE_MAIN_MENU,
@@ -164,13 +164,13 @@ uint8_t previousBoardMenuSelection = 0;
 uint8_t boardWheelFrames = 0;
 int8_t boardWheelDirection = 0;
 MenuSideAnimation menuSideAnimation = MENU_ANIM_STACK;
-bool menuAnimationRight = false;
-uint8_t menuStackCount = 0;
-uint8_t menuStackPieces = 0;
+uint8_t menuStackCount[2] = {};
+uint8_t menuStackPieces[2] = {};
 uint8_t menuStackBlinkFrames = 0;
 uint8_t menuFallingPiece = 0;
 int8_t menuFallBottomY = 0;
 uint8_t menuFallVelocity = 1;
+uint8_t menuFallingColumn = 0;
 #ifdef ALL_MENS_MORRIS_DEBUG
 uint8_t debugScenario = DEBUG_SCENARIO_MILL;
 #endif
@@ -718,7 +718,6 @@ void startTransition(TransitionMode mode) {
   transitionMode = mode;
   transitionFrame = 0;
   if (mode == TRANSITION_CURTAIN_TO_DEMO) {
-    resetMenuAnimation(false);
     stopMenuMusic();
   }
 }
@@ -1403,9 +1402,11 @@ const char *boardMenuTitle(uint8_t boardIndex) {
 
 void startMenuFallingPiece() {
   uint8_t next = random(2);
-  if (menuStackCount >= 2) {
+  uint8_t count = menuStackCount[menuFallingColumn];
+  uint8_t pieces = menuStackPieces[menuFallingColumn];
+  if (count >= 2) {
     if (random(2) == 0) {
-      next = (menuStackPieces >> (menuStackCount - 1)) & 1;
+      next = (pieces >> (count - 1)) & 1;
     }
   }
   menuFallingPiece = next;
@@ -1417,10 +1418,12 @@ void resetMenuAnimation(bool advanceStyle) {
   if (advanceStyle) {
     menuSideAnimation = menuSideAnimation == MENU_ANIM_STACK ? MENU_ANIM_BALLS : MENU_ANIM_STACK;
   }
-  menuAnimationRight = random(2) == 0;
-  menuStackCount = 0;
-  menuStackPieces = 0;
+  menuStackCount[0] = 0;
+  menuStackCount[1] = 0;
+  menuStackPieces[0] = 0;
+  menuStackPieces[1] = 0;
   menuStackBlinkFrames = 0;
+  menuFallingColumn = 0;
   startMenuFallingPiece();
 }
 
@@ -1434,46 +1437,51 @@ void updateMenuAnimation() {
 
   if (menuStackBlinkFrames > 0) {
     menuStackBlinkFrames--;
-    if (menuStackBlinkFrames == 0 && menuStackCount >= 3) {
-      menuStackCount -= 3;
-      menuStackPieces &= (1 << menuStackCount) - 1;
+    uint8_t count = menuStackCount[menuFallingColumn];
+    if (menuStackBlinkFrames == 0 && count >= 3) {
+      count -= 3;
+      menuStackCount[menuFallingColumn] = count;
+      menuStackPieces[menuFallingColumn] &= (1 << count) - 1;
+      menuFallingColumn ^= 1;
       startMenuFallingPiece();
     }
     return;
   }
 
-  int8_t targetY = 62 - menuStackCount * HUD_STACK_STEP_Y;
+  uint8_t count = menuStackCount[menuFallingColumn];
+  int8_t targetY = 62 - count * HUD_STACK_STEP_Y;
   menuFallBottomY += menuFallVelocity;
-  if (menuFallVelocity < 5) {
-    menuFallVelocity++;
-  }
+  menuFallVelocity++;
   if (menuFallBottomY < targetY) {
     return;
   }
 
   menuFallBottomY = targetY;
-  if (menuStackCount >= MENU_STACK_CAPACITY) {
-    menuStackCount = 0;
-    menuStackPieces = 0;
+  if (count >= MENU_STACK_CAPACITY) {
+    count = 0;
+    menuStackPieces[menuFallingColumn] = 0;
   }
   if (menuFallingPiece != 0) {
-    menuStackPieces |= 1 << menuStackCount;
+    menuStackPieces[menuFallingColumn] |= 1 << count;
   }
-  menuStackCount++;
-  if (menuStackCount >= 3) {
-    uint8_t top = (menuStackPieces >> (menuStackCount - 1)) & 1;
-    uint8_t second = (menuStackPieces >> (menuStackCount - 2)) & 1;
-    uint8_t third = (menuStackPieces >> (menuStackCount - 3)) & 1;
+  count++;
+  menuStackCount[menuFallingColumn] = count;
+  if (count >= 3) {
+    uint8_t pieces = menuStackPieces[menuFallingColumn];
+    uint8_t top = (pieces >> (count - 1)) & 1;
+    uint8_t second = (pieces >> (count - 2)) & 1;
+    uint8_t third = (pieces >> (count - 3)) & 1;
     if (top == second && second == third) {
       menuStackBlinkFrames = 24;
       return;
     }
   }
+  menuFallingColumn ^= 1;
   startMenuFallingPiece();
 }
 
 void drawMenuTitleShine() {
-  uint8_t phase = (animationFrame >> 1) & 127;
+  uint8_t phase = (animationFrame >> 2) & 127;
   if (phase < 96) {
     return;
   }
@@ -1515,19 +1523,23 @@ void drawBoardWheel() {
 }
 
 void drawMenuStackAnimation() {
-  uint8_t x = menuAnimationRight ? 106 : 6;
-  for (uint8_t i = 0; i < menuStackCount; i++) {
-    if (menuStackBlinkFrames > 0 && i >= menuStackCount - 3 && ((menuStackBlinkFrames >> 2) & 1)) {
-      continue;
+  for (uint8_t column = 0; column < 2; column++) {
+    uint8_t x = column == 0 ? 6 : 106;
+    uint8_t count = menuStackCount[column];
+    uint8_t pieces = menuStackPieces[column];
+    for (uint8_t i = 0; i < count; i++) {
+      if (column == menuFallingColumn && menuStackBlinkFrames > 0
+          && i >= count - 3 && ((menuStackBlinkFrames >> 2) & 1)) {
+        continue;
+      }
+      const uint16_t *sprite = ((pieces >> i) & 1) ? whiteUiPiece16x10 : blackUiPiece16x10;
+      drawUiPieceSprite(sprite, x, 62 - i * HUD_STACK_STEP_Y);
     }
-    const uint16_t *sprite = ((menuStackPieces >> i) & 1) ? whiteUiPiece16x10 : blackUiPiece16x10;
-    drawUiPieceSprite(sprite, x, 62 - i * HUD_STACK_STEP_Y);
   }
-  if (menuStackBlinkFrames == 0) {
+  if (menuStackBlinkFrames == 0 && menuFallBottomY >= HUD_PIECE_HEIGHT - 1) {
+    uint8_t x = menuFallingColumn == 0 ? 6 : 106;
     const uint16_t *sprite = menuFallingPiece ? whiteUiPiece16x10 : blackUiPiece16x10;
-    if (menuFallBottomY >= HUD_PIECE_HEIGHT - 1) {
-      drawUiPieceSprite(sprite, x, menuFallBottomY);
-    }
+    drawUiPieceSprite(sprite, x, menuFallBottomY);
   }
 }
 
@@ -1537,11 +1549,11 @@ void drawMenuBallAnimation() {
       uint8_t t = (animationFrame + i * 17 + side * 29) & 63;
       uint8_t x = (side == 0 ? 5 : 106) + ((i * 5 + (animationFrame >> 3)) & 15);
       uint8_t y = 4 + t;
-      uint8_t floorY = 61 - (i & 3) * 4;
-      if (y > floorY) {
-        y = floorY;
+      if (((i + side + (animationFrame >> 4)) & 1) == 0) {
+        arduboy.fillCircle(x, y, 2, WHITE);
+      } else {
+        arduboy.drawCircle(x, y, 2, WHITE);
       }
-      arduboy.drawCircle(x, y, 2, WHITE);
     }
   }
 }
@@ -2150,7 +2162,6 @@ void gameSetup() {
   arduboy.audio.begin();
   uint32_t seed = static_cast<unsigned long>(micros()) ^ analogRead(A0);
   randomSeed(seed);
-  resetMenuAnimation(false);
   linkBegin(seed);
   tinyfont.setTextColor(BLACK);
   resetMorrisGame(game, ClassicBoardDefinition, ClassicRuleSet);
