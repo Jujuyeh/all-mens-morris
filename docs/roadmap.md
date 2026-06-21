@@ -34,7 +34,7 @@
 - Added Flower as a playable custom 20-point board profile.
 - Added Hexagon as a playable 36-point board with three concentric hexagons
   and twelve standard pieces per player.
-- Added Crossroads, Spiral, Hourglass, and Fortress as additional playable board
+- Added Crossroads, Ninja, Hourglass, and Fortress as additional playable board
   profiles for 64x64 playtests, and retired Diamond/Clover after board
   readability review.
 - Added a generic CPU opponent that works across generated board/rule profiles.

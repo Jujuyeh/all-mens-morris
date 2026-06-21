@@ -38,7 +38,7 @@ Implemented:
   reserves are placed, or when the active player has no legal move.
 - Draw detection after 50 movement turns without a capture.
 - Main menu scaffold for choosing board/ruleset pairings, with Classic Nine
-  Men's Morris, Crossroads, Spiral, Hourglass, Fortress, Hexagon, Six Men's
+  Men's Morris, Crossroads, Ninja, Hourglass, Fortress, Hexagon, Six Men's
   Morris, Three Men's Morris, and Flower active as boards.
 - Main menu ruleset selector for Standard, Long Morris, and Lesker Morris.
   Long Morris scales to `standard pieces * 2 + 3`, fills until one empty point
@@ -65,7 +65,7 @@ Implemented:
   classic capture/flying rules.
 - Playable Hexagon profile with three regular concentric hexagons, 36 valid
   points, 24 mill lines, and twelve standard pieces per player.
-- Playable Crossroads, Spiral, Hourglass, and Fortress board profiles for
+- Playable Crossroads, Ninja, Hourglass, and Fortress board profiles for
   alternate graph shapes that still fit the 64x64 playfield.
 - Main menu setting for whether white or black moves first.
 - Directional cursor navigation that follows the board geometry, preferring
