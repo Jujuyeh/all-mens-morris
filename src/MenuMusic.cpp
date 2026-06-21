@@ -4,33 +4,36 @@
 // Menu themes are compact monophonic Arduboy tone event streams.
 
 const uint8_t MenuMusicTheme0Notes[] PROGMEM = {
-  48, 0, 52, 0, 55, 0, 48, 0, 50, 0, 53, 0, 57, 0, 50, 0,
+  60, 64, 64, 60, 64, 60, 64, 64, 60, 64,
 };
 
 const uint8_t MenuMusicTheme0Durations[] PROGMEM = {
-  2, 2, 1, 1, 1, 3, 1, 2, 2, 2, 1, 1, 1, 3, 1, 2,
+  4, 2, 2, 2, 4, 4, 4, 2, 4, 4,
 };
 const uint8_t MenuMusicTheme1Notes[] PROGMEM = {
-  45, 0, 49, 0, 52, 0, 45, 0, 47, 0, 50, 0, 54, 0, 47, 0,
+  72, 72, 69, 72, 69, 72, 67, 0, 69, 69, 67, 69, 67, 69, 65, 0,
 };
 
 const uint8_t MenuMusicTheme1Durations[] PROGMEM = {
-  2, 2, 1, 1, 1, 3, 1, 2, 2, 2, 1, 1, 1, 3, 1, 2,
+  6, 4, 2, 2, 2, 2, 6, 2, 6, 4, 2, 2, 2, 2, 6, 2,
 };
 const uint8_t MenuMusicTheme2Notes[] PROGMEM = {
-  43, 0, 47, 0, 50, 0, 43, 0, 45, 0, 48, 0, 52, 0, 45, 0,
+  61, 60, 59, 58, 57, 56, 55, 57, 0, 64, 0, 63, 62, 61, 60, 59,
+  58, 61, 0,
 };
 
 const uint8_t MenuMusicTheme2Durations[] PROGMEM = {
-  2, 2, 1, 1, 1, 3, 1, 2, 2, 2, 1, 1, 1, 3, 1, 2,
+  6, 2, 2, 2, 2, 2, 6, 6, 2, 4, 2, 2, 2, 2, 2, 2,
+  6, 6, 2,
 };
 
-const uint8_t MenuMusicThemeEventCounts[] PROGMEM = { 16, 16, 16 };
+const uint8_t MenuMusicThemeEventCounts[] PROGMEM = { 10, 16, 19 };
 
 const uint8_t *const MenuMusicNotesByTheme[] PROGMEM = { MenuMusicTheme0Notes, MenuMusicTheme1Notes, MenuMusicTheme2Notes };
 
 const uint8_t *const MenuMusicDurationsByTheme[] PROGMEM = { MenuMusicTheme0Durations, MenuMusicTheme1Durations, MenuMusicTheme2Durations };
 
 const uint16_t MenuMusicFrequencies[] PROGMEM = {
-  98, 104, 110, 117, 123, 131, 139, 147, 156, 165, 175, 185, 196, 208, 220,
+  196, 208, 220, 233, 247, 262, 277, 294, 311, 330, 349, 370, 392, 415, 440, 466,
+  494, 523,
 };

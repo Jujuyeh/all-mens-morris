@@ -9,68 +9,44 @@
       "name": "Bossa One",
       "events": [
         {
-          "note": 48,
+          "note": 60,
+          "duration": 4
+        },
+        {
+          "note": 64,
           "duration": 2
         },
         {
-          "note": 0,
+          "note": 64,
           "duration": 2
         },
         {
-          "note": 52,
-          "duration": 1
-        },
-        {
-          "note": 0,
-          "duration": 1
-        },
-        {
-          "note": 55,
-          "duration": 1
-        },
-        {
-          "note": 0,
-          "duration": 3
-        },
-        {
-          "note": 48,
-          "duration": 1
-        },
-        {
-          "note": 0,
+          "note": 60,
           "duration": 2
         },
         {
-          "note": 50,
+          "note": 64,
+          "duration": 4
+        },
+        {
+          "note": 60,
+          "duration": 4
+        },
+        {
+          "note": 64,
+          "duration": 4
+        },
+        {
+          "note": 64,
           "duration": 2
         },
         {
-          "note": 0,
-          "duration": 2
+          "note": 60,
+          "duration": 4
         },
         {
-          "note": 53,
-          "duration": 1
-        },
-        {
-          "note": 0,
-          "duration": 1
-        },
-        {
-          "note": 57,
-          "duration": 1
-        },
-        {
-          "note": 0,
-          "duration": 3
-        },
-        {
-          "note": 50,
-          "duration": 1
-        },
-        {
-          "note": 0,
-          "duration": 2
+          "note": 64,
+          "duration": 4
         }
       ]
     },
@@ -79,64 +55,64 @@
       "name": "Bossa Two",
       "events": [
         {
-          "note": 45,
+          "note": 72,
+          "duration": 6
+        },
+        {
+          "note": 72,
+          "duration": 4
+        },
+        {
+          "note": 69,
           "duration": 2
         },
         {
-          "note": 0,
+          "note": 72,
           "duration": 2
         },
         {
-          "note": 49,
-          "duration": 1
-        },
-        {
-          "note": 0,
-          "duration": 1
-        },
-        {
-          "note": 52,
-          "duration": 1
-        },
-        {
-          "note": 0,
-          "duration": 3
-        },
-        {
-          "note": 45,
-          "duration": 1
-        },
-        {
-          "note": 0,
+          "note": 69,
           "duration": 2
         },
         {
-          "note": 47,
+          "note": 72,
           "duration": 2
+        },
+        {
+          "note": 67,
+          "duration": 6
         },
         {
           "note": 0,
           "duration": 2
         },
         {
-          "note": 50,
-          "duration": 1
+          "note": 69,
+          "duration": 6
         },
         {
-          "note": 0,
-          "duration": 1
+          "note": 69,
+          "duration": 4
         },
         {
-          "note": 54,
-          "duration": 1
+          "note": 67,
+          "duration": 2
         },
         {
-          "note": 0,
-          "duration": 3
+          "note": 69,
+          "duration": 2
         },
         {
-          "note": 47,
-          "duration": 1
+          "note": 67,
+          "duration": 2
+        },
+        {
+          "note": 69,
+          "duration": 2
+        },
+        {
+          "note": 65,
+          "duration": 6
         },
         {
           "note": 0,
@@ -149,64 +125,76 @@
       "name": "Bossa Three",
       "events": [
         {
-          "note": 43,
+          "note": 61,
+          "duration": 6
+        },
+        {
+          "note": 60,
           "duration": 2
         },
         {
-          "note": 0,
+          "note": 59,
           "duration": 2
         },
         {
-          "note": 47,
-          "duration": 1
-        },
-        {
-          "note": 0,
-          "duration": 1
-        },
-        {
-          "note": 50,
-          "duration": 1
-        },
-        {
-          "note": 0,
-          "duration": 3
-        },
-        {
-          "note": 43,
-          "duration": 1
-        },
-        {
-          "note": 0,
+          "note": 58,
           "duration": 2
         },
         {
-          "note": 45,
+          "note": 57,
           "duration": 2
+        },
+        {
+          "note": 56,
+          "duration": 2
+        },
+        {
+          "note": 55,
+          "duration": 6
+        },
+        {
+          "note": 57,
+          "duration": 6
         },
         {
           "note": 0,
           "duration": 2
         },
         {
-          "note": 48,
-          "duration": 1
+          "note": 64,
+          "duration": 4
         },
         {
           "note": 0,
-          "duration": 1
+          "duration": 2
         },
         {
-          "note": 52,
-          "duration": 1
+          "note": 63,
+          "duration": 2
         },
         {
-          "note": 0,
-          "duration": 3
+          "note": 62,
+          "duration": 2
         },
         {
-          "note": 45,
-          "duration": 1
+          "note": 61,
+          "duration": 2
+        },
+        {
+          "note": 60,
+          "duration": 2
+        },
+        {
+          "note": 59,
+          "duration": 2
+        },
+        {
+          "note": 58,
+          "duration": 6
+        },
+        {
+          "note": 61,
+          "duration": 6
         },
         {
           "note": 0,
