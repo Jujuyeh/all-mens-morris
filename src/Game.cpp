@@ -1405,7 +1405,7 @@ void startMenuFallingPiece() {
   uint8_t count = menuStackCount[menuFallingColumn];
   uint8_t pieces = menuStackPieces[menuFallingColumn];
   if (count >= 2) {
-    if (random(2) == 0) {
+    if (random(4) == 0) {
       next = (pieces >> (count - 1)) & 1;
     }
   }
