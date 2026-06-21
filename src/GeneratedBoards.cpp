@@ -628,7 +628,7 @@ const BoardDefinition NinjaBoardDefinition = {
 };
 
 const RuleSet NinjaRuleSet = {
-  9,
+  8,
   3,
   3,
   50,
