@@ -25,9 +25,10 @@ The implementation is split into:
   mill capture rules, flying, win detection, and phase transitions. Rule
   booleans are stored as bit flags, and board occupancy uses two bits per
   point.
-- `src/GeneratedBoards.*`: generated firmware board and rule data from
-  `boards/*.json`, currently Classic Nine Men's Morris, Flower, Long Morris,
-  Six Men's Morris, and Three Men's Morris.
+- `src/GeneratedBoards.*`: generated firmware board and standard rule data
+  from `boards/*.json`, currently Classic Nine Men's Morris, Flower, Six Men's
+  Morris, and Three Men's Morris. `Game.cpp` derives selectable global rulesets
+  such as Long Morris and Lesker Morris from each board's standard rule data.
 - `src/MenuMusic.*`: generated compact menu music arrays from TableTop Studio
   audio data. Current menu themes are short original bossa-style loops emitted
   as one firmware voice.
@@ -66,10 +67,11 @@ indices and board data so later variants can swap topology without rewriting the
 state machine.
 
 Board and rules data are deliberately separate. `make board-data` generates a
-board definition from the graph overlay, and a rule set from variant settings
-such as piece count, flying, capture protection, material wins, blocked wins,
-reserve-gated block wins, mixed placement/movement, mill behavior, and draw
-counters.
+board definition from the graph overlay, and a standard rule set from variant
+settings such as piece count, flying, capture protection, material wins,
+blocked wins, reserve-gated block wins, mill behavior, and draw counters.
+Runtime ruleset selectors can then scale and modify those standard rules
+without duplicating board geometry.
 
 ## Near-Term Refactor Targets
 

@@ -174,110 +174,12 @@ const BoardDefinition FlowerBoardDefinition = {
 
 const RuleSet FlowerRuleSet = {
   "flower",
-  8,
+  7,
   3,
   3,
   50,
   0,
   RULE_FLYING_ENABLED | RULE_PROTECT_PIECES_IN_MILLS | RULE_BLOCK_WIN_ENABLED | RULE_MATERIAL_WIN_ENABLED | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
-};
-
-const BoardPoint LongMorrisBoardPoints[] PROGMEM = {
-  {4, 4},
-  {32, 4},
-  {60, 4},
-  {12, 12},
-  {32, 12},
-  {52, 12},
-  {20, 20},
-  {32, 20},
-  {44, 20},
-  {4, 32},
-  {12, 32},
-  {20, 32},
-  {44, 32},
-  {52, 32},
-  {60, 32},
-  {20, 44},
-  {32, 44},
-  {44, 44},
-  {12, 52},
-  {32, 52},
-  {52, 52},
-  {4, 60},
-  {32, 60},
-  {60, 60},
-};
-
-const uint16_t LongMorrisMills[] PROGMEM = {
-  2080,
-  5251,
-  8422,
-  11593,
-  14764,
-  17935,
-  21106,
-  24277,
-  21792,
-  18755,
-  15718,
-  7297,
-  23152,
-  17800,
-  20901,
-  24002,
-};
-
-const uint8_t LongMorrisAdjacencyOffsets[] PROGMEM = {
-  0, 2, 5, 7, 9, 13, 15, 17, 20, 22, 25, 29, 32, 35, 39, 42, 44, 47, 49, 51, 55, 57, 59, 62, 64,
-};
-
-const uint8_t LongMorrisAdjacency[] PROGMEM = {
-  1, 9,
-  0, 2, 4,
-  1, 14,
-  4, 10,
-  1, 3, 5, 7,
-  4, 13,
-  7, 11,
-  4, 6, 8,
-  7, 12,
-  0, 10, 21,
-  3, 9, 11, 18,
-  6, 10, 15,
-  8, 13, 17,
-  5, 12, 14, 20,
-  2, 13, 23,
-  11, 16,
-  15, 17, 19,
-  12, 16,
-  10, 19,
-  16, 18, 20, 22,
-  13, 19,
-  9, 22,
-  19, 21, 23,
-  14, 22,
-};
-
-const BoardDefinition LongMorrisBoardDefinition = {
-  "long-morris",
-  "LONG",
-  24,
-  16,
-  LongMorrisBoardPoints,
-  LongMorrisMills,
-  LongMorrisAdjacencyOffsets,
-  LongMorrisAdjacency,
-};
-
-const RuleSet LongMorrisRuleSet = {
-  "long-morris",
-  21,
-  3,
-  3,
-  100,
-  1,
-  RULE_FLYING_ENABLED | RULE_MIXED_PLACEMENT_MOVEMENT | RULE_PROTECT_PIECES_IN_MILLS | RULE_BLOCK_WIN_ENABLED | RULE_MATERIAL_WIN_ENABLED | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_SKIP_BLOCKED_WITH_RESERVE,
 };
 
 const BoardPoint SixMenBoardPoints[] PROGMEM = {
@@ -414,5 +316,5 @@ const RuleSet ThreeMenRuleSet = {
   RULE_MILL_ACTION_WIN | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
 };
 
-const BoardDefinition *const MorrisBoardProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicBoardDefinition, &FlowerBoardDefinition, &LongMorrisBoardDefinition, &SixMenBoardDefinition, &ThreeMenBoardDefinition};
-const RuleSet *const MorrisRuleProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicRuleSet, &FlowerRuleSet, &LongMorrisRuleSet, &SixMenRuleSet, &ThreeMenRuleSet};
+const BoardDefinition *const MorrisBoardProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicBoardDefinition, &FlowerBoardDefinition, &SixMenBoardDefinition, &ThreeMenBoardDefinition};
+const RuleSet *const MorrisRuleProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicRuleSet, &FlowerRuleSet, &SixMenRuleSet, &ThreeMenRuleSet};

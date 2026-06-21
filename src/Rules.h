@@ -49,6 +49,7 @@ enum RuleFlag : uint16_t {
   RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY = 1 << 6,
   RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY = 1 << 7,
   RULE_SKIP_BLOCKED_WITH_RESERVE = 1 << 8,
+  RULE_START_IN_MOVING = 1 << 9,
 };
 
 struct RuleSet {
@@ -101,7 +102,6 @@ bool canPlaceAt(const MorrisGameState &game, uint8_t point);
 bool playerCanFly(const MorrisGameState &game, Player player);
 bool canMovePiece(const MorrisGameState &game, uint8_t from, uint8_t to);
 bool canCaptureAt(const MorrisGameState &game, uint8_t point);
-bool canToggleActionMode(const MorrisGameState &game);
-void toggleActionMode(MorrisGameState &game);
+void normalizeTurnActionMode(MorrisGameState &game);
 bool applyPrimaryAction(MorrisGameState &game);
 void advanceCursor(MorrisGameState &game, int8_t delta);

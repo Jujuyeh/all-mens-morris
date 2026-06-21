@@ -9,6 +9,9 @@ const state = {
   millDraft: [],
   spriteTool: "black",
   spriteDrawing: false,
+  spriteAssetPath: "assets/fx/banner.png",
+  spriteAssetWidth: 128,
+  spriteAssetHeight: 64,
   sounds: [],
   selectedSound: null,
   selectedThemeIndex: 0,
@@ -40,6 +43,7 @@ const el = {
   rawTab: document.querySelector("#rawTab"),
   rulesForm: document.querySelector("#rulesForm"),
   rawJson: document.querySelector("#rawJson"),
+  spriteAssetSelect: document.querySelector("#spriteAssetSelect"),
   spriteCanvas: document.querySelector("#spriteCanvas"),
   spriteTools: Array.from(document.querySelectorAll("[data-sprite-tool]")),
   spriteCursorInfo: document.querySelector("#spriteCursorInfo"),
@@ -562,14 +566,67 @@ async function loadBoards() {
 }
 
 async function loadGlobalSprite() {
+  el.spriteCanvas.width = state.spriteAssetWidth;
+  el.spriteCanvas.height = state.spriteAssetHeight;
+  spriteCtx.imageSmoothingEnabled = false;
   const image = new Image();
   image.onload = () => {
     spriteCtx.clearRect(0, 0, el.spriteCanvas.width, el.spriteCanvas.height);
     spriteCtx.drawImage(image, 0, 0, el.spriteCanvas.width, el.spriteCanvas.height);
-    setStatus("Loaded global FX banner");
+    setStatus(`Loaded ${state.spriteAssetPath}`);
   };
-  image.onerror = () => setStatus("Could not load assets/fx/banner.png");
-  image.src = `/assets/fx/banner.png?cache=${Date.now()}`;
+  image.onerror = () => {
+    if (state.spriteAssetPath === "assets/ui/pieces.png") {
+      drawDefaultUiPieces();
+      setStatus("Started new UI pieces draft");
+    } else {
+      setStatus(`Could not load ${state.spriteAssetPath}`);
+    }
+  };
+  image.src = `/${state.spriteAssetPath}?cache=${Date.now()}`;
+}
+
+function drawSpriteRows(x, rows) {
+  spriteCtx.fillStyle = "#fff";
+  rows.forEach((row, y) => {
+    for (let px = 0; px < 16; px++) {
+      if ((row >> (15 - px)) & 1) {
+        spriteCtx.fillRect(x + px, y, 1, 1);
+      }
+    }
+  });
+}
+
+function drawDefaultUiPieces() {
+  el.spriteCanvas.width = 32;
+  el.spriteCanvas.height = 10;
+  spriteCtx.imageSmoothingEnabled = false;
+  spriteCtx.fillStyle = "#000";
+  spriteCtx.fillRect(0, 0, 32, 10);
+  drawSpriteRows(0, [
+    0b0000011111100000,
+    0b0001111111111000,
+    0b0011111111111100,
+    0b0111111111111110,
+    0b0111111111111110,
+    0b0011111111111100,
+    0b0001111111111000,
+    0b0011111111111100,
+    0b0011111111111100,
+    0b0000111111110000,
+  ]);
+  drawSpriteRows(16, [
+    0b0000011111100000,
+    0b0001111111111000,
+    0b0011110000111100,
+    0b0111100000011110,
+    0b0111100000011110,
+    0b0011110000111100,
+    0b0001111111111000,
+    0b0011000000001100,
+    0b0011111111111100,
+    0b0000111111110000,
+  ]);
 }
 
 function spritePoint(event) {
@@ -597,7 +654,7 @@ function invertSprite() {
     image.data[i + 2] = 255 - image.data[i + 2];
   }
   spriteCtx.putImageData(image, 0, 0);
-  setStatus("Inverted global FX banner draft");
+  setStatus(`Inverted ${state.spriteAssetPath} draft`);
 }
 
 async function saveGlobalSprite() {
@@ -605,7 +662,7 @@ async function saveGlobalSprite() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      path: "assets/fx/banner.png",
+      path: state.spriteAssetPath,
       dataUrl: el.spriteCanvas.toDataURL("image/png"),
     }),
   });
@@ -1105,6 +1162,13 @@ el.spriteTools.forEach((tool) => {
     state.spriteTool = tool.dataset.spriteTool;
     el.spriteTools.forEach((button) => button.classList.toggle("active", button === tool));
   });
+});
+el.spriteAssetSelect.addEventListener("change", () => {
+  const option = el.spriteAssetSelect.selectedOptions[0];
+  state.spriteAssetPath = el.spriteAssetSelect.value;
+  state.spriteAssetWidth = Number(option.dataset.width || 128);
+  state.spriteAssetHeight = Number(option.dataset.height || 64);
+  loadGlobalSprite();
 });
 el.invertSprite.addEventListener("click", invertSprite);
 el.reloadSprite.addEventListener("click", loadGlobalSprite);

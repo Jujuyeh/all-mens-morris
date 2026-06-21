@@ -21,6 +21,9 @@ void resetMorrisGame(MorrisGameState &game, const BoardDefinition &board, const 
   game.actionMode = TURN_ACTION_PLACE;
   game.millPending = false;
   game.lastMoveMadeMill = false;
+  if (ruleFlag(rules, RULE_START_IN_MOVING)) {
+    game.phase = PHASE_MOVING;
+  }
 }
 
 void resetMorrisGame(MorrisGameState &game) {
@@ -208,7 +211,7 @@ static void setDraw(MorrisGameState &game, WinReason reason) {
   setGameOver(game, PLAYER_NONE, reason);
 }
 
-static void normalizeActionMode(MorrisGameState &game) {
+void normalizeTurnActionMode(MorrisGameState &game) {
   if (game.phase == PHASE_PLACING) {
     game.actionMode = TURN_ACTION_PLACE;
     return;
@@ -234,7 +237,7 @@ static void finishPlacementIfReady(MorrisGameState &game) {
           || (game.piecesToPlace[0] == 0 && game.piecesToPlace[1] == 0))) {
     game.phase = PHASE_MOVING;
     game.actionMode = TURN_ACTION_MOVE;
-    normalizeActionMode(game);
+    normalizeTurnActionMode(game);
   }
 }
 
@@ -273,7 +276,7 @@ static void resolveCurrentPlayerTurn(MorrisGameState &game) {
     }
 
     if (playerHasLegalAction(game, game.currentPlayer)) {
-      normalizeActionMode(game);
+      normalizeTurnActionMode(game);
       return;
     }
 
@@ -404,22 +407,6 @@ static bool captureAtCursor(MorrisGameState &game) {
   return true;
 }
 
-bool canToggleActionMode(const MorrisGameState &game) {
-  return game.phase == PHASE_MOVING
-      && ruleFlag(*game.rules, RULE_MIXED_PLACEMENT_MOVEMENT)
-      && playerCanPlace(game, game.currentPlayer)
-      && playerHasLegalMove(game, game.currentPlayer);
-}
-
-void toggleActionMode(MorrisGameState &game) {
-  if (!canToggleActionMode(game)) {
-    normalizeActionMode(game);
-    return;
-  }
-  game.actionMode = game.actionMode == TURN_ACTION_PLACE ? TURN_ACTION_MOVE : TURN_ACTION_PLACE;
-  game.selected = 255;
-}
-
 bool applyPrimaryAction(MorrisGameState &game) {
   game.lastMoveMadeMill = false;
   if (game.phase == PHASE_PLACING) {
@@ -429,10 +416,12 @@ bool applyPrimaryAction(MorrisGameState &game) {
     return captureAtCursor(game);
   }
   if (game.phase == PHASE_MOVING) {
-    normalizeActionMode(game);
-    if (ruleFlag(*game.rules, RULE_MIXED_PLACEMENT_MOVEMENT) && game.actionMode == TURN_ACTION_PLACE) {
+    normalizeTurnActionMode(game);
+    if (game.selected == 255 && canPlaceAt(game, game.cursor)) {
+      game.actionMode = TURN_ACTION_PLACE;
       return placeAtCursor(game, PHASE_MOVING);
     }
+    game.actionMode = TURN_ACTION_MOVE;
     return moveFromSelection(game);
   }
   return false;

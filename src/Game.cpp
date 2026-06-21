@@ -28,7 +28,13 @@ constexpr uint8_t BOARD_OFFSET_Y = 0;
 constexpr uint8_t HUD_LEFT_X = 0;
 constexpr uint8_t HUD_RIGHT_X = 100;
 constexpr uint8_t NO_POINT = 255;
-constexpr uint8_t MENU_ITEM_COUNT = 3;
+constexpr uint8_t HUD_PIECE_WIDTH = 16;
+constexpr uint8_t HUD_PIECE_HEIGHT = 10;
+constexpr uint8_t HUD_STACK_STEP_Y = 3;
+constexpr uint8_t HUD_STACK_BOTTOM_Y = 60;
+constexpr uint8_t HUD_STACK_SINGLE_BOTTOM_Y = 45;
+constexpr uint8_t HISTORY_CAPACITY = 8;
+constexpr uint8_t MENU_ITEM_COUNT = 4;
 constexpr uint8_t BOARD_MENU_COUNT = MORRIS_BOARD_PROFILE_COUNT;
 constexpr uint16_t MENU_IDLE_DEMO_FRAMES = GAME_FPS * 20;
 constexpr uint16_t DEMO_TOTAL_FRAMES = GAME_FPS * 30;
@@ -80,6 +86,13 @@ enum OpponentMode : uint8_t {
   OPPONENT_MODE_COUNT,
 };
 
+enum RulesetMode : uint8_t {
+  RULESET_STANDARD,
+  RULESET_LONG,
+  RULESET_LESKER,
+  RULESET_MODE_COUNT,
+};
+
 enum CpuAnimationPhase : uint8_t {
   CPU_ANIM_IDLE,
   CPU_ANIM_TO_FROM,
@@ -99,14 +112,17 @@ enum DebugScenario : uint8_t {
 #endif
 
 MorrisGameState game;
-MorrisGameState undoGame;
+MorrisGameState history[HISTORY_CAPACITY];
+RuleSet activeRuleSet = ClassicRuleSet;
 AppScene scene = SCENE_MAIN_MENU;
 ConfirmAction confirmAction = CONFIRM_NONE;
 uint8_t selectedMenuItem = 0;
 uint8_t selectedBoardMenuItem = 0;
+RulesetMode selectedRulesetMenuItem = RULESET_STANDARD;
 Player firstPlayer = PLAYER_TWO;
 Player cpuPlayer = PLAYER_ONE;
-bool hasUndo = false;
+uint8_t historyCount = 0;
+uint8_t historyIndex = 0;
 OpponentMode opponentMode = OPPONENT_PLAYER_TWO;
 bool linkWasAvailable = false;
 uint8_t cpuThinkFrames = 0;
@@ -149,6 +165,7 @@ void enterCpuPickPause();
 void enterCpuDropPause();
 void playCpuCursorStepSound();
 void playCpuActionSound();
+uint8_t textPixelWidth(const char *text);
 
 const BoardDefinition *boardProfile(uint8_t index) {
   if (index >= MORRIS_BOARD_PROFILE_COUNT) {
@@ -334,6 +351,45 @@ const char *opponentModeLabel() {
   return "PLAYER 2";
 }
 
+const char *rulesetModeLabel() {
+  if (selectedRulesetMenuItem == RULESET_LONG) {
+    return "LONG";
+  }
+  if (selectedRulesetMenuItem == RULESET_LESKER) {
+    return "LESKER";
+  }
+  return "STANDARD";
+}
+
+uint8_t scaledPieceCount(uint8_t basePieces) {
+  if (selectedRulesetMenuItem == RULESET_LONG) {
+    return static_cast<uint8_t>(basePieces * 2 + 3);
+  }
+  if (selectedRulesetMenuItem == RULESET_LESKER) {
+    return static_cast<uint8_t>(basePieces + 1);
+  }
+  return basePieces;
+}
+
+const RuleSet *buildActiveRuleSet(const RuleSet *standard) {
+  if (standard == nullptr) {
+    standard = &ClassicRuleSet;
+  }
+
+  activeRuleSet = *standard;
+  activeRuleSet.piecesPerPlayer = scaledPieceCount(standard->piecesPerPlayer);
+  if (selectedRulesetMenuItem == RULESET_LONG) {
+    activeRuleSet.noCaptureDrawTurnLimit = 100;
+    activeRuleSet.placementStopEmptyPoints = 1;
+    activeRuleSet.flags |= RULE_MIXED_PLACEMENT_MOVEMENT | RULE_SKIP_BLOCKED_WITH_RESERVE;
+    activeRuleSet.flags &= ~RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY;
+  } else if (selectedRulesetMenuItem == RULESET_LESKER) {
+    activeRuleSet.flags |= RULE_MIXED_PLACEMENT_MOVEMENT | RULE_START_IN_MOVING;
+    activeRuleSet.flags &= ~RULE_SKIP_BLOCKED_WITH_RESERVE;
+  }
+  return &activeRuleSet;
+}
+
 AiDifficulty selectedAiDifficulty() {
   if (scene == SCENE_DEMO) {
     return game.currentPlayer == PLAYER_ONE ? AI_EASY : AI_HARD;
@@ -360,6 +416,16 @@ void previousOpponentMode() {
         ? static_cast<OpponentMode>(OPPONENT_MODE_COUNT - 1)
         : static_cast<OpponentMode>(opponentMode - 1);
   } while (opponentMode == OPPONENT_LINK && !linkModeAvailable());
+}
+
+void nextRulesetMode() {
+  selectedRulesetMenuItem = static_cast<RulesetMode>((selectedRulesetMenuItem + 1) % RULESET_MODE_COUNT);
+}
+
+void previousRulesetMode() {
+  selectedRulesetMenuItem = selectedRulesetMenuItem == RULESET_STANDARD
+      ? static_cast<RulesetMode>(RULESET_MODE_COUNT - 1)
+      : static_cast<RulesetMode>(selectedRulesetMenuItem - 1);
 }
 
 BoardPoint screenPoint(uint8_t index) {
@@ -399,17 +465,59 @@ bool gameStateChanged(const MorrisGameState &before, const MorrisGameState &afte
   return false;
 }
 
+void resetHistory() {
+  history[0] = game;
+  historyCount = 1;
+  historyIndex = 0;
+}
+
+void pushHistory() {
+  if (historyIndex + 1 < historyCount) {
+    historyCount = historyIndex + 1;
+  }
+  if (historyCount < HISTORY_CAPACITY) {
+    history[historyCount++] = game;
+    historyIndex = historyCount - 1;
+    return;
+  }
+  for (uint8_t i = 1; i < HISTORY_CAPACITY; i++) {
+    history[i - 1] = history[i];
+  }
+  history[HISTORY_CAPACITY - 1] = game;
+  historyIndex = HISTORY_CAPACITY - 1;
+  historyCount = HISTORY_CAPACITY;
+}
+
+bool undoHistory() {
+  if (historyIndex == 0 || historyCount == 0) {
+    return false;
+  }
+  historyIndex--;
+  game = history[historyIndex];
+  return true;
+}
+
+bool redoHistory() {
+  if (historyIndex + 1 >= historyCount) {
+    return false;
+  }
+  historyIndex++;
+  game = history[historyIndex];
+  return true;
+}
+
 void startMatch() {
   const BoardDefinition *board = boardProfile(selectedBoardMenuItem);
-  const RuleSet *rules = ruleProfile(selectedBoardMenuItem);
-  if (board == nullptr || rules == nullptr) {
+  const RuleSet *standardRules = ruleProfile(selectedBoardMenuItem);
+  if (board == nullptr || standardRules == nullptr) {
     board = &ClassicBoardDefinition;
-    rules = &ClassicRuleSet;
+    standardRules = &ClassicRuleSet;
   }
+  const RuleSet *rules = buildActiveRuleSet(standardRules);
   resetMorrisGame(game, *board, *rules);
   game.currentPlayer = firstPlayer;
   cpuPlayer = opponentOf(firstPlayer);
-  hasUndo = false;
+  resetHistory();
   clearPendingCursorDirection();
   millFlashFrames = 0;
   idleFrames = 0;
@@ -421,8 +529,11 @@ void startMatch() {
   setMessage("");
 }
 
-void startLinkMatch(uint8_t boardIndex, Player startingPlayer) {
+void startLinkMatch(uint8_t boardIndex, uint8_t rulesetIndex, Player startingPlayer) {
   selectedBoardMenuItem = boardIndex < BOARD_MENU_COUNT ? boardIndex : 0;
+  selectedRulesetMenuItem = rulesetIndex < RULESET_MODE_COUNT
+      ? static_cast<RulesetMode>(rulesetIndex)
+      : RULESET_STANDARD;
   firstPlayer = startingPlayer == PLAYER_ONE ? PLAYER_ONE : PLAYER_TWO;
   opponentMode = OPPONENT_LINK;
   startMatch();
@@ -456,6 +567,7 @@ void applyLinkedAction(const LinkEvent &event) {
   playCpuActionSound();
   bool moved = applyPrimaryAction(game);
   if (moved) {
+    pushHistory();
     showActionFeedback(cpuAnimationPhaseBeforeAction, true);
   } else {
     setMessage("LINK ERR");
@@ -477,7 +589,7 @@ void handleLinkEvents() {
   LinkEvent event;
   while (linkConsumeEvent(event)) {
     if (event.kind == LINK_EVENT_START && linkDiscoveryMenuActive()) {
-      startLinkMatch(event.board, event.firstPlayer);
+      startLinkMatch(event.board, event.ruleset, event.firstPlayer);
     } else if (event.kind == LINK_EVENT_ACTION) {
       applyLinkedAction(event);
     } else if (event.kind == LINK_EVENT_CURSOR) {
@@ -530,7 +642,8 @@ void startDemoMatch() {
     resetMorrisGame(game, *board, *rules);
   }
 
-  hasUndo = false;
+  historyCount = 0;
+  historyIndex = 0;
   clearPendingCursorDirection();
   millFlashFrames = 0;
   confirmAction = CONFIRM_NONE;
@@ -545,7 +658,8 @@ void startDemoMatch() {
 void returnToMainMenu() {
   scene = SCENE_MAIN_MENU;
   confirmAction = CONFIRM_NONE;
-  hasUndo = false;
+  historyCount = 0;
+  historyIndex = 0;
   cpuAnimationPhase = CPU_ANIM_IDLE;
   clearPendingCursorDirection();
   idleFrames = 0;
@@ -711,7 +825,8 @@ void loadDebugDrawScenario() {
 }
 
 void loadDebugScenario() {
-  hasUndo = false;
+  historyCount = 0;
+  historyIndex = 0;
   millFlashFrames = 0;
   confirmAction = CONFIRM_NONE;
   scene = SCENE_PLAYING;
@@ -1146,6 +1261,72 @@ void drawHudPiece(uint8_t x, uint8_t y, Player player) {
   }
 }
 
+const char *hudStatusLabel() {
+  if (game.phase == PHASE_PLACING) {
+    return "PUT";
+  } else if (game.phase == PHASE_CAPTURING) {
+    return "TAKE";
+  } else if (game.phase == PHASE_GAME_OVER) {
+    return "OVER";
+  } else if (game.phase == PHASE_MOVING && game.selected == 255 && canPlaceAt(game, game.cursor)) {
+    return "PUT";
+  } else if (playerCanFly(game, game.currentPlayer)) {
+    return "FLY";
+  }
+  return "MOVE";
+}
+
+void drawHudTextCentered(uint8_t panelX, uint8_t panelW, uint8_t y, const char *text) {
+  tinyfont.setCursor(panelX + panelW / 2 - textPixelWidth(text) / 2, y);
+  tinyfont.print(text);
+}
+
+void drawUiPieceSprite(const uint16_t *sprite, uint8_t x, uint8_t bottomY) {
+  uint8_t topY = bottomY - HUD_PIECE_HEIGHT + 1;
+  for (uint8_t y = 0; y < HUD_PIECE_HEIGHT; y++) {
+    uint16_t mask = pgm_read_word(uiPieceMask16x10 + y);
+    for (uint8_t px = 0; px < HUD_PIECE_WIDTH; px++) {
+      if ((mask >> (HUD_PIECE_WIDTH - 1 - px)) & 1) {
+        arduboy.drawPixel(x + px, topY + y, BLACK);
+      }
+    }
+  }
+  for (uint8_t y = 0; y < HUD_PIECE_HEIGHT; y++) {
+    uint16_t row = pgm_read_word(sprite + y);
+    for (uint8_t px = 0; px < HUD_PIECE_WIDTH; px++) {
+      if ((row >> (HUD_PIECE_WIDTH - 1 - px)) & 1) {
+        arduboy.drawPixel(x + px, topY + y, WHITE);
+      }
+    }
+  }
+}
+
+void drawHudPieceStack(uint8_t x, Player player) {
+  uint8_t count = game.piecesToPlace[playerIndex(player)];
+  const uint16_t *sprite = player == PLAYER_ONE ? whiteUiPiece16x10 : blackUiPiece16x10;
+  if (count == 0) {
+    return;
+  }
+  if (count > 9) {
+    drawUiPieceSprite(sprite, x, HUD_STACK_SINGLE_BOTTOM_Y);
+    tinyfont.setCursor(x + 4, HUD_STACK_SINGLE_BOTTOM_Y + 4);
+    tinyfont.print(count);
+    return;
+  }
+  for (uint8_t i = 0; i < count; i++) {
+    drawUiPieceSprite(sprite, x, HUD_STACK_BOTTOM_Y - i * HUD_STACK_STEP_Y);
+  }
+}
+
+void drawHudPlayerPanel(uint8_t panelX, uint8_t panelW, Player player, const char *label) {
+  uint8_t spriteX = panelX + panelW / 2 - HUD_PIECE_WIDTH / 2;
+  drawHudTextCentered(panelX, panelW, 3, label);
+  if (game.phase != PHASE_GAME_OVER && game.currentPlayer == player) {
+    drawHudTextCentered(panelX, panelW, 12, hudStatusLabel());
+  }
+  drawHudPieceStack(spriteX, player);
+}
+
 void drawHud() {
   arduboy.fillRect(0, 0, 30, 64, BLACK);
   arduboy.fillRect(98, 0, 30, 64, BLACK);
@@ -1154,77 +1335,10 @@ void drawHud() {
   drawHudRule(29);
   drawHudRule(98);
 
-  tinyfont.setCursor(HUD_LEFT_X, 2);
-  tinyfont.print("STATE");
-  tinyfont.setCursor(HUD_LEFT_X, 9);
-  if (game.phase == PHASE_PLACING) {
-    tinyfont.print("PLACE");
-  } else if (game.phase == PHASE_CAPTURING) {
-    tinyfont.print("CAP");
-  } else if (game.phase == PHASE_GAME_OVER) {
-    tinyfont.print("OVER");
-  } else if (ruleFlag(*game.rules, RULE_MIXED_PLACEMENT_MOVEMENT) && game.actionMode == TURN_ACTION_PLACE) {
-    tinyfont.print("PUT");
-  } else if (playerCanFly(game, game.currentPlayer)) {
-    tinyfont.print("FLY");
-  } else {
-    tinyfont.print("MOVE");
-  }
-  tinyfont.setCursor(HUD_LEFT_X, 22);
-  if (game.phase == PHASE_GAME_OVER) {
-    if (game.winner == PLAYER_NONE) {
-      tinyfont.print("DRAW");
-    } else {
-      tinyfont.print(game.winner == PLAYER_TWO ? "W" : "B");
-      tinyfont.print(" WINS");
-    }
-  } else {
-    tinyfont.print("TURN");
-    drawHudPiece(HUD_LEFT_X + 4, 34, game.currentPlayer);
-    tinyfont.setCursor(HUD_LEFT_X + 10, 32);
-    tinyfont.print(game.currentPlayer == PLAYER_TWO ? "W" : "B");
-    tinyfont.setCursor(HUD_LEFT_X, 45);
-    tinyfont.print(game.phase == PHASE_CAPTURING ? "TAKE" : "TURN");
-  }
-
-  tinyfont.setCursor(HUD_RIGHT_X, 2);
-  tinyfont.print("HAND");
-  drawHudPiece(HUD_RIGHT_X + 4, 14, PLAYER_ONE);
-  tinyfont.setCursor(HUD_RIGHT_X + 10, 12);
-  tinyfont.print(game.piecesToPlace[0]);
-  drawHudPiece(HUD_RIGHT_X + 4, 23, PLAYER_TWO);
-  tinyfont.setCursor(HUD_RIGHT_X + 10, 21);
-  tinyfont.print(game.piecesToPlace[1]);
-
-  tinyfont.setCursor(HUD_RIGHT_X, 31);
-  tinyfont.print("BOARD");
-  tinyfont.setCursor(HUD_RIGHT_X, 38);
-  tinyfont.print("B ");
-  tinyfont.print(game.piecesOnBoard[0]);
-  tinyfont.setCursor(HUD_RIGHT_X + 13, 38);
-  tinyfont.print("W ");
-  tinyfont.print(game.piecesOnBoard[1]);
-
-  if (messageFrames > 0) {
-    tinyfont.setCursor(HUD_RIGHT_X, 48);
-    tinyfont.print(message);
-  } else if (game.phase == PHASE_GAME_OVER) {
-    tinyfont.setCursor(HUD_RIGHT_X, 48);
-    if (game.winReason == WIN_DRAW_NO_CAPTURE) {
-      tinyfont.print("NO CAP");
-    } else {
-      if (game.winReason == WIN_BY_BLOCK) {
-        tinyfont.print("BLOCK");
-      } else if (game.winReason == WIN_BY_MILL) {
-        tinyfont.print("MILL");
-      } else {
-        tinyfont.print("2 MEN");
-      }
-    }
-  }
-
-  tinyfont.setCursor(HUD_RIGHT_X, 57);
-  tinyfont.print("A MENU");
+  Player leftPlayer = firstPlayer;
+  Player rightPlayer = opponentOf(firstPlayer);
+  drawHudPlayerPanel(0, 29, leftPlayer, "P1");
+  drawHudPlayerPanel(99, 29, rightPlayer, "P2");
 }
 
 void drawCenteredPanel(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
@@ -1299,32 +1413,36 @@ void drawMainMenu() {
   uint8_t leftX = titleX > 12 ? titleX - 12 : 2;
   uint8_t rightX = titleX + titleWidth + 12;
 
-  tinyfont.setCursor(52, 27);
-  tinyfont.print("BOARD");
-  drawMenuChevron(leftX, 37, true);
-  drawMenuChevron(rightX, 37, false);
-  tinyfont.setCursor(titleX - 1, 38);
+  drawMenuChevron(leftX, 27, true);
+  drawMenuChevron(rightX, 27, false);
+  tinyfont.setCursor(titleX - 1, 28);
   tinyfont.print(title);
   if (selectedMenuItem == 0) {
-    drawDashedRect(leftX - 3, 35, rightX - leftX + 11, 11, animationFrame / 5, WHITE);
+    drawDashedRect(leftX - 3, 25, rightX - leftX + 11, 11, animationFrame / 5, WHITE);
   }
   if (!selectedBoardIsPlayable()) {
     tinyfont.setCursor(108, 56);
     tinyfont.print("SOON");
   }
 
-  tinyfont.setCursor(38, 48);
-  tinyfont.print("FIRST ");
-  tinyfont.print(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
+  tinyfont.setCursor(38, 39);
+  tinyfont.print(rulesetModeLabel());
   if (selectedMenuItem == 1) {
-    drawDashedRect(35, 45, 60, 10, animationFrame / 5, WHITE);
+    drawDashedRect(35, 36, 62, 10, animationFrame / 5, WHITE);
   }
 
-  tinyfont.setCursor(38, 57);
+  tinyfont.setCursor(38, 49);
+  tinyfont.print("FIRST ");
+  tinyfont.print(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
+  if (selectedMenuItem == 2) {
+    drawDashedRect(35, 46, 61, 10, animationFrame / 5, WHITE);
+  }
+
+  tinyfont.setCursor(38, 58);
   tinyfont.print("VS ");
   tinyfont.print(opponentModeLabel());
-  if (selectedMenuItem == 2) {
-    drawDashedRect(35, 54, 62, 10, animationFrame / 5, WHITE);
+  if (selectedMenuItem == 3) {
+    drawDashedRect(35, 55, 62, 9, animationFrame / 5, WHITE);
   }
 #if defined(ALL_MENS_MORRIS_FXC_LINK) && defined(ALL_MENS_MORRIS_DEBUG)
   tinyfont.setCursor(102, 24);
@@ -1373,11 +1491,11 @@ void drawQuickMenu() {
   tinyfont.print("DOWN MENU");
 #else
   tinyfont.setCursor(27, 41);
-  tinyfont.print("RIGHT MODE");
+  tinyfont.print("RIGHT REDO");
 #endif
 #ifdef ALL_MENS_MORRIS_DEBUG
   tinyfont.setCursor(27, 45);
-  tinyfont.print("RIGHT MODE");
+  tinyfont.print("RIGHT REDO");
 #endif
 }
 
@@ -1569,6 +1687,8 @@ void handleMainMenuInput() {
     if (selectedMenuItem == 0) {
       selectedBoardMenuItem = selectedBoardMenuItem == 0 ? BOARD_MENU_COUNT - 1 : selectedBoardMenuItem - 1;
     } else if (selectedMenuItem == 1) {
+      previousRulesetMode();
+    } else if (selectedMenuItem == 2) {
       firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
     } else {
       previousOpponentMode();
@@ -1579,6 +1699,8 @@ void handleMainMenuInput() {
     if (selectedMenuItem == 0) {
       selectedBoardMenuItem = (selectedBoardMenuItem + 1) % BOARD_MENU_COUNT;
     } else if (selectedMenuItem == 1) {
+      nextRulesetMode();
+    } else if (selectedMenuItem == 2) {
       firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
     } else {
       nextOpponentMode();
@@ -1588,15 +1710,19 @@ void handleMainMenuInput() {
   if (arduboy.justPressed(B_BUTTON)) {
     if (selectedMenuItem == 0 && selectedBoardIsPlayable()) {
       if (opponentMode == OPPONENT_LINK) {
-        linkSendStart(selectedBoardMenuItem, firstPlayer);
+        linkSendStart(selectedBoardMenuItem, selectedRulesetMenuItem, firstPlayer);
       }
       startMatch();
       playEffect(660, 45, 880, 70);
     } else if (selectedMenuItem == 1) {
+      nextRulesetMode();
+      setMessage(rulesetModeLabel());
+      playEffect(784, 45);
+    } else if (selectedMenuItem == 2) {
       firstPlayer = firstPlayer == PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
       setMessage(firstPlayer == PLAYER_TWO ? "WHITE" : "BLACK");
       playEffect(784, 45);
-    } else if (selectedMenuItem == 2) {
+    } else if (selectedMenuItem == 3) {
       nextOpponentMode();
       setMessage(opponentModeLabel());
       playEffect(784, 45);
@@ -1612,7 +1738,8 @@ void handleConfirmInput() {
     if (confirmAction == CONFIRM_MAIN_MENU) {
       scene = SCENE_MAIN_MENU;
       confirmAction = CONFIRM_NONE;
-      hasUndo = false;
+      historyCount = 0;
+      historyIndex = 0;
       setMessage("");
       playEffect(392, 45, 262, 65);
     }
@@ -1626,12 +1753,6 @@ void handleConfirmInput() {
   }
 }
 
-void toggleLongActionMode() {
-  toggleActionMode(game);
-  setMessage(game.actionMode == TURN_ACTION_PLACE ? "PUT" : "MOVE");
-  playEffect(698, 35);
-}
-
 void handleQuickMenuInput() {
   if (!arduboy.pressed(A_BUTTON)) {
     return;
@@ -1642,9 +1763,7 @@ void handleQuickMenuInput() {
     loadDebugScenario();
 #endif
   } else if (arduboy.justPressed(LEFT_BUTTON)) {
-    if (hasUndo) {
-      game = undoGame;
-      hasUndo = false;
+    if (undoHistory()) {
       setMessage("REWIND");
       playEffect(440, 45, 330, 70);
     } else {
@@ -1656,8 +1775,12 @@ void handleQuickMenuInput() {
     setMessage("");
     playEffect(330, 35);
   } else if (arduboy.justPressed(RIGHT_BUTTON)) {
-    if (canToggleActionMode(game)) {
-      toggleLongActionMode();
+    if (redoHistory()) {
+      setMessage("REDO");
+      playEffect(330, 45, 440, 70);
+    } else {
+      setMessage("NO REDO");
+      playEffect(160, 80);
     }
   }
 }
@@ -1701,7 +1824,11 @@ void handleInput() {
     clearPendingCursorDirection();
     GamePhase phaseBeforeAction = game.phase;
     MorrisGameState beforeAction = game;
-    TurnActionMode actionMode = game.actionMode;
+    TurnActionMode actionMode = (game.phase == PHASE_MOVING
+        && game.selected == NO_POINT
+        && canPlaceAt(game, game.cursor))
+        ? TURN_ACTION_PLACE
+        : TURN_ACTION_MOVE;
     uint8_t actionFrom = game.phase == PHASE_MOVING && game.selected != NO_POINT ? game.selected : NO_POINT;
     uint8_t actionTo = game.cursor;
     bool moved = applyPrimaryAction(game);
@@ -1709,8 +1836,7 @@ void handleInput() {
       setMessage("NOPE");
       playEffect(120, 80);
     } else if (gameStateChanged(beforeAction, game)) {
-      undoGame = beforeAction;
-      hasUndo = true;
+      pushHistory();
     }
 
     if (!moved) {

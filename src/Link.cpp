@@ -60,6 +60,7 @@ LinkStatus diagnosticStatus = LINK_STATUS_NONE;
 #endif
 LinkPacket pendingAction = {};
 LinkPacket pendingCursor = {};
+LinkPacket pendingStart = {};
 LinkEvent pendingEvent = {};
 
 #if I2C_LIB_VER >= 30000
@@ -214,6 +215,7 @@ void queueEvent(const LinkPacket &packet) {
   lastEventSeq = packet.seq;
   pendingEvent.board = packet.board;
   pendingEvent.firstPlayer = static_cast<Player>(packet.firstPlayer);
+  pendingEvent.ruleset = packet.mode;
   pendingEvent.mode = static_cast<TurnActionMode>(packet.mode);
   pendingEvent.from = packet.from;
   pendingEvent.to = packet.to;
@@ -302,14 +304,7 @@ void linkUpdate(bool inMainMenu, uint8_t board, Player firstPlayer) {
 
   if (pendingSendStart) {
     pendingSendStart = false;
-    LinkPacket packet = {};
-    packet.kind = LINK_KIND_START;
-    packet.board = board;
-    packet.firstPlayer = firstPlayer;
-    packet.mode = TURN_ACTION_MOVE;
-    packet.from = 255;
-    packet.to = 255;
-    if (!sendPacket(packet)) {
+    if (!sendPacket(pendingStart)) {
       pendingSendStart = true;
     }
     return;
@@ -364,7 +359,14 @@ bool linkConsumeEvent(LinkEvent &event) {
   return true;
 }
 
-void linkSendStart(uint8_t, Player) {
+void linkSendStart(uint8_t board, uint8_t ruleset, Player firstPlayer) {
+  pendingStart = {};
+  pendingStart.kind = LINK_KIND_START;
+  pendingStart.board = board;
+  pendingStart.firstPlayer = firstPlayer;
+  pendingStart.mode = static_cast<TurnActionMode>(ruleset);
+  pendingStart.from = 255;
+  pendingStart.to = 255;
   localStartedMatch = true;
   pendingSendStart = true;
 }
@@ -396,7 +398,7 @@ LinkStatus linkStatus() { return LINK_STATUS_NONE; }
 bool linkLocalIsPlayerOne() { return true; }
 Player linkLocalPlayer(Player firstPlayer) { return firstPlayer; }
 bool linkConsumeEvent(LinkEvent &) { return false; }
-void linkSendStart(uint8_t, Player) {}
+void linkSendStart(uint8_t, uint8_t, Player) {}
 void linkSendAction(TurnActionMode, uint8_t, uint8_t) {}
 void linkSendCursor(uint8_t) {}
 

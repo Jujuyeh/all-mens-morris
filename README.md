@@ -14,13 +14,12 @@ campaign-style ideas without mixing rule logic into rendering code.
 Early scaffold. The project compiles and runs, but the full game is not complete
 yet. Current controls:
 
-- Main menu up/down: switch between board selection, first-player setting, and
-  opponent setting.
-- Main menu left/right: change the selected board, first-player setting, or
-  opponent setting.
-- Main menu B: start the selected playable board, toggle the first-player
-  setting, cycle `VS PLAYER 2`/`VS CPU EASY`/`VS CPU HARD`, or show `SOON` for
-  unavailable boards.
+- Main menu up/down: switch between board, ruleset, first-player, and opponent
+  settings.
+- Main menu left/right: change the selected board, ruleset, first-player
+  setting, or opponent setting.
+- Main menu B: start the selected playable board/ruleset pairing, cycle the
+  selected setting, or show `SOON` for unavailable boards.
 - Main menu idle: after 20 seconds without input, enter a silent CPU demo.
 - Demo mode: any button returns to the main menu and restarts menu music,
   rotating through short menu themes.
@@ -28,10 +27,9 @@ yet. Current controls:
   neighboring points; press two non-opposite directions together for diagonals.
 - B: place/select/confirm/capture.
 - Hold A: show quick menu.
-- Hold A + left: rewind one game state.
+- Hold A + left: rewind through the fixed in-RAM game history.
 - Hold A + down: return to the main menu, with confirmation.
-- Hold A + right: toggle `PUT`/`MOVE` in variants that support mixed placement
-  and movement.
+- Hold A + right: redo through the fixed in-RAM game history.
 - Debug build only, hold A + up: cycle test scenarios for mill, flying,
   blocked-game-over, and draw states.
 

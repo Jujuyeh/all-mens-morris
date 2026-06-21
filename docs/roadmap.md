@@ -27,8 +27,10 @@
 - Added mill behavior as a rule knob so variants can capture on mills or win
   immediately on mills.
 - Added a playable Three Men's Morris profile.
-- Added Long Morris as a playable custom variant with mixed placement/movement
-  rules on the classic board.
+- Reworked Long Morris from a duplicated classic-board profile into a selectable
+  ruleset that can be applied to any generated board.
+- Added Lesker Morris as a selectable ruleset with mixed placement/movement from
+  the start.
 - Added Flower as a playable custom 20-point board profile.
 - Added a generic CPU opponent that works across generated board/rule profiles.
 - Added visible CPU cursor/action animation with turn-paced movement sounds.
@@ -56,12 +58,12 @@
 ## Next Cycle
 
 1. Retest the guarded FX-C peer discovery path on one and two physical units,
-   especially cable orientation, peer detection stability, start sync, and
-   action sync on Classic and Long Morris.
+   especially cable orientation, peer detection stability, start sync, ruleset
+   sync, and action sync on Classic/Long/Lesker combinations.
 2. Add remote cursor/action animation over the linked protocol if physical
    testing confirms the packet sync is stable.
 3. Test CPU Easy/Hard behavior across Classic, Six Men's Morris, Three Men's
-   Morris, Long Morris, and Flower on device/libretro.
+   Morris, Flower, and the Standard/Long/Lesker rulesets on device/libretro.
 4. Keep future CPU tuning under a strict flash/RAM budget so linked multiplayer
    support for two Arduboy FX-C units over USB-C still has room.
 5. Continue small data/code compaction passes before adding linked multiplayer

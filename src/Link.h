@@ -22,6 +22,7 @@ struct LinkEvent {
   LinkEventKind kind = LINK_EVENT_NONE;
   uint8_t board = 0;
   Player firstPlayer = PLAYER_TWO;
+  uint8_t ruleset = 0;
   TurnActionMode mode = TURN_ACTION_MOVE;
   uint8_t from = 255;
   uint8_t to = 255;
@@ -34,6 +35,6 @@ LinkStatus linkStatus();
 bool linkLocalIsPlayerOne();
 Player linkLocalPlayer(Player firstPlayer);
 bool linkConsumeEvent(LinkEvent &event);
-void linkSendStart(uint8_t board, Player firstPlayer);
+void linkSendStart(uint8_t board, uint8_t ruleset, Player firstPlayer);
 void linkSendAction(TurnActionMode mode, uint8_t from, uint8_t to);
 void linkSendCursor(uint8_t point);

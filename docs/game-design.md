@@ -37,13 +37,21 @@ Implemented:
 - Win/loss detection when an opponent is reduced below three pieces after all
   reserves are placed, or when the active player has no legal move.
 - Draw detection after 50 movement turns without a capture.
-- Main menu scaffold for choosing modes, with Classic Nine Men's Morris, Six
-  Men's Morris, Three Men's Morris, Long Morris, and Flower active.
+- Main menu scaffold for choosing board/ruleset pairings, with Classic Nine
+  Men's Morris, Six Men's Morris, Three Men's Morris, and Flower active as
+  boards.
+- Main menu ruleset selector for Standard, Long Morris, and Lesker Morris.
+  Long Morris scales to `standard pieces * 2 + 3`, fills until one empty point
+  remains, allows mixed placement/movement, skips fully blocked reserve turns,
+  and uses a 100-turn no-capture draw limit. Lesker Morris scales to
+  `standard pieces + 1` and uses standard rules except that placement and
+  movement are both available from the start.
 - Main menu opponent setting for local two-player, CPU Easy, or CPU Hard play.
   In CPU mode, the human takes the selected first-player color and the CPU
   plays the opposite color.
 - Horizontal board selector in the main menu, with left/right cycling board
-  titles and up/down moving between board, first-player, and opponent settings.
+  titles and up/down moving between board, ruleset, first-player, and opponent
+  settings.
 - Data-backed `BoardDefinition` and `RuleSet` generation for board and rule
   variants.
 - Initial TableTop Studio for studying and editing board profiles before
@@ -53,24 +61,18 @@ Implemented:
 - Playable Three Men's Morris profile with a 3x3 board, three pieces per
   player, diagonal mills, and immediate win on mill formation instead of
   capture.
-- Playable Long Morris profile on the classic 24-point board with 21 pieces per
-  player, initial filling until one empty point remains, mixed `PUT`/`MOVE`
-  turns when more than one point is open, classic mill capture, flying only
-  after reserves are exhausted, material loss at two board pieces after the
-  initial filling stage, block wins only after reserves are exhausted, blocked
-  reserve turns skipped, and a 100-turn no-capture draw limit.
 - Playable Flower profile with a custom 20-point graph, eight mill lines, and
   classic capture/flying rules.
 - Main menu setting for whether white or black moves first.
 - Directional cursor navigation that follows the board geometry, preferring
   connected neighboring points before falling back to a wider geometric search.
   D-pad chords support eight-direction cursor movement on freer board layouts.
-- Hold-A quick menu for debug scenarios in debug builds, one-state rewind, and
-  returning to the main menu.
-- Hold-A/right action toggle for mixed placement/movement variants.
-- Centered board layout with compact side HUD panels.
-- In-game side HUD panels use inverted colors so the central board remains
-  visually separate.
+- Hold-A quick menu for debug scenarios in debug builds, fixed-depth rewind,
+  redo, and returning to the main menu.
+- Mixed placement/movement variants choose `PUT` automatically when the cursor
+  is on a legal empty placement point; otherwise B uses selection/movement.
+- Centered board layout with compact side HUD panels. The side HUD shows P1/P2,
+  the active action label, and stacked reserve-piece sprites.
 - Animated dashed cursor selector.
 - First visual pass for the simplified board, side HUD, and inverted main menu
   with lightweight pattern decoration.

@@ -9,7 +9,7 @@
     "height": 64
   },
   "rules": {
-    "piecesPerPlayer": 8,
+    "piecesPerPlayer": 7,
     "minPiecesToContinue": 3,
     "flyPieceCount": 3,
     "noCaptureDrawTurnLimit": 50,

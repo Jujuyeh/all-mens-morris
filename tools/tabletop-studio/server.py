@@ -20,6 +20,7 @@ import audio_data  # noqa: E402
 
 GLOBAL_ASSET_PATHS = {
     "assets/fx/banner.png",
+    "assets/ui/pieces.png",
 }
 
 
