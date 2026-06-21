@@ -32,6 +32,8 @@
 - Added Lesker Morris as a selectable ruleset with mixed placement/movement from
   the start.
 - Added Flower as a playable custom 20-point board profile.
+- Added Hex Twelve as a playable 27-point board with three concentric hexagons
+  and twelve standard pieces per player.
 - Added a generic CPU opponent that works across generated board/rule profiles.
 - Added visible CPU cursor/action animation with turn-paced movement sounds.
 - Added CPU Easy and CPU Hard opponent settings, with Hard using depth-2

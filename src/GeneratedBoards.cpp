@@ -178,6 +178,110 @@ const RuleSet FlowerRuleSet = {
   RULE_FLYING_ENABLED | RULE_PROTECT_PIECES_IN_MILLS | RULE_BLOCK_WIN_ENABLED | RULE_MATERIAL_WIN_ENABLED | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
 };
 
+const BoardPoint HexTwelveBoardPoints[] PROGMEM = {
+  {32, 2},
+  {45, 10},
+  {58, 17},
+  {58, 47},
+  {45, 54},
+  {32, 62},
+  {6, 47},
+  {6, 32},
+  {6, 17},
+  {32, 12},
+  {41, 17},
+  {49, 22},
+  {49, 42},
+  {41, 47},
+  {32, 52},
+  {15, 42},
+  {15, 32},
+  {15, 22},
+  {32, 22},
+  {36, 25},
+  {41, 27},
+  {41, 37},
+  {36, 39},
+  {32, 42},
+  {23, 37},
+  {23, 32},
+  {23, 27},
+};
+
+const uint16_t HexTwelveMills[] PROGMEM = {
+  2080,
+  5251,
+  8422,
+  11593,
+  14764,
+  17935,
+  21106,
+  24277,
+  27448,
+  18720,
+  19777,
+  20834,
+  21891,
+  22948,
+  24005,
+  25062,
+  26119,
+  27176,
+};
+
+const uint8_t HexTwelveAdjacencyOffsets[] PROGMEM = {
+  0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 31, 35, 39, 43, 47, 51, 55, 59, 63, 66, 69, 72, 75, 78, 81, 84, 87, 90,
+};
+
+const uint8_t HexTwelveAdjacency[] PROGMEM = {
+  1, 8, 9,
+  0, 2, 10,
+  1, 3, 11,
+  2, 4, 12,
+  3, 5, 13,
+  4, 6, 14,
+  5, 7, 15,
+  6, 8, 16,
+  0, 7, 17,
+  0, 10, 17, 18,
+  1, 9, 11, 19,
+  2, 10, 12, 20,
+  3, 11, 13, 21,
+  4, 12, 14, 22,
+  5, 13, 15, 23,
+  6, 14, 16, 24,
+  7, 15, 17, 25,
+  8, 9, 16, 26,
+  9, 19, 26,
+  10, 18, 20,
+  11, 19, 21,
+  12, 20, 22,
+  13, 21, 23,
+  14, 22, 24,
+  15, 23, 25,
+  16, 24, 26,
+  17, 18, 25,
+};
+
+const BoardDefinition HexTwelveBoardDefinition = {
+  "HEX 12",
+  27,
+  18,
+  HexTwelveBoardPoints,
+  HexTwelveMills,
+  HexTwelveAdjacencyOffsets,
+  HexTwelveAdjacency,
+};
+
+const RuleSet HexTwelveRuleSet = {
+  12,
+  3,
+  3,
+  50,
+  0,
+  RULE_FLYING_ENABLED | RULE_PROTECT_PIECES_IN_MILLS | RULE_BLOCK_WIN_ENABLED | RULE_MATERIAL_WIN_ENABLED | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
+};
+
 const BoardPoint SixMenBoardPoints[] PROGMEM = {
   {4, 4},
   {32, 4},
@@ -308,5 +412,5 @@ const RuleSet ThreeMenRuleSet = {
   RULE_MILL_ACTION_WIN | RULE_BLOCK_WIN_REQUIRES_RESERVE_EMPTY | RULE_MATERIAL_WIN_REQUIRES_RESERVE_EMPTY,
 };
 
-const BoardDefinition *const MorrisBoardProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicBoardDefinition, &FlowerBoardDefinition, &SixMenBoardDefinition, &ThreeMenBoardDefinition};
-const RuleSet *const MorrisRuleProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicRuleSet, &FlowerRuleSet, &SixMenRuleSet, &ThreeMenRuleSet};
+const BoardDefinition *const MorrisBoardProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicBoardDefinition, &FlowerBoardDefinition, &HexTwelveBoardDefinition, &SixMenBoardDefinition, &ThreeMenBoardDefinition};
+const RuleSet *const MorrisRuleProfiles[MORRIS_BOARD_PROFILE_COUNT] PROGMEM = {&ClassicRuleSet, &FlowerRuleSet, &HexTwelveRuleSet, &SixMenRuleSet, &ThreeMenRuleSet};

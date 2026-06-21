@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-constexpr uint8_t MORRIS_MAX_POINT_COUNT = 24;
-constexpr uint8_t MORRIS_MAX_MILL_COUNT = 16;
+constexpr uint8_t MORRIS_MAX_POINT_COUNT = 27;
+constexpr uint8_t MORRIS_MAX_MILL_COUNT = 24;
 constexpr uint8_t MORRIS_NO_POINT = 255;
 
 struct BoardPoint {

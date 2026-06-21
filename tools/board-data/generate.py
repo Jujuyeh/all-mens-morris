@@ -10,8 +10,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-MAX_POINT_COUNT = 24
-MAX_MILL_COUNT = 16
+MAX_POINT_COUNT = 27
+MAX_MILL_COUNT = 24
 MAX_ADJACENCY_SLOTS = 8
 EMPTY_ADJACENCY = 255
 
