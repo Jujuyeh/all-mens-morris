@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-MAX_POINT_COUNT = 27
+MAX_POINT_COUNT = 36
 MAX_MILL_COUNT = 24
 MAX_ADJACENCY_SLOTS = 8
 EMPTY_ADJACENCY = 255
@@ -165,8 +165,7 @@ def format_points(profile: dict) -> str:
 def format_mills(profile: dict) -> str:
     rows = []
     for mill in profile["mills"]:
-        packed = mill[0] | (mill[1] << 5) | (mill[2] << 10)
-        rows.append(f"  {packed},")
+        rows.append("  " + ", ".join(str(value) for value in mill) + ",")
     return "\n".join(rows)
 
 
@@ -195,7 +194,7 @@ def generated_header(profiles: list[dict]) -> str:
     for profile in profiles:
         prefix = symbol_prefix(profile["id"])
         board_externs.append(f"extern const BoardPoint {prefix}BoardPoints[] PROGMEM;")
-        board_externs.append(f"extern const uint16_t {prefix}Mills[] PROGMEM;")
+        board_externs.append(f"extern const uint8_t {prefix}Mills[] PROGMEM;")
         board_externs.append(f"extern const uint8_t {prefix}AdjacencyOffsets[] PROGMEM;")
         board_externs.append(f"extern const uint8_t {prefix}Adjacency[] PROGMEM;")
         board_externs.append(f"extern const BoardDefinition {prefix}BoardDefinition;")
@@ -241,7 +240,7 @@ def generated_source(profiles: list[dict]) -> str:
             [
                 "};",
                 "",
-                f"const uint16_t {prefix}Mills[] PROGMEM = {{",
+                f"const uint8_t {prefix}Mills[] PROGMEM = {{",
                 format_mills(profile),
                 "};",
                 "",

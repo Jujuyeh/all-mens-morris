@@ -38,7 +38,7 @@ Implemented:
   reserves are placed, or when the active player has no legal move.
 - Draw detection after 50 movement turns without a capture.
 - Main menu scaffold for choosing board/ruleset pairings, with Classic Nine
-  Men's Morris, Hex Twelve, Six Men's Morris, Three Men's Morris, and Flower
+  Men's Morris, Hexagon, Six Men's Morris, Three Men's Morris, and Flower
   active as boards.
 - Main menu ruleset selector for Standard, Long Morris, and Lesker Morris.
   Long Morris scales to `standard pieces * 2 + 3`, fills until one empty point
@@ -63,7 +63,7 @@ Implemented:
   capture.
 - Playable Flower profile with a custom 20-point graph, eight mill lines, and
   classic capture/flying rules.
-- Playable Hex Twelve profile with three regular concentric hexagons, 27 valid
+- Playable Hexagon profile with three regular concentric hexagons, 36 valid
   points, 18 mill lines, and twelve standard pieces per player.
 - Main menu setting for whether white or black moves first.
 - Directional cursor navigation that follows the board geometry, preferring

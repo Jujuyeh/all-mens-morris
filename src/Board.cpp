@@ -7,11 +7,11 @@ BoardPoint boardPoint(const BoardDefinition &board, uint8_t index) {
 }
 
 MillLine millLine(const BoardDefinition &board, uint8_t index) {
-  uint16_t packed = pgm_read_word(&board.mills[index]);
+  uint8_t offset = index * 3;
   return {
-    static_cast<uint8_t>(packed & 31),
-    static_cast<uint8_t>((packed >> 5) & 31),
-    static_cast<uint8_t>((packed >> 10) & 31),
+    pgm_read_byte(&board.mills[offset]),
+    pgm_read_byte(&board.mills[offset + 1]),
+    pgm_read_byte(&board.mills[offset + 2]),
   };
 }
 

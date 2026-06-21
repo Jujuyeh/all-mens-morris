@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-constexpr uint8_t MORRIS_MAX_POINT_COUNT = 27;
+constexpr uint8_t MORRIS_MAX_POINT_COUNT = 36;
 constexpr uint8_t MORRIS_MAX_MILL_COUNT = 24;
 constexpr uint8_t MORRIS_NO_POINT = 255;
 
@@ -22,13 +22,13 @@ struct BoardDefinition {
   uint8_t pointCount;
   uint8_t millCount;
   const BoardPoint *points;
-  const uint16_t *mills;
+  const uint8_t *mills;
   const uint8_t *adjacencyOffsets;
   const uint8_t *adjacency;
 };
 
 extern const BoardPoint ClassicBoardPoints[] PROGMEM;
-extern const uint16_t ClassicMills[] PROGMEM;
+extern const uint8_t ClassicMills[] PROGMEM;
 extern const uint8_t ClassicAdjacencyOffsets[] PROGMEM;
 extern const uint8_t ClassicAdjacency[] PROGMEM;
 extern const BoardDefinition ClassicBoardDefinition;
