@@ -112,6 +112,16 @@ Build a distributable `.arduboy` package:
 make package-arduboy ARDUBOY_VERSION=v1.0.0
 ```
 
+Prepare the static browser player:
+
+```sh
+make web-site
+```
+
+This compiles the stable HEX, copies it to `site/build/`, copies the banner,
+and fetches the Ardens web player into `site/vendor/ardens/`. Those fetched
+files are generated outputs and are kept out of git.
+
 Open TableTop Studio:
 
 ```sh
@@ -144,6 +154,7 @@ build is close to the ATmega32U4 flash limit.
 |   |-- Game.cpp
 |   `-- AllMensMorrisGame.h
 |-- docs/
+|-- site/
 |-- tools/tabletop-studio/
 |-- tools/board-data/
 |-- skills/

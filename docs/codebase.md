@@ -56,6 +56,10 @@ The implementation is split into:
   `src/GeneratedBoards.*` board/rule data.
 - `tools/music/`: Arduboy menu music generator, editable audio JSON sources,
   and optional checked-in public-domain MIDI source files.
+- `site/`: static browser player shell around the Ardens web player. `make
+  web-site` compiles the stable HEX, copies it to `site/build/`, copies the FX
+  banner, and fetches Ardens web player files into `site/vendor/ardens/`.
+  Generated site build and vendor files stay out of git.
 
 Startup uses `arduboy.beginDoFirst()` and `arduboy.waitNoButtons()` instead of
 `arduboy.begin()` so the stock Arduboy boot logo and LED animation are skipped.

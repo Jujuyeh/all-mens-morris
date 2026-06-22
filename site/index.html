@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>All Men's Morris</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="stage">
+      <header class="masthead">
+        <div class="cart" aria-hidden="true">
+          <div class="cart-top"></div>
+          <img src="build/banner.png" alt="">
+          <div class="cart-pins"></div>
+        </div>
+        <div class="title-lockup">
+          <p>ALL MEN'S</p>
+          <h1>MORRIS</h1>
+        </div>
+      </header>
+
+      <div class="device-shell">
+        <section class="device" aria-label="All Men's Morris web player">
+          <div class="bezel">
+            <div class="screen">
+              <iframe
+                id="player"
+                title="All Men's Morris running in Ardens"
+                tabindex="0"
+                allow="autoplay; fullscreen"
+                src="about:blank"></iframe>
+            </div>
+            <div class="brand-row" aria-hidden="true">
+              <span class="stone stone-light"></span>
+              <span class="brand-mark">JUJUYEH</span>
+              <span class="stone stone-dark"></span>
+            </div>
+          </div>
+
+          <div class="controls" aria-label="Arduboy controls">
+            <div class="dpad" aria-label="Directional pad">
+              <button class="pad up" data-key="ArrowUp" aria-label="Up"></button>
+              <button class="pad left" data-key="ArrowLeft" aria-label="Left"></button>
+              <button class="pad right" data-key="ArrowRight" aria-label="Right"></button>
+              <button class="pad down" data-key="ArrowDown" aria-label="Down"></button>
+              <div class="pad-center" aria-hidden="true"></div>
+            </div>
+
+            <div class="system-strip" aria-hidden="true">
+              <span></span>
+              <span></span>
+            </div>
+
+            <div class="face-buttons" aria-label="Action buttons">
+              <button class="face face-a" data-key="z" aria-label="A"><span>A</span></button>
+              <button class="face face-b" data-key="x" aria-label="B"><span>B</span></button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <nav class="desktop-actions" aria-label="Project links">
+        <a class="utility-link" href="https://www.arduboy.com/">ARDUBOY</a>
+        <a class="utility-link" id="hex-link" href="build/all-mens-morris-latest.hex">HEX</a>
+        <a class="utility-link" href="https://github.com/Jujuyeh/all-mens-morris">GITHUB</a>
+      </nav>
+
+      <aside class="keyboard-legend" aria-label="Keyboard controls">
+        <span>ARROWS D-PAD</span>
+        <span>Z / A = A</span>
+        <span>X / S / B = B</span>
+        <span>M = MUTE</span>
+      </aside>
+
+      <button class="audio-toggle" type="button" aria-label="Mute audio" aria-pressed="false"></button>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
