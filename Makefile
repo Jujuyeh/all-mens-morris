@@ -1,4 +1,5 @@
 ARDUINO_CLI ?= arduino-cli
+PYTHON ?= python3
 FQBN ?= arduino:avr:leonardo
 SKETCH_DIR := $(CURDIR)
 BUILD ?= stable
@@ -125,7 +126,7 @@ fx-entry-fxc: compile-fxc
 	@printf '%s\n' "Merge this into an FX-C flashcart backup, not a classic FX cart."
 
 package-arduboy: compile
-	python "$(ARDUBOY_PACKAGE_SCRIPT)" \
+	$(PYTHON) "$(ARDUBOY_PACKAGE_SCRIPT)" \
 		--hex "$(HEX)" \
 		--banner "$(SKETCH_DIR)/$(FX_BANNER)" \
 		--output "$(ARDUBOY_PACKAGE)" \
@@ -134,13 +135,13 @@ package-arduboy: compile
 	@printf '%s\n' "$(ARDUBOY_PACKAGE)"
 
 tabletop-studio:
-	python tools/tabletop-studio/server.py --open
+	$(PYTHON) tools/tabletop-studio/server.py --open
 
 board-data:
-	python tools/board-data/generate.py
+	$(PYTHON) tools/board-data/generate.py
 
 music-data:
-	python tools/music/generate_menu_music.py
+	$(PYTHON) tools/music/generate_menu_music.py
 
 check: board-data music-data compile
 
