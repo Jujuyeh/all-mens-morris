@@ -327,10 +327,6 @@ uint16_t menuMusicDurationMs(uint8_t duration) {
   return static_cast<uint16_t>(duration) * MENU_MUSIC_TICK_MS;
 }
 
-uint16_t menuMusicToneMs(uint8_t duration) {
-  return (menuMusicDurationMs(duration) * 3) / 4;
-}
-
 uint8_t menuMusicDurationFrames(uint8_t duration) {
   uint16_t frames = (static_cast<uint16_t>(duration) * MENU_MUSIC_TICK_MS * GAME_FPS + 999) / 1000;
   return frames == 0 ? 1 : frames;
@@ -361,7 +357,7 @@ void startMenuMusicEvent() {
   if (frequency == 0) {
     sound.noTone();
   } else {
-    sound.tone(frequency, menuMusicToneMs(duration));
+    sound.tone(frequency, (menuMusicDurationMs(duration) * 3) / 4);
   }
 }
 
@@ -642,6 +638,13 @@ void applyLinkedCursor(const LinkEvent &event) {
 
 void applyLinkedAction(const LinkEvent &event) {
   if (!isLinkMatch() || event.kind != LINK_EVENT_ACTION || isLocalLinkTurn()) {
+    return;
+  }
+  if (event.to == NO_POINT) {
+    bool redo = event.mode == TURN_ACTION_MOVE;
+    if (redo ? redoHistory() : undoHistory()) {
+      setMessage(redo ? "REDO" : "REWIND");
+    }
     return;
   }
   cpuAnimationPhaseBeforeAction = game.phase;
@@ -1972,26 +1975,23 @@ void handleQuickMenuInput() {
 #ifdef ALL_MENS_MORRIS_DEBUG
     loadDebugScenario();
 #endif
-  } else if (arduboy.justPressed(LEFT_BUTTON)) {
-    if (undoHistory()) {
-      setMessage("REWIND");
-      playEffect(440, 45, 330, 70);
+  } else if (arduboy.justPressed(LEFT_BUTTON) || arduboy.justPressed(RIGHT_BUTTON)) {
+    bool redo = arduboy.justPressed(RIGHT_BUTTON);
+    bool changed = redo ? redoHistory() : undoHistory();
+    if (changed) {
+      if (isLinkMatch()) {
+        linkSendAction(redo ? TURN_ACTION_MOVE : TURN_ACTION_PLACE, NO_POINT, NO_POINT);
+      }
+      setMessage(redo ? "REDO" : "REWIND");
+      playEffect(redo ? 440 : 330, 70);
     } else {
-      setMessage("NO UNDO");
+      setMessage(redo ? "NO REDO" : "NO UNDO");
       playEffect(160, 80);
     }
   } else if (arduboy.justPressed(DOWN_BUTTON)) {
     confirmAction = CONFIRM_MAIN_MENU;
     setMessage("");
     playEffect(330, 35);
-  } else if (arduboy.justPressed(RIGHT_BUTTON)) {
-    if (redoHistory()) {
-      setMessage("REDO");
-      playEffect(330, 45, 440, 70);
-    } else {
-      setMessage("NO REDO");
-      playEffect(160, 80);
-    }
   }
 }
 

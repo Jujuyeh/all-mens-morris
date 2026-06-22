@@ -30,9 +30,11 @@ yet. Current controls:
 - B: place/select/confirm/capture.
 - Hold A: show quick menu.
 - Hold A + left: rewind through the fixed in-RAM game history.
+  In linked games, this sends the same rewind step to the peer console.
 - Hold A + down: return to the main menu, with confirmation.
   In linked games, confirming this returns both consoles to the main menu.
 - Hold A + right: redo through the fixed in-RAM game history.
+  In linked games, this sends the same redo step to the peer console.
 - Debug build only, hold A + up: cycle test scenarios for mill, flying,
   blocked-game-over, and draw states.
 

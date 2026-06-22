@@ -44,6 +44,8 @@ The implementation is split into:
   count to reduce lockups when another connected program is also touching I2C.
   `make setup` pins ArduboyI2C from GitHub so the FX-C build gets the newer
   bus-busy and cable-orientation support required by the USB-C link.
+- Arduino builds use `-mcall-prologues` and `-fno-inline-small-functions` to
+  keep the stable, debug, and FX-C binaries inside the ATmega32U4 flash budget.
 - `src/Assets.*`: shared PROGMEM sprites, currently including title and boot
   logo assets.
 - `boards/*.json`: editable board/rule profiles consumed by TableTop Studio and

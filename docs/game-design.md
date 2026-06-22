@@ -122,11 +122,12 @@ Implemented:
   steps are mirrored as compact cursor packets with the same short step tone
   used by CPU turns, while local actions are sent as
   compact mode/from/to packets and applied immediately on the receiving
-  console. Returning to the main menu sends a compact menu packet so both
-  consoles leave the linked match together. Only the active local player can
-  act, fresh remote-turn input flashes a one-frame rejection effect, local
-  turns light the RGB LED green, and mills keep the red/blue police LED flash
-  on both consoles.
+  console. Rewind and redo use a reserved compact action packet so both
+  consoles step through the shared history together. Returning to the main menu
+  sends a compact menu packet so both consoles leave the linked match together.
+  Only the active local player can act, fresh remote-turn input flashes a
+  one-frame rejection effect, local turns light the RGB LED green, and mills
+  keep the red/blue police LED flash on both consoles.
 
 Not implemented yet:
 
