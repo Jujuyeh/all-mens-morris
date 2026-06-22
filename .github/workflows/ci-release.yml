@@ -23,9 +23,6 @@ jobs:
       - name: Install Arduino CLI
         uses: arduino/setup-arduino-cli@v2
 
-      - name: Enable pinned Git libraries
-        run: arduino-cli config set library.enable_unsafe_install true
-
       - name: Install Arduino dependencies
         run: make setup
 

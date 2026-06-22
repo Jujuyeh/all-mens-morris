@@ -49,7 +49,7 @@ setup:
 	$(ARDUINO_CLI) core install arduino:avr
 	$(ARDUINO_CLI) lib install Arduboy2 Arduboy-TinyFont ArduboyTones
 	rm -rf "$(SKETCH_DIR)/.arduino-sketchbook/libraries/ArduboyI2C"
-	$(ARDUINO_CLI) lib install --git-url https://github.com/sub1inear/ArduboyI2C.git#74d9e8d89111e6b19292d5c6e1ac576710137c5d
+	ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true $(ARDUINO_CLI) lib install --git-url https://github.com/sub1inear/ArduboyI2C.git#74d9e8d89111e6b19292d5c6e1ac576710137c5d
 
 compile:
 	$(ARDUINO_CLI) compile --fqbn $(FQBN) $(ARDUINO_BUILD_FLAGS) --build-path $(BUILD_DIR) $(SKETCH_DIR)
