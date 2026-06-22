@@ -58,6 +58,7 @@ constexpr uint8_t BOOT_CURTAIN_START_FRAMES = framesAtGameFps(47);
 constexpr uint8_t BOOT_TOTAL_FRAMES = framesAtGameFps(52);
 constexpr uint8_t MENU_MUSIC_RESTART_FRAMES = 12;
 constexpr uint8_t MENU_MUSIC_INITIAL_DELAY_FRAMES = GAME_FPS;
+constexpr uint8_t AUDIO_OSD_FRAMES = GAME_FPS;
 constexpr uint8_t BOARD_WHEEL_X = 31;
 constexpr uint8_t BOARD_WHEEL_Y = 25;
 constexpr uint8_t BOARD_WHEEL_W = 66;
@@ -166,6 +167,7 @@ uint8_t menuMusicIndex = 0;
 uint8_t menuMusicTheme = 0;
 bool menuMusicActive = false;
 AudioMode audioMode = AUDIO_MUSIC_FX;
+uint8_t audioOsdFrames = 0;
 uint8_t rejectFlashFrames = 0;
 uint8_t previousBoardMenuSelection = 0;
 uint8_t boardWheelFrames = 0;
@@ -196,6 +198,7 @@ void playCpuActionSound();
 uint8_t textPixelWidth(const char *text);
 void resetMenuAnimation(bool advanceStyle);
 void updateMenuAnimation();
+void returnToMainMenu();
 
 const BoardDefinition *boardProfile(uint8_t index) {
   if (index >= MORRIS_BOARD_PROFILE_COUNT) {
@@ -324,6 +327,10 @@ uint16_t menuMusicDurationMs(uint8_t duration) {
   return static_cast<uint16_t>(duration) * MENU_MUSIC_TICK_MS;
 }
 
+uint16_t menuMusicToneMs(uint8_t duration) {
+  return (menuMusicDurationMs(duration) * 3) / 4;
+}
+
 uint8_t menuMusicDurationFrames(uint8_t duration) {
   uint16_t frames = (static_cast<uint16_t>(duration) * MENU_MUSIC_TICK_MS * GAME_FPS + 999) / 1000;
   return frames == 0 ? 1 : frames;
@@ -354,7 +361,7 @@ void startMenuMusicEvent() {
   if (frequency == 0) {
     sound.noTone();
   } else {
-    sound.tone(frequency, menuMusicDurationMs(duration));
+    sound.tone(frequency, menuMusicToneMs(duration));
   }
 }
 
@@ -399,7 +406,7 @@ void nextAudioMode() {
   if (audioMode == AUDIO_MUSIC_FX) {
     restartMenuMusic();
   }
-  setMessage(audioModeLabel());
+  audioOsdFrames = AUDIO_OSD_FRAMES;
 }
 
 const char *opponentModeLabel() {
@@ -675,6 +682,8 @@ void handleLinkEvents() {
       applyLinkedAction(event);
     } else if (event.kind == LINK_EVENT_CURSOR) {
       applyLinkedCursor(event);
+    } else if (event.kind == LINK_EVENT_MENU && isLinkMatch()) {
+      returnToMainMenu();
     }
   }
   if (discoveryActive && !linkAvailable && opponentMode == OPPONENT_LINK) {
@@ -1647,6 +1656,11 @@ void drawMainMenu() {
   if (selectedMenuItem == 3) {
     drawDashedRect(35, 55, 61, 9, animationFrame / 5, WHITE);
   }
+  if (audioOsdFrames > 0) {
+    arduboy.fillRect(0, 57, 44, 7, BLACK);
+    tinyfont.setCursor(1, 58);
+    tinyfont.print(audioModeLabel());
+  }
 #if defined(ALL_MENS_MORRIS_FXC_LINK) && defined(ALL_MENS_MORRIS_DEBUG)
   tinyfont.setCursor(102, 24);
   switch (linkStatus()) {
@@ -1933,11 +1947,10 @@ void handleMainMenuInput() {
 void handleConfirmInput() {
   if (arduboy.justPressed(B_BUTTON)) {
     if (confirmAction == CONFIRM_MAIN_MENU) {
-      scene = SCENE_MAIN_MENU;
-      confirmAction = CONFIRM_NONE;
-      historyCount = 0;
-      historyIndex = 0;
-      setMessage("");
+      if (isLinkMatch()) {
+        linkSendMenu();
+      }
+      returnToMainMenu();
       playEffect(392, 45, 262, 65);
     }
     return;
@@ -2002,6 +2015,13 @@ void handleInput() {
   }
 
   if (linkInputLocked()) {
+    if (arduboy.pressed(A_BUTTON) && arduboy.justPressed(DOWN_BUTTON)) {
+      confirmAction = CONFIRM_MAIN_MENU;
+      setMessage("");
+      playEffect(330, 35);
+      clearPendingCursorDirection();
+      return;
+    }
     if (anyButtonJustPressed()) {
       rejectInput();
     }
@@ -2247,6 +2267,9 @@ void gameLoop() {
   updateMenuMusic();
   if (messageFrames > 0) {
     messageFrames--;
+  }
+  if (audioOsdFrames > 0) {
+    audioOsdFrames--;
   }
 
   arduboy.fillScreen(WHITE);

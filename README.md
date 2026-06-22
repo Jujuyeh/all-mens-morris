@@ -20,6 +20,8 @@ yet. Current controls:
   setting, or opponent setting.
 - Main menu B: start the selected playable board/ruleset pairing, cycle the
   selected setting, or show `SOON` for unavailable boards.
+- Main menu A: rotate audio between Music+FX, FX Only, and Muted, with a brief
+  bottom-left status overlay.
 - Main menu idle: after 20 seconds without input, enter a silent CPU demo.
 - Demo mode: any button returns to the main menu and restarts menu music,
   rotating through short menu themes.
@@ -29,6 +31,7 @@ yet. Current controls:
 - Hold A: show quick menu.
 - Hold A + left: rewind through the fixed in-RAM game history.
 - Hold A + down: return to the main menu, with confirmation.
+  In linked games, confirming this returns both consoles to the main menu.
 - Hold A + right: redo through the fixed in-RAM game history.
 - Debug build only, hold A + up: cycle test scenarios for mill, flying,
   blocked-game-over, and draw states.

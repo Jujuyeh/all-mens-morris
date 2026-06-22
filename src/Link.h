@@ -9,6 +9,7 @@ enum LinkEventKind : uint8_t {
   LINK_EVENT_START,
   LINK_EVENT_ACTION,
   LINK_EVENT_CURSOR,
+  LINK_EVENT_MENU,
 };
 
 enum LinkStatus : uint8_t {
@@ -38,3 +39,4 @@ bool linkConsumeEvent(LinkEvent &event);
 void linkSendStart(uint8_t board, uint8_t ruleset, Player firstPlayer);
 void linkSendAction(TurnActionMode mode, uint8_t from, uint8_t to);
 void linkSendCursor(uint8_t point);
+void linkSendMenu();

@@ -13,6 +13,7 @@ constexpr uint8_t LINK_KIND_BEACON = 1;
 constexpr uint8_t LINK_KIND_START = 2;
 constexpr uint8_t LINK_KIND_ACTION = 3;
 constexpr uint8_t LINK_KIND_CURSOR = 4;
+constexpr uint8_t LINK_KIND_MENU = 5;
 constexpr uint8_t LINK_ADDRESS = 0x08;
 constexpr uint8_t LINK_SEND_ADDRESS = 0x00;
 constexpr uint8_t LINK_PEER_TIMEOUT_FRAMES = 120;
@@ -226,6 +227,8 @@ void queueEvent(const LinkPacket &packet) {
     pendingEvent.kind = LINK_EVENT_ACTION;
   } else if (packet.kind == LINK_KIND_CURSOR) {
     pendingEvent.kind = LINK_EVENT_CURSOR;
+  } else if (packet.kind == LINK_KIND_MENU) {
+    pendingEvent.kind = LINK_EVENT_MENU;
   }
 }
 
@@ -256,7 +259,8 @@ void processReceived() {
   peerNonce = packet.nonce;
   if (packet.kind == LINK_KIND_START
       || packet.kind == LINK_KIND_ACTION
-      || packet.kind == LINK_KIND_CURSOR) {
+      || packet.kind == LINK_KIND_CURSOR
+      || packet.kind == LINK_KIND_MENU) {
     queueEvent(packet);
   }
 }
@@ -389,6 +393,15 @@ void linkSendCursor(uint8_t point) {
   pendingSendCursor = true;
 }
 
+void linkSendMenu() {
+  pendingAction = {};
+  pendingAction.kind = LINK_KIND_MENU;
+  pendingAction.from = 255;
+  pendingAction.to = 255;
+  pendingAction.mode = TURN_ACTION_MOVE;
+  pendingSendAction = true;
+}
+
 #else
 
 void linkBegin(uint32_t) {}
@@ -401,5 +414,6 @@ bool linkConsumeEvent(LinkEvent &) { return false; }
 void linkSendStart(uint8_t, uint8_t, Player) {}
 void linkSendAction(TurnActionMode, uint8_t, uint8_t) {}
 void linkSendCursor(uint8_t) {}
+void linkSendMenu() {}
 
 #endif
