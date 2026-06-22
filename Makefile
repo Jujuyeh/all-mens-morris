@@ -15,6 +15,9 @@ FX_CART_DIR ?= $(DIST_DIR)/fx-cart
 FX_CATEGORY ?= TableTop
 FX_GAME ?= 02-All-Mens-Morris
 FX_BANNER ?= assets/fx/banner.png
+ARDUBOY_VERSION ?= dev
+ARDUBOY_PACKAGE_SCRIPT ?= $(SKETCH_DIR)/tools/package-arduboy.py
+ARDUBOY_PACKAGE := $(DIST_DIR)/release/all-mens-morris-$(ARDUBOY_VERSION).arduboy
 
 ELF := $(BUILD_DIR)/all-mens-morris.ino.elf
 HEX := $(BUILD_DIR)/all-mens-morris.ino.hex
@@ -36,7 +39,7 @@ endif
 export ARDUINO_DIRECTORIES_DATA := $(ARDUINO_DATA_DIR)
 export ARDUINO_DIRECTORIES_USER := $(SKETCH_DIR)/.arduino-sketchbook
 
-.PHONY: all setup compile compile-debug compile-fxc upload upload-sketch clean hex size size-debug symbols symbols-debug check sim cloud libretro libretro-debug fx-entry fx-entry-fxc tabletop-studio board-data music-data
+.PHONY: all setup compile compile-debug compile-fxc upload upload-sketch clean hex size size-debug symbols symbols-debug check sim cloud libretro libretro-debug fx-entry fx-entry-fxc package-arduboy tabletop-studio board-data music-data
 
 all: compile
 
@@ -120,6 +123,15 @@ fx-entry-fxc: compile-fxc
 	@printf '%s\n' "$(FX_CART_DIR)/FX-C/$(FX_CATEGORY)/$(FX_GAME).hex"
 	@printf '%s\n' "$(FX_CART_DIR)/FX-C/$(FX_CATEGORY)/$(FX_GAME).png"
 	@printf '%s\n' "Merge this into an FX-C flashcart backup, not a classic FX cart."
+
+package-arduboy: compile
+	python "$(ARDUBOY_PACKAGE_SCRIPT)" \
+		--hex "$(HEX)" \
+		--banner "$(SKETCH_DIR)/$(FX_BANNER)" \
+		--output "$(ARDUBOY_PACKAGE)" \
+		--version "$(ARDUBOY_VERSION)"
+	@printf '%s\n' "Arduboy package prepared:"
+	@printf '%s\n' "$(ARDUBOY_PACKAGE)"
 
 tabletop-studio:
 	python tools/tabletop-studio/server.py --open

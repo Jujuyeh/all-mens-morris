@@ -62,34 +62,20 @@
 
 ## Next Cycle
 
-1. Retest the guarded FX-C peer discovery path on one and two physical units,
-   especially cable orientation, peer detection stability, start sync, ruleset
-   sync, and action sync on Classic/Long/Lesker combinations.
-2. Add remote cursor/action animation over the linked protocol if physical
-   testing confirms the packet sync is stable.
-3. Test CPU Easy/Hard behavior across Classic, Six Men's Morris, Three Men's
-   Morris, Flower, and the Standard/Long/Lesker rulesets on device/libretro.
-4. Keep future CPU tuning under a strict flash/RAM budget so linked multiplayer
-   support for two Arduboy FX-C units over USB-C still has room.
-5. Continue small data/code compaction passes before adding linked multiplayer
-   protocol and UI.
-6. Tune board graph/art direction after CPU and human playtests.
-7. Add generated profile metadata for menu labels, availability, and future
-   variant descriptions.
-8. Continue the pixel-art pass for pieces and final board/menu assets.
-9. Make the Nix workflow more reproducible: move Arduino core/library setup out
-   of the ad-hoc `make setup` path where practical, add Darwin targets, expose a
-   useful `nix run github:Jujuyeh/all-mens-morris` entry that launches the
-   libretro build when public, and generate a release-ready `.arduboy` package
-   as part of the release cycle.
+1. Cut and publish `v1.0.0` release artifacts.
+2. Keep only low-risk release fixes on this branch unless a real hardware bug
+   appears.
+3. Move larger ideas into a future sequel/advanced edition that can target
+   Arduboy FX/FX-C storage more aggressively.
+4. Make the Nix workflow more reproducible: move Arduino core/library setup out
+   of the ad-hoc `make setup` path where practical, add Darwin targets, and
+   expose a useful `nix run github:Jujuyeh/all-mens-morris` entry that launches
+   the libretro build when public.
 
 ## Later
 
-- Hardened linked multiplayer between two Arduboy FX-C units, with cable-flip
-  guidance, reconnect behavior, and optional remote cursor animation.
 - More board/rule variant definitions.
 - More advanced draw rules, such as repeated-position detection.
 - TableTop Studio for designing board sprites and playable graph data together.
 - Save/settings support.
-- Arduboy FX packaging workflow with banner art.
-- Sound effects and optional music.
+- Advanced Arduboy FX/FX-C edition with larger board/rule libraries.

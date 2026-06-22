@@ -3,16 +3,16 @@
 All Men's Morris is an Arduboy / Arduboy FX strategy game built around Nine
 Men's Morris and related board variants.
 
-The first playable slice implements local two-player Morris variants with piece
-placement, movement, flying with three pieces, mill detection, mandatory capture
-after a mill, basic win detection, and sound/RGB feedback. The project is
-structured so future modes can add different boards, rule variants, AI, and
-campaign-style ideas without mixing rule logic into rendering code.
+The v1.0 release implements playable Morris-family variants with placement,
+movement, flying with three pieces, mill detection, mandatory capture after a
+mill, win/draw detection, CPU opponents, Arduboy FX-C link-cable play, and
+sound/RGB feedback. The project is structured so future modes can add different
+boards, rule variants, AI, and campaign-style ideas without mixing rule logic
+into rendering code.
 
 ## Status
 
-Early scaffold. The project compiles and runs, but the full game is not complete
-yet. Current controls:
+Release-ready v1.0.0. Current controls:
 
 - Main menu up/down: switch between board, ruleset, first-player, and opponent
   settings.
@@ -106,6 +106,12 @@ Prepare an Arduboy FX-C catalog entry with link-cable support:
 make fx-entry-fxc
 ```
 
+Build a distributable `.arduboy` package:
+
+```sh
+make package-arduboy ARDUBOY_VERSION=v1.0.0
+```
+
 Open TableTop Studio:
 
 ```sh
@@ -117,6 +123,13 @@ graph overlay, validates connections/mills/rule settings, edits global sprites,
 and includes a piano-roll audio editor. `make board-data` converts board
 profiles into firmware C++ data; `make music-data` converts the editable menu
 music source into `src/MenuMusic.*`.
+
+## Release Notes
+
+`v1.0.0` is the first complete playable release. Known limitations: FX-C link
+play expects both consoles to run the same build, advanced desync recovery is
+out of scope, no persistent save/settings storage is implemented, and the FX-C
+build is close to the ATmega32U4 flash limit.
 
 ## Layout
 

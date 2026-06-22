@@ -29,8 +29,17 @@ jobs:
       - name: Compile debug
         run: nix develop -c make compile-debug
 
+      - name: Compile FX-C
+        run: nix develop -c make compile-fxc
+
       - name: Prepare FX entry
         run: nix develop -c make fx-entry
+
+      - name: Prepare FX-C entry
+        run: nix develop -c make fx-entry-fxc
+
+      - name: Package .arduboy
+        run: nix develop -c make package-arduboy ARDUBOY_VERSION=${{ github.ref_name }}
 
       - name: Package artifacts
         if: startsWith(github.ref, 'refs/tags/v')
@@ -40,6 +49,7 @@ jobs:
           mkdir -p dist/release
           cp build/stable/all-mens-morris.ino.hex "dist/release/all-mens-morris-${version}.hex"
           cp build/debug/all-mens-morris.ino.hex "dist/release/all-mens-morris-debug-${version}.hex"
+          cp build/fxc/all-mens-morris.ino.hex "dist/release/all-mens-morris-fxc-${version}.hex"
           tar -C dist/fx-cart -czf "dist/release/all-mens-morris-fx-entry-${version}.tar.gz" .
           (cd dist/release && sha256sum * > "SHA256SUMS-${version}.txt")
           printf 'All Men'\''s Morris %s\n' "$version" > "dist/release/README-${version}.txt"
