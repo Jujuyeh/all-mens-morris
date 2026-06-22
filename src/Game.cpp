@@ -103,6 +103,12 @@ enum MenuSideAnimation : uint8_t {
   MENU_ANIM_BALLS,
 };
 
+enum AudioMode : uint8_t {
+  AUDIO_MUSIC_FX,
+  AUDIO_FX_ONLY,
+  AUDIO_MUTED,
+};
+
 enum CpuAnimationPhase : uint8_t {
   CPU_ANIM_IDLE,
   CPU_ANIM_TO_FROM,
@@ -159,6 +165,7 @@ uint8_t menuMusicFramesRemaining = 0;
 uint8_t menuMusicIndex = 0;
 uint8_t menuMusicTheme = 0;
 bool menuMusicActive = false;
+AudioMode audioMode = AUDIO_MUSIC_FX;
 uint8_t rejectFlashFrames = 0;
 uint8_t previousBoardMenuSelection = 0;
 uint8_t boardWheelFrames = 0;
@@ -268,17 +275,26 @@ void markSoundEffect() {
 }
 
 void playEffect(uint16_t freq, uint16_t dur) {
+  if (audioMode == AUDIO_MUTED) {
+    return;
+  }
   markSoundEffect();
   sound.tone(freq, dur);
 }
 
 void playEffect(uint16_t freq1, uint16_t dur1, uint16_t freq2, uint16_t dur2) {
+  if (audioMode == AUDIO_MUTED) {
+    return;
+  }
   markSoundEffect();
   sound.tone(freq1, dur1, freq2, dur2);
 }
 
 void playEffect(uint16_t freq1, uint16_t dur1, uint16_t freq2, uint16_t dur2,
                 uint16_t freq3, uint16_t dur3) {
+  if (audioMode == AUDIO_MUTED) {
+    return;
+  }
   markSoundEffect();
   sound.tone(freq1, dur1, freq2, dur2, freq3, dur3);
 }
@@ -343,7 +359,7 @@ void startMenuMusicEvent() {
 }
 
 void updateMenuMusic() {
-  if (scene != SCENE_MAIN_MENU) {
+  if (scene != SCENE_MAIN_MENU || audioMode != AUDIO_MUSIC_FX) {
     stopMenuMusic();
     return;
   }
@@ -359,6 +375,31 @@ void updateMenuMusic() {
   }
 
   startMenuMusicEvent();
+}
+
+const char *audioModeLabel() {
+  if (audioMode == AUDIO_FX_ONLY) {
+    return "FX ONLY";
+  }
+  if (audioMode == AUDIO_MUTED) {
+    return "MUTED";
+  }
+  return "MUSIC+FX";
+}
+
+void nextAudioMode() {
+  if (audioMode == AUDIO_MUSIC_FX) {
+    audioMode = AUDIO_FX_ONLY;
+  } else if (audioMode == AUDIO_FX_ONLY) {
+    audioMode = AUDIO_MUTED;
+  } else {
+    audioMode = AUDIO_MUSIC_FX;
+  }
+  stopMenuMusic();
+  if (audioMode == AUDIO_MUSIC_FX) {
+    restartMenuMusic();
+  }
+  setMessage(audioModeLabel());
 }
 
 const char *opponentModeLabel() {
@@ -645,7 +686,9 @@ uint8_t randomPlayableBoardIndex() {
   uint8_t start = random(BOARD_MENU_COUNT);
   for (uint8_t offset = 0; offset < BOARD_MENU_COUNT; offset++) {
     uint8_t index = (start + offset) % BOARD_MENU_COUNT;
-    if (boardProfile(index) != nullptr && ruleProfile(index) != nullptr) {
+    if (boardProfile(index) != nullptr
+        && boardProfile(index) != &HexTwelveBoardDefinition
+        && ruleProfile(index) != nullptr) {
       return index;
     }
   }
@@ -1880,6 +1923,10 @@ void handleMainMenuInput() {
       setMessage("SOON");
       playEffect(180, 90);
     }
+  }
+  if (arduboy.justPressed(A_BUTTON)) {
+    nextAudioMode();
+    playEffect(audioMode == AUDIO_MUTED ? 160 : 784, 45);
   }
 }
 

@@ -86,14 +86,17 @@ Implemented:
 - Menu music uses three short original bossa-style loops generated from
   TableTop Studio audio data. Startup picks one theme at random; subsequent
   returns from attract mode rotate through the next theme. Playback starts
-  after a one second pause, and gameplay remains effects-only.
+  after a one second pause, and gameplay remains effects-only. Pressing A on
+  the main menu rotates audio through Music+FX, FX Only, and Muted.
 - Attract/demo mode after 20 seconds of main-menu inactivity. The game fades
   out, opens with alternating horizontal curtain bars, then runs a silent CPU
   Easy vs CPU Hard demo on a random playable board from a legally generated
-  mid-game state. Any button returns to the main menu through the curtain and
-  restarts menu music; otherwise the demo returns after 30 seconds or three
-  seconds after a demo win/draw. Demo CPU turns wait a random 0.2-0.8 seconds,
-  and demo results are labeled as Player 1/Player 2 rather than CPU.
+  mid-game state, excluding Hexagon because its 36-point topology currently
+  stalls too hard when generating a demo state. Any button returns to the main
+  menu through the curtain and restarts menu music; otherwise the demo returns
+  after 30 seconds or three seconds after a demo win/draw. Demo CPU turns wait
+  a random 0.2-0.8 seconds, and demo results are labeled as Player 1/Player 2
+  rather than CPU.
 - Blinking result panel for completed games, with local player, CPU, and tie
   labels plus short win/lose/draw fanfares.
 - Debug-only hold-A/up scenarios for mill, flying, blocked-game-over, and draw
@@ -109,11 +112,12 @@ Implemented:
 - Arduboy FX-C build support behind `BUILD=fxc`, with a first linked
   multiplayer slice. Two consoles in the main menu exchange compact I2C
   beacons; when a peer is detected the opponent selector unlocks and selects
-  `VS LINK`. Discovery beacons are rate-limited, jittered, and only sent after
-  the I2C lines have sampled idle to reduce multi-master bus collisions. The
-  console that starts a linked match controls the first-player side for that
-  match. Local cursor steps are mirrored as compact cursor packets with the
-  same short step tone used by CPU turns, while local actions are sent as
+  `VS LINK`. Discovery beacons are rate-limited, jittered, use maximum
+  ArduboyI2C bus-busy checking, and are only sent after the I2C lines have
+  sampled idle to reduce multi-master bus collisions. The console that starts a
+  linked match controls the first-player side for that match. Local cursor
+  steps are mirrored as compact cursor packets with the same short step tone
+  used by CPU turns, while local actions are sent as
   compact mode/from/to packets and applied immediately on the receiving
   console. Only the active local player can act, fresh remote-turn input
   flashes a one-frame rejection effect, local turns light the RGB LED green,

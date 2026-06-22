@@ -3,7 +3,7 @@
 #ifdef ALL_MENS_MORRIS_FXC_LINK
 #define I2C_IMPLEMENTATION
 #define I2C_BUFFER_SIZE 12
-#define I2C_CHECK_BUS_BUSY_CHECKS 64
+#define I2C_CHECK_BUS_BUSY_CHECKS 255
 #include <ArduboyI2C.h>
 
 namespace {
@@ -15,9 +15,9 @@ constexpr uint8_t LINK_KIND_ACTION = 3;
 constexpr uint8_t LINK_KIND_CURSOR = 4;
 constexpr uint8_t LINK_ADDRESS = 0x08;
 constexpr uint8_t LINK_SEND_ADDRESS = 0x00;
-constexpr uint8_t LINK_PEER_TIMEOUT_FRAMES = 45;
-constexpr uint8_t LINK_SEND_INTERVAL_FRAMES = 24;
-constexpr uint8_t LINK_SEND_JITTER_FRAMES = 31;
+constexpr uint8_t LINK_PEER_TIMEOUT_FRAMES = 120;
+constexpr uint8_t LINK_SEND_INTERVAL_FRAMES = 45;
+constexpr uint8_t LINK_SEND_JITTER_FRAMES = 45;
 constexpr uint8_t LINK_TX_STUCK_FRAMES = 3;
 constexpr uint8_t LINK_IDLE_LINE_CHECKS = 8;
 #ifdef ALL_MENS_MORRIS_DEBUG
